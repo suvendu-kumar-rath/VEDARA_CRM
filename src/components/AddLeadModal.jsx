@@ -4,7 +4,7 @@ import Modal from "./Modal";
 const sources = ["Instagram", "Facebook", "Website", "Google Ads", "Referral", "Walk-in", "Email Campaign", "LinkedIn"];
 const budgetRanges = ["₹10-15 Lakhs", "₹15-20 Lakhs", "₹20-25 Lakhs", "₹25-35 Lakhs", "₹35-45 Lakhs", "₹45-60 Lakhs", "₹60-80 Lakhs", "₹80 Lakhs - 1 Crore", "₹1-1.5 Crore", "₹1.5+ Crore"];
 const propertyTypes = ["Apartment", "Villa", "Penthouse", "Bungalow", "Duplex", "Studio", "Commercial", "Office Space", "Retail Space"];
-const teamMembers = ["Priya Singh", "Rahul Mehta", "Anjali Desai", "Karan Sharma"];
+const teamMembers = ["Arpita Singh", "Rahul Mehta", "Anjali Desai", "Karan Sharma"];
 
 export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
   const [formData, setFormData] = useState({

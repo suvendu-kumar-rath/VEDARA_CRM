@@ -146,7 +146,7 @@ export const sampleActivities = [
     title: "Site Visit Scheduled",
     description: "Client wants to visit the Andheri project site this weekend",
     time: "2 hours ago",
-    by: "Priya Singh",
+    by: "Arpita Singh",
     note: "Client is specifically interested in 2BHK units with sea view. Budget confirmed at ₹30 Lakhs."
   },
   {
@@ -154,7 +154,7 @@ export const sampleActivities = [
     title: "Follow-up Call",
     description: "Discussed project amenities and payment plans",
     time: "Yesterday, 4:30 PM",
-    by: "Priya Singh"
+    by: "Arpita Singh"
   },
   {
     type: "Email",
@@ -168,7 +168,7 @@ export const sampleActivities = [
     title: "Initial Discussion",
     description: "First consultation about interior requirements",
     time: "3 days ago",
-    by: "Priya Singh",
+    by: "Arpita Singh",
     note: "Client prefers modern contemporary style. Timeline: 6-8 months."
   },
   {
@@ -291,7 +291,7 @@ export const quickActions = [
 export const teamMembers = [
   {
     id: 1,
-    name: "Priya Singh",
+    name: "Arpita Singh",
     initials: "PS",
     role: "Sales Manager",
     color: "from-accent to-yellow-600"

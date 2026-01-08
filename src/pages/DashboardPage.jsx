@@ -23,7 +23,7 @@ export default function DashboardPage() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
-          <p className="text-gray-text mt-1">Welcome back, Priya. Here's what's happening today.</p>
+          <p className="text-gray-text mt-1">Welcome back, Arpita. Here's what's happening today.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button 

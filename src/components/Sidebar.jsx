@@ -79,7 +79,7 @@ export default function Sidebar() {
             <span className="text-dark font-bold text-sm">PS</span>
           </div>
           <div>
-            <div className="text-white text-sm font-semibold">Priya Sharma</div>
+            <div className="text-white text-sm font-semibold">Arpita Singh</div>
             <div className="text-gray-text text-xs">Design Director</div>
           </div>
         </div>

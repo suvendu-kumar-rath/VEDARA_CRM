@@ -56,7 +56,7 @@ const sampleActivities = [
     title: "Site Visit Scheduled",
     description: "Client wants to visit the Andheri project site this weekend",
     time: "2 hours ago",
-    by: "Priya Singh",
+    by: "Arpita Singh",
     note: "Client is specifically interested in 2BHK units with sea view. Budget confirmed at ₹30 Lakhs."
   },
   {
@@ -64,7 +64,7 @@ const sampleActivities = [
     title: "Follow-up Call",
     description: "Discussed project amenities and payment plans",
     time: "Yesterday, 4:30 PM",
-    by: "Priya Singh"
+    by: "Arpita Singh"
   },
   {
     type: "Email",
@@ -78,7 +78,7 @@ const sampleActivities = [
     title: "Initial Discussion",
     description: "First consultation about interior requirements",
     time: "3 days ago",
-    by: "Priya Singh",
+    by: "Arpita Singh",
     note: "Client prefers modern contemporary style. Timeline: 6-8 months."
   },
   {
@@ -368,7 +368,7 @@ export default function LeadDetails() {
                 PS
               </div>
               <div>
-                <div className="text-white font-medium">Priya Singh</div>
+                <div className="text-white font-medium">Arpita Singh</div>
                 <div className="text-gray-text text-sm">Sales Manager</div>
               </div>
             </div>
