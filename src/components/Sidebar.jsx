@@ -76,7 +76,7 @@ export default function Sidebar() {
         </div>
         <div className="flex items-center gap-3 mt-10 p-3 rounded hover:bg-gray-border cursor-pointer transition">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-yellow-600 flex items-center justify-center">
-            <span className="text-dark font-bold text-sm">PS</span>
+            <span className="text-dark font-bold text-sm">AS</span>
           </div>
           <div>
             <div className="text-white text-sm font-semibold">Arpita Singh</div>
