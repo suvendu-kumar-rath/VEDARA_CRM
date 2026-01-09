@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddLeadModal from "../components/AddLeadModal";
 
-// Sample leads data for demonstration
-/* const initialLeadsData = [
+const initialLeadsData = [
   {
     id: 1,
     name: "Rajesh Sharma",
@@ -100,9 +99,7 @@ import AddLeadModal from "../components/AddLeadModal";
     stage: "Discussion",
     stageColor: "yellow"
   }
-]; */
-
-const initialLeadsData = [];
+];
 
 // Stage color mapping for badges
 const stageBorderColors = {
