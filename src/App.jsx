@@ -7,7 +7,7 @@ import LeadsPage from "./pages/LeadsPage";
 import LeadDetails from "./pages/LeadDetails";
 import ClientsPage from "./pages/ClientsPage";
 // import QuotationsPage from "./pages/QuotationsPage";
-// import ProjectsPage from "./pages/ProjectsPage";
+import ProjectsPage from "./pages/ProjectsPage";
 // import DesignsPage from "./pages/DesignsPage";
 // import SettingsPage from "./pages/SettingsPage";
 
@@ -24,7 +24,7 @@ export default function App() {
             <Route path="/leads/:id" element={<LeadDetails />} />
             <Route path="/clients" element={<ClientsPage />} />
             {/* <Route path="/quotations" element={<QuotationsPage />} /> */}
-            {/* <Route path="/projects" element={<ProjectsPage />} /> */}
+            <Route path="/projects" element={<ProjectsPage />} />
             {/* <Route path="/designs" element={<DesignsPage />} /> */}
             {/* <Route path="/settings" element={<SettingsPage />} /> */}
           </Routes>
