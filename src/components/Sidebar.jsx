@@ -1,27 +1,58 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const navItems = [
-  { label: "Dashboard", icon: "📊", path: "/" },
-  { label: "Leads", icon: "👥", path: "/leads" },
-  { label: "Clients", icon: "👤", path: "/clients" },
-  { label: "Projects", icon: "📁", path: "/projects" },
-  { label: "Designs", icon: "🎨", path: "/designs" },
-  { label: "Quotations", icon: "📄", path: "/quotations" },
-  { label: "Vendors", icon: "🏪", path: "/vendors" },
-  { label: "Site Updates", icon: "📍", path: "/site-updates" },
-  { label: "Reports", icon: "📈", path: "/reports" },
-  { label: "Settings", icon: "⚙️", path: "/settings" },
+  { label: "Dashboard", icon: "📊", path: "/", roles: ["admin", "lead"] },
+  { label: "Leads", icon: "👥", path: "/leads", roles: ["admin", "lead"] },
+  { label: "Clients", icon: "👤", path: "/clients", roles: ["admin", "lead"] },
+  { label: "Projects", icon: "📁", path: "/projects", roles: ["admin", "lead"] },
+  { label: "Designs", icon: "🎨", path: "/designs", roles: ["admin", "lead", "designer"] },
+  { label: "Quotations", icon: "📄", path: "/quotations", roles: ["admin", "lead"] },
+  { label: "Users", icon: "👥", path: "/users", roles: ["admin"] },
+  { label: "Settings", icon: "⚙️", path: "/settings", roles: ["admin", "lead"] },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const isActive = (path) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
   };
+
+  const canAccessNavItem = (navItem) => {
+    if (!user) return false;
+    return navItem.roles.includes(user.role);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsMobileMenuOpen(false);
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'admin': return 'from-blue-500 to-blue-600';
+      case 'lead': return 'from-green-500 to-green-600';
+      case 'designer': return 'from-purple-500 to-purple-600';
+      default: return 'from-gray-500 to-gray-600';
+    }
+  };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin': return 'Administrator';
+      case 'lead': return 'Lead Manager';
+      case 'designer': return 'Designer';
+      default: return role;
+    }
+  };
+
+  // Filter navigation items based on user role
+  const accessibleNavItems = navItems.filter(canAccessNavItem);
 
   return (
     <>
@@ -57,7 +88,7 @@ export default function Sidebar() {
             <div className="text-gray-text text-xs mt-1">Interior Design Studio</div>
           </div>
           <nav className="flex flex-col gap-1">
-            {navItems.map((item) => (
+            {accessibleNavItems.map((item) => (
               <Link
                 key={item.label}
                 to={item.path}
@@ -74,14 +105,28 @@ export default function Sidebar() {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-3 mt-10 p-3 rounded hover:bg-gray-border cursor-pointer transition">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-yellow-600 flex items-center justify-center">
-            <span className="text-dark font-bold text-sm">AS</span>
+        <div className="space-y-3 mt-10">
+          {/* User Profile */}
+          <div className="flex items-center gap-3 p-3 rounded bg-gray-border/50">
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRoleColor(user?.role)} flex items-center justify-center`}>
+              <span className="text-white font-bold text-sm">
+                {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-white text-sm font-semibold truncate">{user?.name || 'User'}</div>
+              <div className="text-gray-text text-xs">{getRoleDisplayName(user?.role)}</div>
+            </div>
           </div>
-          <div>
-            <div className="text-white text-sm font-semibold">Arpita Singh</div>
-            <div className="text-gray-text text-xs">Design Director</div>
-          </div>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-left text-sm font-medium text-gray-text hover:bg-red-900/20 hover:text-red-400 transition"
+          >
+            <span className="text-base">🚪</span>
+            Logout
+          </button>
         </div>
       </aside>
     </>
