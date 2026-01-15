@@ -55,11 +55,12 @@ export default function SettingsPage() {
   return (
     <main className="flex-1 p-6 md:p-10 bg-dark overflow-y-auto">
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Settings</h1>
           <p className="text-gray-text mt-1">Manage your studio preferences</p>
         </div>
+        {/*
         <button 
           onClick={handleSaveChanges}
           disabled={!hasChanges}
@@ -71,23 +72,46 @@ export default function SettingsPage() {
         >
           <span>💾</span> Save Changes
         </button>
+        */}
+
+        <div
+          className={`px-6 py-2.5 rounded flex items-center gap-2 transition text-sm font-medium ${
+            hasChanges 
+              ? 'bg-accent text-dark' 
+              : 'bg-gray-border text-gray-text'
+          }`}
+          aria-hidden
+        >
+          <span>💾</span> Save Changes
+        </div>
       </div>
 
       {/* Tabs */}
       <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2">
         {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 rounded flex items-center gap-2 whitespace-nowrap transition text-sm font-medium ${
-              activeTab === tab.id
-                ? 'bg-accent text-dark'
-                : 'bg-dark-light border border-gray-border text-gray-text hover:border-accent hover:text-white'
-            }`}
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
-          </button>
+          <React.Fragment key={tab.id}>
+            {/*
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 rounded flex items-center gap-2 whitespace-nowrap transition text-sm font-medium ${
+                activeTab === tab.id
+                  ? 'bg-accent text-dark'
+                  : 'bg-dark-light border border-gray-border text-gray-text hover:border-accent hover:text-white'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+            */}
+
+            <div className={`px-4 py-2.5 rounded flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
+              activeTab === tab.id ? 'bg-accent text-dark' : 'bg-dark-light border border-gray-border text-gray-text'
+            }`}>
+              <span>{tab.icon}</span>
+              {tab.label}
+            </div>
+          </React.Fragment>
         ))}
       </div>
 
@@ -420,9 +444,15 @@ export default function SettingsPage() {
               <h2 className="text-xl font-bold text-white">User Roles</h2>
               <p className="text-gray-text text-sm mt-1">Manage team members and their permissions</p>
             </div>
+            {/*
             <button className="bg-accent text-dark px-5 py-2 rounded flex items-center gap-2 hover:bg-yellow-500 transition text-sm font-medium">
               <span className="text-lg">+</span> Add User
             </button>
+            */}
+
+            <div className="bg-accent text-dark px-5 py-2 rounded flex items-center gap-2 text-sm font-medium" aria-hidden>
+              <span className="text-lg">+</span> Add User
+            </div>
           </div>
           <div className="divide-y divide-gray-border">
             {[

@@ -13,7 +13,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import DesignsPage from "./pages/DesignsPage";
 import UsersPage from "./pages/UsersPage";
 import LoginPage from "./pages/LoginPage";
-// import SettingsPage from "./pages/SettingsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -76,7 +76,7 @@ function AppContent() {
               <UsersPage />
             </ProtectedRoute>
           } />
-          {/* <Route path="/settings" element={<SettingsPage />} /> */}
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </div>
     </div>
