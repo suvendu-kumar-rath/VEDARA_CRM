@@ -1,25 +1,11 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
-
-const clients = [
-  "Rajesh & Priya Mehra",
-  "TechCorp Solutions",
-  "Rohit & Sneha Joshi",
-  "Dr. Suresh Menon",
-  "Café Mocha Chain"
-];
-
-const projects = [
-  { name: "Juhu Villa Project", type: "Residential", baseAmount: 5000000 },
-  { name: "TechCorp HQ Office", type: "Commercial", baseAmount: 8000000 },
-  { name: "BKC Office Project", type: "Commercial", baseAmount: 7500000 },
-  { name: "Luxury Penthouse", type: "Residential", baseAmount: 9000000 }
-];
+import api from '../services/api';
 
 export default function CreateQuotationModal({ isOpen, onClose, onCreateQuotation }) {
   const [formData, setFormData] = useState({
-    client: "",
-    project: "",
+    client_id: "",
+    project_id: "",
     baseAmount: "",
     validUntil: "",
     discount: "0",
@@ -27,6 +13,7 @@ export default function CreateQuotationModal({ isOpen, onClose, onCreateQuotatio
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,26 +23,11 @@ export default function CreateQuotationModal({ isOpen, onClose, onCreateQuotatio
     }
   };
 
-  const handleProjectChange = (e) => {
-    const projectName = e.target.value;
-    const selectedProject = projects.find(p => p.name === projectName);
-    
-    setFormData(prev => ({
-      ...prev,
-      project: projectName,
-      baseAmount: selectedProject ? selectedProject.baseAmount.toString() : ""
-    }));
-    
-    if (errors.project) {
-      setErrors(prev => ({ ...prev, project: "" }));
-    }
-  };
-
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.client) newErrors.client = "Client is required";
-    if (!formData.project) newErrors.project = "Project is required";
+    if (!formData.client_id) newErrors.client_id = "Client ID is required";
+    if (!formData.project_id) newErrors.project_id = "Project ID is required";
     if (!formData.baseAmount) newErrors.baseAmount = "Base amount is required";
     if (!formData.validUntil) newErrors.validUntil = "Valid until date is required";
 
@@ -63,20 +35,40 @@ export default function CreateQuotationModal({ isOpen, onClose, onCreateQuotatio
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (validateForm()) {
-      onCreateQuotation(formData);
-      handleReset();
-      onClose();
+      setIsLoading(true);
+      setErrors({});
+      try {
+        // Prepare data for API (camelCase fields as expected by backend)
+        const payload = {
+          clientId: Number(formData.client_id),
+          projectId: Number(formData.project_id),
+          baseAmount: Number(formData.baseAmount),
+          discountPercent: Number(formData.discount),
+          validUntil: formData.validUntil,
+          notes: formData.notes,
+          status: 'sent',
+        };
+        const response = await api.createQuotation(payload);
+        console.log('Quotation created:', response);
+        if (onCreateQuotation) onCreateQuotation(response.data || payload);
+        handleReset();
+        onClose();
+      } catch (error) {
+        console.error('Failed to create quotation:', error);
+        setErrors({ api: error.message || 'Failed to create quotation' });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const handleReset = () => {
     setFormData({
-      client: "",
-      project: "",
+      client_id: "",
+      project_id: "",
       baseAmount: "",
       validUntil: "",
       discount: "0",
@@ -90,63 +82,51 @@ export default function CreateQuotationModal({ isOpen, onClose, onCreateQuotatio
     onClose();
   };
 
-  const selectedProject = projects.find(p => p.name === formData.project);
-
   return (
     <Modal isOpen={isOpen} onClose={handleCancel} title="Create New Quotation" icon="📋">
       <form onSubmit={handleSubmit}>
+        {errors.api && (
+          <div className="mb-4 p-3 bg-red-500 bg-opacity-10 border border-red-500 rounded text-red-500 text-sm">
+            {errors.api}
+          </div>
+        )}
         <div className="space-y-6">
-          {/* Client */}
+          {/* Client ID */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
-              Client
+              Client ID
             </label>
-            <select
-              name="client"
-              value={formData.client}
+            <input
+              type="number"
+              name="client_id"
+              value={formData.client_id}
               onChange={handleChange}
-              className={`w-full bg-dark border ${errors.client ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition`}
-            >
-              <option value="">Select client</option>
-              {clients.map((client) => (
-                <option key={client} value={client}>
-                  {client}
-                </option>
-              ))}
-            </select>
-            {errors.client && <p className="text-red-500 text-xs mt-1">{errors.client}</p>}
+              placeholder="Enter client ID"
+              className={`w-full bg-dark border ${errors.client_id ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition`}
+            />
+            {errors.client_id && <p className="text-red-500 text-xs mt-1">{errors.client_id}</p>}
           </div>
 
-          {/* Project */}
+          {/* Project ID */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
-              Project
+              Project ID
             </label>
-            <select
-              name="project"
-              value={formData.project}
-              onChange={handleProjectChange}
-              className={`w-full bg-dark border ${errors.project ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition`}
-            >
-              <option value="">Select project</option>
-              {projects.map((project) => (
-                <option key={project.name} value={project.name}>
-                  {project.name} ({project.type})
-                </option>
-              ))}
-            </select>
-            {errors.project && <p className="text-red-500 text-xs mt-1">{errors.project}</p>}
+            <input
+              type="number"
+              name="project_id"
+              value={formData.project_id}
+              onChange={handleChange}
+              placeholder="Enter project ID"
+              className={`w-full bg-dark border ${errors.project_id ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition`}
+            />
+            {errors.project_id && <p className="text-red-500 text-xs mt-1">{errors.project_id}</p>}
           </div>
 
           {/* Base Amount */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
               Base Amount
-              {selectedProject && (
-                <span className="text-gray-text text-xs ml-2">
-                  (Pre-filled from {selectedProject.type} pricing)
-                </span>
-              )}
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-text">₹</span>
@@ -230,12 +210,16 @@ export default function CreateQuotationModal({ isOpen, onClose, onCreateQuotatio
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 bg-accent text-dark rounded hover:bg-yellow-500 transition text-sm font-medium"
+            disabled={isLoading}
+            className="px-6 py-2.5 bg-accent text-dark rounded hover:bg-yellow-500 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create Quotation
+            {isLoading ? 'Creating...' : 'Create Quotation'}
           </button>
         </div>
       </form>
+      {errors.api && (
+        <div className="text-red-500 text-sm mb-2">{errors.api}</div>
+      )}
     </Modal>
   );
 }

@@ -6,7 +6,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showDemoCredentials, setShowDemoCredentials] = useState(false);
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -14,19 +13,13 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const result = login(email, password);
+    const result = await login(email, password);
     
     if (!result.success) {
       setError(result.error);
     }
     
     setLoading(false);
-  };
-
-  const handleDemoLogin = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
   };
 
   return (
@@ -83,51 +76,6 @@ export default function LoginPage() {
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6">
-            <button
-              onClick={() => setShowDemoCredentials(!showDemoCredentials)}
-              className="w-full text-sm text-gray-400 hover:text-accent transition"
-            >
-              {showDemoCredentials ? 'Hide' : 'Show'} Demo Credentials
-            </button>
-
-            {showDemoCredentials && (
-              <div className="mt-4 p-4 bg-dark border border-gray-700 rounded">
-                <p className="text-sm text-gray-300 mb-3">Demo Accounts:</p>
-                
-                <div className="space-y-2">
-                  <button
-                    onClick={() => handleDemoLogin('admin@vedara.com', 'admin123')}
-                    className="w-full text-left p-2 bg-blue-900/20 border border-blue-500/30 rounded hover:bg-blue-900/30 transition"
-                  >
-                    <div className="text-blue-400 font-medium">Admin</div>
-                    <div className="text-xs text-gray-400">admin@vedara.com / admin123</div>
-                    <div className="text-xs text-gray-500">Full access + user management</div>
-                  </button>
-
-                  <button
-                    onClick={() => handleDemoLogin('lead@vedara.com', 'lead123')}
-                    className="w-full text-left p-2 bg-green-900/20 border border-green-500/30 rounded hover:bg-green-900/30 transition"
-                  >
-                    <div className="text-green-400 font-medium">Lead Manager</div>
-                    <div className="text-xs text-gray-400">lead@vedara.com / lead123</div>
-                    <div className="text-xs text-gray-500">All access except user management</div>
-                  </button>
-
-                  <button
-                    onClick={() => handleDemoLogin('designer@vedara.com', 'design123')}
-                    className="w-full text-left p-2 bg-purple-900/20 border border-purple-500/30 rounded hover:bg-purple-900/30 transition"
-                  >
-                    <div className="text-purple-400 font-medium">Designer</div>
-                    <div className="text-xs text-gray-400">designer@vedara.com / design123</div>
-                    <div className="text-xs text-gray-500">Design page access only</div>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">

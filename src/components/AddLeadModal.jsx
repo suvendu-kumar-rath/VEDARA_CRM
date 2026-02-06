@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
 
-const sources = ["Instagram", "Facebook", "Website", "Google Ads", "Referral", "Walk-in", "Email Campaign", "LinkedIn"];
-const budgetRanges = ["₹10-15 Lakhs", "₹15-20 Lakhs", "₹20-25 Lakhs", "₹25-35 Lakhs", "₹35-45 Lakhs", "₹45-60 Lakhs", "₹60-80 Lakhs", "₹80 Lakhs - 1 Crore", "₹1-1.5 Crore", "₹1.5+ Crore"];
-const propertyTypes = ["Apartment", "Villa", "Penthouse", "Bungalow", "Duplex", "Studio", "Commercial", "Office Space", "Retail Space"];
-const teamMembers = ["Arpita Singh", "Rahul Mehta", "Anjali Desai", "Karan Sharma"];
+const sources = ["instagram", "facebook", "website", "google_ads", "referral", "walk-in", "email_campaign", "linkedin"];
+const budgetRanges = ["₹10L–₹15L", "₹15L–₹20L", "₹20L–₹25L", "₹25L–₹35L", "₹35L–₹45L", "₹45L–₹60L", "₹50L–₹75L", "₹60L–₹80L", "₹80L–₹1Cr", "₹1Cr–₹1.5Cr", "₹1.5Cr+"];
+const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Villa", "Penthouse", "Duplex", "Studio", "Commercial"];
+const statuses = ["new", "contacted", "qualified", "proposal", "negotiation", "converted", "lost"];
 
 export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
   const [formData, setFormData] = useState({
@@ -12,14 +12,16 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
     phone: "",
     email: "",
     source: "",
-    budget: "",
-    property: "",
+    budget_range: "",
+    property_type: "",
     city: "",
-    assignedTo: "",
+    status: "new",
+    assigned_to: "",
     notes: ""
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,22 +43,29 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
       newErrors.email = "Email is invalid";
     }
     if (!formData.source) newErrors.source = "Source is required";
-    if (!formData.budget) newErrors.budget = "Budget is required";
-    if (!formData.property) newErrors.property = "Property type is required";
+    if (!formData.budget_range) newErrors.budget_range = "Budget is required";
+    if (!formData.property_type) newErrors.property_type = "Property type is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.assignedTo) newErrors.assignedTo = "Assignment is required";
+    if (!formData.assigned_to) newErrors.assigned_to = "Assignment is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onAddLead(formData);
-      handleReset();
-      onClose();
+      setLoading(true);
+      const result = await onAddLead(formData);
+      setLoading(false);
+      
+      if (result.success) {
+        handleReset();
+        onClose();
+      } else {
+        setErrors({ general: result.error || 'Failed to create lead' });
+      }
     }
   };
 
@@ -66,10 +75,11 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
       phone: "",
       email: "",
       source: "",
-      budget: "",
-      property: "",
+      budget_range: "",
+      property_type: "",
       city: "",
-      assignedTo: "",
+      status: "new",
+      assigned_to: "",
       notes: ""
     });
     setErrors({});
@@ -83,6 +93,11 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
   return (
     <Modal isOpen={isOpen} onClose={handleCancel} title="Add New Lead">
       <form onSubmit={handleSubmit}>
+        {errors.general && (
+          <div className="mb-4 bg-red-900/20 border border-red-500/50 text-red-400 p-3 rounded text-sm">
+            {errors.general}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Full Name */}
           <div>
@@ -145,7 +160,9 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
             >
               <option value="">Select source</option>
               {sources.map(source => (
-                <option key={source} value={source}>{source}</option>
+                <option key={source} value={source}>
+                  {source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </option>
               ))}
             </select>
             {errors.source && <p className="text-red-500 text-xs mt-1">{errors.source}</p>}
@@ -157,17 +174,17 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
               Budget Range
             </label>
             <select
-              name="budget"
-              value={formData.budget}
+              name="budget_range"
+              value={formData.budget_range}
               onChange={handleChange}
-              className={`w-full bg-dark border ${errors.budget ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer ${!formData.budget ? 'text-gray-text' : ''}`}
+              className={`w-full bg-dark border ${errors.budget_range ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer ${!formData.budget_range ? 'text-gray-text' : ''}`}
             >
               <option value="">Select budget</option>
               {budgetRanges.map(budget => (
                 <option key={budget} value={budget}>{budget}</option>
               ))}
             </select>
-            {errors.budget && <p className="text-red-500 text-xs mt-1">{errors.budget}</p>}
+            {errors.budget_range && <p className="text-red-500 text-xs mt-1">{errors.budget_range}</p>}
           </div>
 
           {/* Property Type */}
@@ -176,17 +193,17 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
               Property Type
             </label>
             <select
-              name="property"
-              value={formData.property}
+              name="property_type"
+              value={formData.property_type}
               onChange={handleChange}
-              className={`w-full bg-dark border ${errors.property ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer ${!formData.property ? 'text-gray-text' : ''}`}
+              className={`w-full bg-dark border ${errors.property_type ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer ${!formData.property_type ? 'text-gray-text' : ''}`}
             >
               <option value="">Select type</option>
               {propertyTypes.map(type => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
-            {errors.property && <p className="text-red-500 text-xs mt-1">{errors.property}</p>}
+            {errors.property_type && <p className="text-red-500 text-xs mt-1">{errors.property_type}</p>}
           </div>
 
           {/* City */}
@@ -205,23 +222,37 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
             {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
           </div>
 
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Status
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer"
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Assigned To */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
-              Assigned To
+              Assigned To (Employee ID)
             </label>
-            <select
-              name="assignedTo"
-              value={formData.assignedTo}
+            <input
+              type="number"
+              name="assigned_to"
+              value={formData.assigned_to}
               onChange={handleChange}
-              className={`w-full bg-dark border ${errors.assignedTo ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer ${!formData.assignedTo ? 'text-gray-text' : ''}`}
-            >
-              <option value="">Select team member</option>
-              {teamMembers.map(member => (
-                <option key={member} value={member}>{member}</option>
-              ))}
-            </select>
-            {errors.assignedTo && <p className="text-red-500 text-xs mt-1">{errors.assignedTo}</p>}
+              placeholder="Enter employee ID"
+              className={`w-full bg-dark border ${errors.assigned_to ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition`}
+            />
+            {errors.assigned_to && <p className="text-red-500 text-xs mt-1">{errors.assigned_to}</p>}
           </div>
         </div>
 
@@ -251,9 +282,10 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded bg-accent text-dark hover:bg-yellow-500 transition font-medium"
+            disabled={loading}
+            className="px-6 py-2.5 rounded bg-accent text-dark hover:bg-yellow-500 transition font-medium disabled:opacity-50"
           >
-            Add Lead
+            {loading ? 'Adding...' : 'Add Lead'}
           </button>
         </div>
       </form>

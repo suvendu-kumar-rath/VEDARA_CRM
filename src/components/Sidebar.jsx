@@ -9,7 +9,7 @@ const navItems = [
   { label: "Projects", icon: "📁", path: "/projects", roles: ["admin", "lead"] },
   { label: "Designs", icon: "🎨", path: "/designs", roles: ["admin", "lead", "designer"] },
   { label: "Quotations", icon: "📄", path: "/quotations", roles: ["admin", "lead"] },
-  { label: "Users", icon: "👥", path: "/users", roles: ["admin"] },
+  { label: "Employee", icon: "👥", path: "/users", roles: ["admin"] },
   { label: "Settings", icon: "⚙️", path: "/settings", roles: ["admin", "lead"] },
 ];
 
@@ -110,11 +110,11 @@ export default function Sidebar() {
           <div className="flex items-center gap-3 p-3 rounded bg-gray-border/50">
             <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRoleColor(user?.role)} flex items-center justify-center`}>
               <span className="text-white font-bold text-sm">
-                {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-white text-sm font-semibold truncate">{user?.name || 'User'}</div>
+              <div className="text-white text-sm font-semibold truncate">{user?.email || 'User'}</div>
               <div className="text-gray-text text-xs">{getRoleDisplayName(user?.role)}</div>
             </div>
           </div>

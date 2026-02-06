@@ -1,105 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import apiService from "../services/api";
 import AddLeadModal from "../components/AddLeadModal";
-
-const initialLeadsData = [
-  {
-    id: 1,
-    name: "Rajesh Sharma",
-    phone: "+91 98705 43210",
-    source: "Instagram",
-    budget: "₹25-35 Lakhs",
-    property: "Apartment",
-    city: "Mumbai",
-    followUp: "20 Jan",
-    stage: "Site Visit",
-    stageColor: "yellow"
-  },
-  {
-    id: 2,
-    name: "Ananya Patel",
-    phone: "+91 87654 32109",
-    source: "Referral",
-    budget: "₹40-50 Lakhs",
-    property: "Villa",
-    city: "Bangalore",
-    followUp: "18 Jan",
-    stage: "Quote Shared",
-    stageColor: "green"
-  },
-  {
-    id: 3,
-    name: "Vikram Malhotra",
-    phone: "+91 76543 21098",
-    source: "Website",
-    budget: "₹15-20 Lakhs",
-    property: "Apartment",
-    city: "Delhi",
-    followUp: "22 Jan",
-    stage: "New",
-    stageColor: "blue"
-  },
-  {
-    id: 4,
-    name: "Meera Krishnan",
-    phone: "+91 65432 10987",
-    source: "Google Ads",
-    budget: "₹60-80 Lakhs",
-    property: "Penthouse",
-    city: "Chennai",
-    followUp: "19 Jan",
-    stage: "Discussion",
-    stageColor: "yellow"
-  },
-  {
-    id: 5,
-    name: "Arjun Reddy",
-    phone: "+91 54321 09876",
-    source: "Instagram",
-    budget: "₹30-40 Lakhs",
-    property: "Villa",
-    city: "Hyderabad",
-    followUp: "21 Jan",
-    stage: "Site Visit",
-    stageColor: "yellow"
-  },
-  {
-    id: 6,
-    name: "Kavitha Nair",
-    phone: "+91 43210 98765",
-    source: "Referral",
-    budget: "₹20-25 Lakhs",
-    property: "Apartment",
-    city: "Kochi",
-    followUp: "23 Jan",
-    stage: "New",
-    stageColor: "blue"
-  },
-  {
-    id: 7,
-    name: "Sanjay Kapoor",
-    phone: "+91 32109 87654",
-    source: "Walk-in",
-    budget: "₹1-1.5 Crore",
-    property: "Commercial",
-    city: "Mumbai",
-    followUp: "17 Jan",
-    stage: "Quote Shared",
-    stageColor: "green"
-  },
-  {
-    id: 8,
-    name: "Deepa Iyer",
-    phone: "+91 21098 76543",
-    source: "Website",
-    budget: "₹35-45 Lakhs",
-    property: "Bungalow",
-    city: "Pune",
-    followUp: "24 Jan",
-    stage: "Discussion",
-    stageColor: "yellow"
-  }
-];
 
 // Stage color mapping for badges
 const stageBorderColors = {
@@ -112,32 +14,107 @@ const stageBorderColors = {
 export default function LeadsPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [leads, setLeads] = useState(initialLeadsData);
+  const [leads, setLeads] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddLead = (formData) => {
-    const newLead = {
-      id: leads.length + 1,
-      name: formData.name,
-      phone: formData.phone,
-      email: formData.email,
-      source: formData.source,
-      budget: formData.budget,
-      property: formData.property,
-      city: formData.city,
-      followUp: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-      stage: "New",
-      stageColor: "blue"
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getLeads();
+      console.log('Get Leads Response:', response);
+      
+      if (response.success && response.data) {
+        // Handle data.items structure from API
+        const leadsData = response.data.items || response.data || [];
+        
+        // Transform API data to match UI format
+        const transformedLeads = leadsData.map(lead => ({
+          id: lead.id,
+          name: lead.name,
+          phone: lead.phone,
+          email: lead.email,
+          source: lead.source?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || lead.source,
+          budget: lead.budget_range || lead.budgetRange || lead.budget,
+          property: lead.property_type || lead.propertyType || lead.property,
+          city: lead.city,
+          stage: lead.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'New',
+          stageColor: getStageColor(lead.status),
+          assignedTo: lead.assigned_to,
+          notes: lead.notes,
+          createdAt: lead.createdAt,
+          updatedAt: lead.updatedAt
+        }));
+        
+        setLeads(transformedLeads);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leads:', error);
+      setLeads([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStageColor = (status) => {
+    const colorMap = {
+      'new': 'blue',
+      'contacted': 'yellow',
+      'qualified': 'green',
+      'proposal': 'yellow',
+      'negotiation': 'yellow',
+      'converted': 'green',
+      'lost': 'red'
     };
-    
-    setLeads(prev => [newLead, ...prev]);
+    return colorMap[status?.toLowerCase()] || 'blue';
+  };
+
+  const handleAddLead = async (formData) => {
+    try {
+      const response = await apiService.createLead(formData);
+      console.log('Create Lead Response:', response);
+      
+      if (response.success || response.status === 200 || response.status === 201) {
+        // Refresh leads list
+        try {
+          await fetchLeads();
+        } catch {
+          // If fetch fails, add locally
+          const newLead = {
+            id: Date.now(),
+            ...formData,
+            budget: formData.budget_range,
+            property: formData.property_type,
+            stage: formData.status || 'new',
+            stageColor: getStageColor(formData.status)
+          };
+          setLeads(prev => [newLead, ...prev]);
+        }
+        return { success: true };
+      }
+      return { success: false, error: response.message };
+    } catch (error) {
+      console.error('Create lead error:', error);
+      return { success: false, error: error.message };
+    }
   };
 
   const filteredLeads = leads.filter(lead =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.phone.includes(searchTerm) ||
-    lead.city.toLowerCase().includes(searchTerm.toLowerCase())
+    lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.phone?.includes(searchTerm) ||
+    lead.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const stats = {
+    total: leads.length,
+    hot: leads.filter(l => l.stageColor === 'green').length,
+    converted: leads.filter(l => l.stage?.toLowerCase() === 'converted').length,
+    dropped: leads.filter(l => l.stage?.toLowerCase() === 'lost').length
+  };
 
   return (
     <main className="flex-1 p-6 md:p-10 bg-dark">
@@ -161,7 +138,7 @@ export default function LeadsPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">👥</div>
             <div>
-              <div className="text-2xl font-bold text-white">8</div>
+              <div className="text-2xl font-bold text-white">{stats.total}</div>
               <div className="text-sm text-gray-text">Total Leads</div>
             </div>
           </div>
@@ -170,7 +147,7 @@ export default function LeadsPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">🔥</div>
             <div>
-              <div className="text-2xl font-bold text-white">4</div>
+              <div className="text-2xl font-bold text-white">{stats.hot}</div>
               <div className="text-sm text-gray-text">Hot Leads</div>
             </div>
           </div>
@@ -179,7 +156,7 @@ export default function LeadsPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">✅</div>
             <div>
-              <div className="text-2xl font-bold text-white">3</div>
+              <div className="text-2xl font-bold text-white">{stats.converted}</div>
               <div className="text-sm text-gray-text">Converted</div>
             </div>
           </div>
@@ -188,7 +165,7 @@ export default function LeadsPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">❌</div>
             <div>
-              <div className="text-2xl font-bold text-white">1</div>
+              <div className="text-2xl font-bold text-white">{stats.dropped}</div>
               <div className="text-sm text-gray-text">Dropped</div>
             </div>
           </div>
@@ -208,19 +185,25 @@ export default function LeadsPage() {
             />
           </div>
           <select className="bg-dark border border-gray-border rounded px-4 py-2.5 text-gray-text focus:outline-none focus:border-accent transition">
-            <option>All Stages</option>
+            <option>All Statuses</option>
             <option>New</option>
-            <option>Site Visit</option>
-            <option>Discussion</option>
-            <option>Quote Shared</option>
+            <option>Contacted</option>
+            <option>Qualified</option>
+            <option>Proposal</option>
+            <option>Negotiation</option>
+            <option>Converted</option>
+            <option>Lost</option>
           </select>
           <select className="bg-dark border border-gray-border rounded px-4 py-2.5 text-gray-text focus:outline-none focus:border-accent transition">
             <option>All Sources</option>
             <option>Instagram</option>
+            <option>Facebook</option>
             <option>Website</option>
-            <option>Referral</option>
             <option>Google Ads</option>
+            <option>Referral</option>
             <option>Walk-in</option>
+            <option>Email Campaign</option>
+            <option>LinkedIn</option>
           </select>
           <button className="bg-dark border border-gray-border rounded px-4 py-2.5 text-gray-text hover:border-accent hover:text-accent transition flex items-center gap-2">
             <span>🔽</span> More Filters
@@ -239,13 +222,24 @@ export default function LeadsPage() {
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Budget</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Property</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">City</th>
-                <th className="text-left p-4 text-gray-text font-medium text-sm">Follow-up</th>
-                <th className="text-left p-4 text-gray-text font-medium text-sm">Stage</th>
+                <th className="text-left p-4 text-gray-text font-medium text-sm">Status</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLeads.map((lead) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-gray-text">
+                    Loading leads...
+                  </td>
+                </tr>
+              ) : filteredLeads.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-gray-text">
+                    No leads found
+                  </td>
+                </tr>
+              ) : filteredLeads.map((lead) => (
                 <tr
                   key={lead.id}
                   onClick={() => navigate(`/leads/${lead.id}`)}
@@ -263,11 +257,6 @@ export default function LeadsPage() {
                   <td className="p-4 text-gray-text">
                     <span className="flex items-center gap-1">
                       <span>📍</span> {lead.city}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-text">
-                    <span className="flex items-center gap-1">
-                      <span>📅</span> {lead.followUp}
                     </span>
                   </td>
                   <td className="p-4">
@@ -303,7 +292,11 @@ export default function LeadsPage() {
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
-        {filteredLeads.map((lead) => (
+        {loading ? (
+          <div className="text-center text-gray-text p-8">Loading leads...</div>
+        ) : filteredLeads.length === 0 ? (
+          <div className="text-center text-gray-text p-8">No leads found</div>
+        ) : filteredLeads.map((lead) => (
           <div
             key={lead.id}
             onClick={() => navigate(`/leads/${lead.id}`)}
@@ -344,9 +337,6 @@ export default function LeadsPage() {
               </div>
             </div>
             <div className="flex items-center justify-between pt-3 border-t border-gray-border">
-              <div className="flex items-center gap-1 text-gray-text text-sm">
-                <span>📅</span> {lead.followUp}
-              </div>
               <span className={`border ${stageBorderColors[lead.stageColor]} text-${lead.stageColor === 'yellow' ? 'accent' : lead.stageColor === 'green' ? 'green-400' : lead.stageColor === 'blue' ? 'blue-400' : 'red-400'} px-3 py-1 rounded text-xs font-medium`}>
                 {lead.stage}
               </span>

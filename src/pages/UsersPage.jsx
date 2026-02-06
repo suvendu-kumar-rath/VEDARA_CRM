@@ -1,13 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 import Modal from '../components/Modal';
 
 export default function UsersPage() {
-  const { users, createUser, updateUser, deleteUser, user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
+  const [employees, setEmployees] = useState([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Fetch employees from API
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getUsers();
+      console.log('Get Users Response:', response);
+      
+      // Handle different response structures
+      if (response.success) {
+        // Check if data is an array or nested in data property
+        const employeeData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.users || response.data?.employees || []);
+        console.log('Employee Data:', employeeData);
+        setEmployees(employeeData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+      // Don't show error to user if endpoint doesn't exist yet
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createEmployee = async (userData) => {
+    try {
+      const response = await apiService.createUser(userData);
+      console.log('Create User Response:', response);
+      
+      if (response.success || response.status === 200 || response.status === 201) {
+        // Since GET endpoint doesn't exist, add the created employee to local state
+        // Try to fetch first, if it fails, just add locally
+        try {
+          await fetchEmployees();
+        } catch {
+          // If fetch fails, add the employee locally with response data
+          const newEmployee = response.data || response.user || {
+            ...userData,
+            id: Date.now(), // temporary ID
+          };
+          setEmployees(prev => [...prev, newEmployee]);
+        }
+        return { success: true };
+      }
+      return { success: false, error: response.message || 'Failed to create employee' };
+    } catch (error) {
+      console.error('Create employee error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateEmployee = async (userId, updates) => {
+    try {
+      const response = await apiService.updateUser(userId, updates);
+      if (response.success) {
+        await fetchEmployees();
+        return { success: true };
+      }
+      return { success: false, error: response.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const deleteEmployee = async (userId) => {
+    try {
+      const response = await apiService.deleteUser(userId);
+      if (response.success) {
+        await fetchEmployees();
+        return { success: true };
+      }
+      return { success: false, error: response.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
 
   // Only admin can access this page - this will be enforced by routing
   if (currentUser?.role !== 'admin') {
@@ -21,10 +106,10 @@ export default function UsersPage() {
     );
   }
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(emp =>
+    (emp.username?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (emp.role?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
 
   const handleEditUser = (user) => {
@@ -32,14 +117,14 @@ export default function UsersPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (userId === currentUser.id) {
       alert('You cannot delete your own account');
       return;
     }
     
-    if (confirm('Are you sure you want to delete this user?')) {
-      deleteUser(userId);
+    if (confirm('Are you sure you want to delete this employee?')) {
+      await deleteEmployee(userId);
     }
   };
 
@@ -53,10 +138,10 @@ export default function UsersPage() {
   };
 
   const roleStats = {
-    total: users.length,
-    admin: users.filter(u => u.role === 'admin').length,
-    lead: users.filter(u => u.role === 'lead').length,
-    designer: users.filter(u => u.role === 'designer').length
+    total: employees.length,
+    admin: employees.filter(u => u.role === 'admin').length,
+    lead: employees.filter(u => u.role === 'lead').length,
+    designer: employees.filter(u => u.role === 'designer').length
   };
 
   return (
@@ -64,14 +149,14 @@ export default function UsersPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">User Management</h1>
-          <p className="text-gray-text mt-1">Manage user accounts, roles and permissions</p>
+          <h1 className="text-2xl font-bold text-white">Employee Management</h1>
+          <p className="text-gray-text mt-1">Manage employee accounts, roles and permissions</p>
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
           className="bg-accent text-dark px-4 py-2 rounded flex items-center gap-2 hover:bg-yellow-500 transition text-sm font-medium"
         >
-          <span className="text-lg">👤</span> Create User
+          <span className="text-lg">👤</span> Create Employee
         </button>
       </div>
 
@@ -80,7 +165,7 @@ export default function UsersPage() {
         <div className="bg-card-dark p-4 rounded border border-gray-800">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Users</p>
+              <p className="text-gray-400 text-sm">Total Employees</p>
               <p className="text-2xl font-bold text-white">{roleStats.total}</p>
             </div>
             <span className="text-2xl">👥</span>
@@ -124,7 +209,7 @@ export default function UsersPage() {
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
           <input
             type="text"
-            placeholder="Search users by name, email, or role..."
+            placeholder="Search employees by name, email, or role..."
             className="w-full bg-card-dark border border-gray-600 rounded pl-10 pr-4 py-2 text-white focus:outline-none focus:border-accent"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,46 +223,44 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="bg-dark border-b border-gray-700">
               <tr>
-                <th className="text-left p-4 text-gray-300 font-medium">User</th>
+                <th className="text-left p-4 text-gray-300 font-medium">Employee</th>
+                <th className="text-left p-4 text-gray-300 font-medium">Mobile</th>
                 <th className="text-left p-4 text-gray-300 font-medium">Role</th>
-                <th className="text-left p-4 text-gray-300 font-medium">Status</th>
-                <th className="text-left p-4 text-gray-300 font-medium">Created</th>
-                <th className="text-left p-4 text-gray-300 font-medium">Last Login</th>
                 <th className="text-left p-4 text-gray-300 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-dark/50">
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="p-8 text-center text-gray-400">
+                    Loading employees...
+                  </td>
+                </tr>
+              ) : filteredEmployees.map((emp) => (
+                <tr key={emp.id} className="hover:bg-dark/50">
                   <td className="p-4">
                     <div>
-                      <div className="font-medium text-white">{user.name}</div>
-                      <div className="text-sm text-gray-400">{user.email}</div>
+                      <div className="font-medium text-white">{emp.username || 'N/A'}</div>
+                      <div className="text-sm text-gray-400">{emp.email}</div>
                     </div>
                   </td>
+                  <td className="p-4 text-gray-300">{emp.mobile || 'N/A'}</td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs border ${getRoleColor(user.role)}`}>
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    <span className={`px-2 py-1 rounded text-xs border ${getRoleColor(emp.role)}`}>
+                      {emp.role?.charAt(0).toUpperCase() + emp.role?.slice(1)}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <span className="px-2 py-1 rounded text-xs bg-green-900/20 text-green-400 border border-green-500/30">
-                      Active
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-300">{user.createdAt}</td>
-                  <td className="p-4 text-gray-300">{user.lastLogin || 'Never'}</td>
                   <td className="p-4">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleEditUser(user)}
+                        onClick={() => handleEditUser(emp)}
                         className="text-blue-400 hover:text-blue-300 text-sm"
                       >
                         Edit
                       </button>
-                      {user.id !== currentUser.id && (
+                      {emp.id !== currentUser.id && (
                         <button
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => handleDeleteUser(emp.id)}
                           className="text-red-400 hover:text-red-300 text-sm"
                         >
                           Delete
@@ -191,21 +274,21 @@ export default function UsersPage() {
           </table>
         </div>
 
-        {filteredUsers.length === 0 && (
+        {!loading && filteredEmployees.length === 0 && (
           <div className="p-8 text-center text-gray-400">
-            No users found matching your search criteria.
+            No employees found matching your search criteria.
           </div>
         )}
       </div>
 
-      {/* Create User Modal */}
+      {/* Create Employee Modal */}
       <CreateUserModal 
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onCreate={createUser}
+        onCreate={createEmployee}
       />
 
-      {/* Edit User Modal */}
+      {/* Edit Employee Modal */}
       <EditUserModal
         isOpen={isEditModalOpen}
         onClose={() => {
@@ -213,7 +296,7 @@ export default function UsersPage() {
           setEditingUser(null);
         }}
         user={editingUser}
-        onUpdate={updateUser}
+        onUpdate={updateEmployee}
       />
     </main>
   );
@@ -221,23 +304,25 @@ export default function UsersPage() {
 
 function CreateUserModal({ isOpen, onClose, onCreate }) {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
+    mobile: '',
     password: '',
     role: 'designer'
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
 
     // Basic validation
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.username.trim()) newErrors.username = 'Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.mobile.trim()) newErrors.mobile = 'Mobile is required';
     if (!formData.password.trim()) newErrors.password = 'Password is required';
     if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
 
@@ -247,10 +332,12 @@ function CreateUserModal({ isOpen, onClose, onCreate }) {
       return;
     }
 
-    const result = onCreate(formData);
+    const result = await onCreate(formData);
     if (result.success) {
-      setFormData({ name: '', email: '', password: '', role: 'designer' });
+      setFormData({ username: '', email: '', mobile: '', password: '', role: 'designer' });
       onClose();
+    } else {
+      setErrors({ general: result.error || 'Failed to create employee' });
     }
     setLoading(false);
   };
@@ -258,17 +345,23 @@ function CreateUserModal({ isOpen, onClose, onCreate }) {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create New User">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create New Employee">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.general && (
+          <div className="bg-red-900/20 border border-red-500/50 text-red-400 p-3 rounded text-sm">
+            {errors.general}
+          </div>
+        )}
+        
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
           <input
             type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           />
-          {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+          {errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
         </div>
 
         <div>
@@ -280,6 +373,18 @@ function CreateUserModal({ isOpen, onClose, onCreate }) {
             className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           />
           {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Mobile</label>
+          <input
+            type="tel"
+            value={formData.mobile}
+            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+            className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+            placeholder="10-digit mobile number"
+          />
+          {errors.mobile && <p className="text-red-400 text-sm mt-1">{errors.mobile}</p>}
         </div>
 
         <div>
@@ -319,7 +424,7 @@ function CreateUserModal({ isOpen, onClose, onCreate }) {
             disabled={loading}
             className="flex-1 px-4 py-2 bg-accent text-dark font-medium rounded hover:bg-yellow-500 transition disabled:opacity-50"
           >
-            {loading ? 'Creating...' : 'Create User'}
+            {loading ? 'Creating...' : 'Create Employee'}
           </button>
         </div>
       </form>
@@ -329,8 +434,9 @@ function CreateUserModal({ isOpen, onClose, onCreate }) {
 
 function EditUserModal({ isOpen, onClose, user, onUpdate }) {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
+    mobile: '',
     role: 'designer'
   });
   const [loading, setLoading] = useState(false);
@@ -338,18 +444,19 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
   React.useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name,
-        email: user.email,
-        role: user.role
+        username: user.username || '',
+        email: user.email || '',
+        mobile: user.mobile || '',
+        role: user.role || 'designer'
       });
     }
   }, [user]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    onUpdate(user.id, formData);
+    await onUpdate(user.id, formData);
     setLoading(false);
     onClose();
   };
@@ -357,14 +464,14 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
   if (!isOpen || !user) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit User">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Employee">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
           <input
             type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           />
         </div>
@@ -375,6 +482,16 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Mobile</label>
+          <input
+            type="tel"
+            value={formData.mobile}
+            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
             className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           />
         </div>
@@ -405,7 +522,7 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
             disabled={loading}
             className="flex-1 px-4 py-2 bg-accent text-dark font-medium rounded hover:bg-yellow-500 transition disabled:opacity-50"
           >
-            {loading ? 'Updating...' : 'Update User'}
+            {loading ? 'Updating...' : 'Update Employee'}
           </button>
         </div>
       </form>
