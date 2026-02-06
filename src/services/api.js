@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.vedaraspa
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
   }
 
   // Get auth token from localStorage
@@ -52,7 +52,7 @@ class ApiService {
 
   // Auth APIs
   async login(email, password) {
-    return this.request('/admin/login', {
+    return this.request('admin/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -60,34 +60,34 @@ class ApiService {
 
   // User Management APIs
   async createUser(userData) {
-    return this.request('/admin/users', {
+    return this.request('admin/users', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async getUsers() {
-    return this.request('/admin/users', {
+    return this.request('admin/users', {
       method: 'GET',
     });
   }
 
   async updateUser(userId, userData) {
-    return this.request(`/admin/users/${userId}`, {
+    return this.request(`admin/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
   }
 
   async deleteUser(userId) {
-    return this.request(`/admin/users/${userId}`, {
+    return this.request(`admin/users/${userId}`, {
       method: 'DELETE',
     });
   }
 
   // Lead APIs
   async createLead(leadData) {
-    return this.request('/admin/leads', {
+    return this.request('admin/leads', {
       method: 'POST',
       body: JSON.stringify(leadData),
     });
@@ -95,25 +95,25 @@ class ApiService {
 
   async getLeads(filters = {}) {
     const queryParams = new URLSearchParams(filters).toString();
-    const endpoint = `/admin/leads${queryParams ? `?${queryParams}` : ''}`;
+    const endpoint = `admin/leads${queryParams ? `?${queryParams}` : ''}`;
     return this.request(endpoint, { method: 'GET' });
   }
 
   async updateLead(leadId, leadData) {
-    return this.request(`/admin/leads/${leadId}`, {
+    return this.request(`admin/leads/${leadId}`, {
       method: 'PUT',
       body: JSON.stringify(leadData),
     });
   }
 
   async deleteLead(leadId) {
-    return this.request(`/admin/leads/${leadId}`, {
+    return this.request(`admin/leads/${leadId}`, {
       method: 'DELETE',
     });
   }
 
   async convertLeadToClient(leadId, clientData) {
-    return this.request(`/admin/leads/${leadId}/convert`, {
+    return this.request(`admin/leads/${leadId}/convert`, {
       method: 'POST',
       body: JSON.stringify(clientData),
     });
@@ -122,26 +122,26 @@ class ApiService {
   // Quotation APIs
   async getQuotations(filters = {}) {
     const queryParams = new URLSearchParams(filters).toString();
-    const endpoint = `/admin/quotations${queryParams ? `?${queryParams}` : ''}`;
+    const endpoint = `admin/quotations${queryParams ? `?${queryParams}` : ''}`;
     return this.request(endpoint, { method: 'GET' });
   }
 
   async createQuotation(quotationData) {
-    return this.request('/admin/quotations', {
+    return this.request('admin/quotations', {
       method: 'POST',
       body: JSON.stringify(quotationData),
     });
   }
 
   async updateQuotation(quotationId, quotationData) {
-    return this.request(`/admin/quotations/${quotationId}`, {
+    return this.request(`admin/quotations/${quotationId}`, {
       method: 'PUT',
       body: JSON.stringify(quotationData),
     });
   }
 
   async deleteQuotation(quotationId) {
-    return this.request(`/admin/quotations/${quotationId}`, {
+    return this.request(`admin/quotations/${quotationId}`, {
       method: 'DELETE',
     });
   }
