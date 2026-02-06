@@ -47,3 +47,4 @@ export default function StatCards() {
     </div>
   );
 }
+// This component displays a set of statistic cards with icons, values, and percentage changes. Each card is styled with a dark background, borders, and hover effects for better interactivity. The data for the cards is defined in an array, making it easy to update or add new statistics in the future.
