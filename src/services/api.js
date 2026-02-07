@@ -52,7 +52,8 @@ class ApiService {
 
   // Auth APIs
   async login(email, password) {
-    return this.request('admin/login', {
+    // Unified login endpoint for admin, lead, designer
+    return this.request('admin/loginforall', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
