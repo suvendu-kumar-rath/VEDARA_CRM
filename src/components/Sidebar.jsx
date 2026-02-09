@@ -6,7 +6,7 @@ const navItems = [
   { label: "Dashboard", icon: "📊", path: "/", roles: ["admin", "lead"] },
   { label: "Leads", icon: "👥", path: "/leads", roles: ["admin", "lead"] },
   { label: "Clients", icon: "👤", path: "/clients", roles: ["admin", "lead"] },
-  { label: "Projects", icon: "📁", path: "/projects", roles: ["admin", "lead"] },
+  // { label: "Projects", icon: "📁", path: "/projects", roles: ["admin", "lead"] },
   { label: "Designs", icon: "🎨", path: "/designs", roles: ["admin", "lead", "designer"] },
   { label: "Quotations", icon: "📄", path: "/quotations", roles: ["admin", "lead"] },
   { label: "Employee", icon: "👥", path: "/users", roles: ["admin"] },
