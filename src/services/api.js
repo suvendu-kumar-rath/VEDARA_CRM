@@ -86,6 +86,13 @@ class ApiService {
     });
   }
 
+  // Employee APIs
+  async getEmployees() {
+    return this.request('admin/employees', {
+      method: 'GET',
+    });
+  }
+
   // Lead APIs
   async createLead(leadData) {
     return this.request('admin/leads', {

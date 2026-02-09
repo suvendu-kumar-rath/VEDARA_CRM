@@ -20,21 +20,44 @@ export default function UsersPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getUsers();
-      console.log('Get Users Response:', response);
+      const response = await apiService.getEmployees();
+      console.log('Get Employees Response:', response);
+      console.log('Response type:', typeof response, 'Is array:', Array.isArray(response));
+      
+      let employeeData = [];
       
       // Handle different response structures
-      if (response.success) {
-        // Check if data is an array or nested in data property
-        const employeeData = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data?.users || response.data?.employees || []);
-        console.log('Employee Data:', employeeData);
-        setEmployees(employeeData);
+      if (Array.isArray(response)) {
+        // Direct array response
+        employeeData = response;
+      } else if (response?.data) {
+        // Nested in data property
+        if (Array.isArray(response.data)) {
+          employeeData = response.data;
+        } else if (response.data?.items) {
+          employeeData = response.data.items;
+        } else if (response.data?.users) {
+          employeeData = response.data.users;
+        } else if (response.data?.employees) {
+          employeeData = response.data.employees;
+        }
+      } else if (response?.users) {
+        // Direct users property
+        employeeData = response.users;
+      } else if (response?.employees) {
+        // Direct employees property
+        employeeData = response.employees;
       }
+      
+      console.log('Extracted Employee Data:', employeeData);
+      console.log('Employee count:', employeeData.length);
+      if (employeeData.length > 0) {
+        console.log('First employee fields:', Object.keys(employeeData[0]));
+        console.log('First employee data:', employeeData[0]);
+      }
+      setEmployees(employeeData);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
-      // Don't show error to user if endpoint doesn't exist yet
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -107,6 +130,7 @@ export default function UsersPage() {
   }
 
   const filteredEmployees = employees.filter(emp =>
+    (emp.user?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     (emp.username?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     (emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     (emp.role?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
@@ -240,11 +264,13 @@ export default function UsersPage() {
                 <tr key={emp.id} className="hover:bg-dark/50">
                   <td className="p-4">
                     <div>
-                      <div className="font-medium text-white">{emp.username || 'N/A'}</div>
-                      <div className="text-sm text-gray-400">{emp.email}</div>
+                      <div className="font-medium text-white">{emp.user || emp.username}</div>
+                      {emp.email && <div className="text-sm text-gray-400">{emp.email}</div>}
                     </div>
                   </td>
-                  <td className="p-4 text-gray-300">{emp.mobile || 'N/A'}</td>
+                    <td className="p-4 text-gray-300">
+                      {emp.mobile || emp.phone || emp.phoneNumber || emp.contact || emp.number || emp.mobile_number || emp.telephone || emp.cell || emp.cellphone || ''}
+                    </td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded text-xs border ${getRoleColor(emp.role)}`}>
                       {emp.role?.charAt(0).toUpperCase() + emp.role?.slice(1)}
