@@ -1,81 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AddClientModal from "../components/AddClientModal";
-
-const initialClientsData = [
-  {
-    id: 1,
-    name: "Aditya & Priya Verma",
-    email: "verma.family@email.com",
-    type: "Residential",
-    projects: 2,
-    city: "Mumbai",
-    totalValue: "₹45.0 L",
-    manager: "Priya Mehta",
-    status: "Active",
-    statusColor: "green"
-  },
-  {
-    id: 2,
-    name: "TechCorp Solutions Pvt Ltd",
-    email: "facilities@techcorp.com",
-    type: "Commercial",
-    projects: 1,
-    city: "Bangalore",
-    totalValue: "₹1.2 Cr",
-    manager: "Vikram Singh",
-    status: "Active",
-    statusColor: "green"
-  },
-  {
-    id: 3,
-    name: "Rohit & Sneha Joshi",
-    email: "joshi.couple@email.com",
-    type: "Residential",
-    projects: 1,
-    city: "Delhi",
-    totalValue: "₹28.0 L",
-    manager: "Neha Gupta",
-    status: "Completed",
-    statusColor: "yellow"
-  },
-  {
-    id: 4,
-    name: "Dr. Suresh Menon",
-    email: "dr.menon@email.com",
-    type: "Residential",
-    projects: 1,
-    city: "Chennai",
-    totalValue: "₹65.0 L",
-    manager: "Priya Mehta",
-    status: "Active",
-    statusColor: "green"
-  },
-  {
-    id: 5,
-    name: "Café Mocha Chain",
-    email: "design@cafemocha.in",
-    type: "Commercial",
-    projects: 3,
-    city: "Multiple",
-    totalValue: "₹85.0 L",
-    manager: "Vikram Singh",
-    status: "Active",
-    statusColor: "green"
-  },
-  {
-    id: 6,
-    name: "Kiran & Lakshmi Rao",
-    email: "rao.family@email.com",
-    type: "Residential",
-    projects: 1,
-    city: "Hyderabad",
-    totalValue: "₹32.0 L",
-    manager: "Neha Gupta",
-    status: "On Hold",
-    statusColor: "orange"
-  }
-];
+import apiService from "../services/api";
 
 const statusColors = {
   green: "border-green-500 text-green-400",
@@ -86,24 +12,72 @@ const statusColors = {
 export default function ClientsPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [clients, setClients] = useState(initialClientsData);
+  const [clients, setClients] = useState([]);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddClient = (formData) => {
-    const newClient = {
-      id: clients.length + 1,
-      name: formData.name,
-      email: formData.email,
-      type: formData.type,
-      projects: 0,
-      city: formData.city,
-      totalValue: "₹0 L",
-      manager: formData.manager,
-      status: "Active",
-      statusColor: "green"
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getClients();
+      console.log('Get Clients Response:', response);
+      
+      if (response.success && response.data) {
+        const clientsData = response.data.items || response.data || [];
+        
+        // Transform API data to match UI format
+        const transformedClients = clientsData.map(client => ({
+          id: client.id,
+          name: client.name,
+          email: client.email,
+          phone: client.phone,
+          type: client.type || "Residential",
+          projects: client.projects || 0,
+          city: client.city || "N/A",
+          totalValue: client.totalValue || "₹0 L",
+          manager: client.manager || "Unassigned",
+          status: client.status || "Active",
+          statusColor: getStatusColor(client.status)
+        }));
+        setClients(transformedClients);
+      }
+    } catch (error) {
+      console.error('Failed to fetch clients:', error);
+      setClients([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colorMap = {
+      'active': 'green',
+      'completed': 'yellow',
+      'on hold': 'orange',
+      'inactive': 'orange'
     };
-    
-    setClients(prev => [newClient, ...prev]);
+    return colorMap[status?.toLowerCase()] || 'green';
+  };
+
+  const handleAddClient = async (formData) => {
+    try {
+      const response = await apiService.createClient(formData);
+      console.log('Create Client Response:', response);
+      
+      if (response.success || response.status === 200 || response.status === 201) {
+        // Refresh clients list
+        await fetchClients();
+        return { success: true };
+      }
+      return { success: false, error: response.message };
+    } catch (error) {
+      console.error('Create client error:', error);
+      return { success: false, error: error.message };
+    }
   };
 
   const filteredClients = clients.filter(client =>
@@ -218,7 +192,19 @@ export default function ClientsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((client) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-text">
+                    Loading clients...
+                  </td>
+                </tr>
+              ) : filteredClients.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-text">
+                    No clients found
+                  </td>
+                </tr>
+              ) : filteredClients.map((client) => (
                 <tr
                   key={client.id}
                   className="border-b border-gray-border hover:bg-dark transition cursor-pointer"
@@ -275,7 +261,11 @@ export default function ClientsPage() {
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
-        {filteredClients.map((client) => (
+        {loading ? (
+          <div className="text-center text-gray-text p-8">Loading clients...</div>
+        ) : filteredClients.length === 0 ? (
+          <div className="text-center text-gray-text p-8">No clients found</div>
+        ) : filteredClients.map((client) => (
           <div
             key={client.id}
             className="bg-dark-light border border-gray-border rounded-lg p-4 cursor-pointer hover:border-accent transition"

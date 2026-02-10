@@ -39,8 +39,8 @@ export default function LeadsPage() {
           phone: lead.phone,
           email: lead.email,
           source: lead.source?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || lead.source,
-          budget: lead.budget_range || lead.budgetRange || lead.budget,
-          property: lead.property_type || lead.propertyType || lead.property,
+          budget: lead.budgetRange,
+          property: lead.propertyType,
           city: lead.city,
           stage: lead.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'New',
           stageColor: getStageColor(lead.status),
@@ -49,7 +49,6 @@ export default function LeadsPage() {
           createdAt: lead.createdAt,
           updatedAt: lead.updatedAt
         }));
-        
         setLeads(transformedLeads);
       }
     } catch (error) {
@@ -100,6 +99,41 @@ export default function LeadsPage() {
     } catch (error) {
       console.error('Create lead error:', error);
       return { success: false, error: error.message };
+    }
+  };
+
+  const handleConvertLead = async (e, lead) => {
+    e.stopPropagation();
+    
+    // Confirm conversion
+    if (!window.confirm(`Convert "${lead.name}" to a client?`)) {
+      return;
+    }
+
+    try {
+      // Prepare client data from lead
+      const clientData = {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city,
+        source: lead.source,
+        notes: lead.notes
+      };
+
+      const response = await apiService.convertLeadToClient(lead.id, clientData);
+      console.log('Convert Lead Response:', response);
+
+      if (response.success || response.status === 200 || response.status === 201) {
+        alert('Lead successfully converted to client!');
+        // Refresh leads list to remove converted lead
+        await fetchLeads();
+      } else {
+        alert(`Failed to convert lead: ${response.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Convert lead error:', error);
+      alert(`Error converting lead: ${error.message}`);
     }
   };
 
@@ -242,8 +276,7 @@ export default function LeadsPage() {
               ) : filteredLeads.map((lead) => (
                 <tr
                   key={lead.id}
-                  onClick={() => navigate(`/leads/${lead.id}`)}
-                  className="border-b border-gray-border hover:bg-dark transition cursor-pointer"
+                  className="border-b border-gray-border hover:bg-dark transition"
                 >
                   <td className="p-4">
                     <div className="text-white font-medium">{lead.name}</div>
@@ -267,10 +300,7 @@ export default function LeadsPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-4">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/leads/${lead.id}`);
-                        }}
+                        onClick={(e) => handleConvertLead(e, lead)}
                         className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
                       >
                         <span>➜</span> Convert
@@ -299,8 +329,7 @@ export default function LeadsPage() {
         ) : filteredLeads.map((lead) => (
           <div
             key={lead.id}
-            onClick={() => navigate(`/leads/${lead.id}`)}
-            className="bg-dark-light border border-gray-border rounded-lg p-4 cursor-pointer hover:border-accent transition"
+            className="bg-dark-light border border-gray-border rounded-lg p-4 hover:border-accent transition"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">

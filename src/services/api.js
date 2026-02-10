@@ -127,6 +127,33 @@ class ApiService {
     });
   }
 
+  // Client APIs
+  async getClients(filters = {}) {
+    const queryParams = new URLSearchParams(filters).toString();
+    const endpoint = `admin/clients${queryParams ? `?${queryParams}` : ''}`;
+    return this.request(endpoint, { method: 'GET' });
+  }
+
+  async createClient(clientData) {
+    return this.request('admin/clients', {
+      method: 'POST',
+      body: JSON.stringify(clientData),
+    });
+  }
+
+  async updateClient(clientId, clientData) {
+    return this.request(`admin/clients/${clientId}`, {
+      method: 'PUT',
+      body: JSON.stringify(clientData),
+    });
+  }
+
+  async deleteClient(clientId) {
+    return this.request(`admin/clients/${clientId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Quotation APIs
   async getQuotations(filters = {}) {
     const queryParams = new URLSearchParams(filters).toString();
