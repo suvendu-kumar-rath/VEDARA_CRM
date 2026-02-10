@@ -80,6 +80,13 @@ class ApiService {
     });
   }
 
+  async updateUserRole(userId, role) {
+    return this.request(`admin/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
+  }
+
   async deleteUser(userId) {
     return this.request(`admin/users/${userId}`, {
       method: 'DELETE',

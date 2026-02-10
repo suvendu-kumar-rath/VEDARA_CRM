@@ -93,8 +93,8 @@ export default function UsersPage() {
 
   const updateEmployee = async (userId, updates) => {
     try {
-      const response = await apiService.updateUser(userId, updates);
-      if (response.success) {
+      const response = await apiService.updateUserRole(userId, updates.role);
+      if (response.success || response.status === 200) {
         await fetchEmployees();
         return { success: true };
       }
@@ -459,22 +459,12 @@ function CreateUserModal({ isOpen, onClose, onCreate }) {
 }
 
 function EditUserModal({ isOpen, onClose, user, onUpdate }) {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    mobile: '',
-    role: 'designer'
-  });
+  const [role, setRole] = useState('designer');
   const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
     if (user) {
-      setFormData({
-        username: user.username || '',
-        email: user.email || '',
-        mobile: user.mobile || '',
-        role: user.role || 'designer'
-      });
+      setRole(user.role || 'designer');
     }
   }, [user]);
 
@@ -482,7 +472,7 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
     e.preventDefault();
     setLoading(true);
 
-    await onUpdate(user.id, formData);
+    await onUpdate(user.id, { role });
     setLoading(false);
     onClose();
   };
@@ -490,43 +480,34 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
   if (!isOpen || !user) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Employee">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Employee Role">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
-          <input
-            type="text"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-          />
+          <div className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-gray-400">
+            {user.username || user.user}
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-          />
+          <div className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-gray-400">
+            {user.email}
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Mobile</label>
-          <input
-            type="tel"
-            value={formData.mobile}
-            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-            className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-          />
+          <div className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-gray-400">
+            {user.mobile || 'N/A'}
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
           <select
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
             className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           >
             <option value="designer">Designer</option>
@@ -548,7 +529,7 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
             disabled={loading}
             className="flex-1 px-4 py-2 bg-accent text-dark font-medium rounded hover:bg-yellow-500 transition disabled:opacity-50"
           >
-            {loading ? 'Updating...' : 'Update Employee'}
+            {loading ? 'Updating...' : 'Update Role'}
           </button>
         </div>
       </form>
