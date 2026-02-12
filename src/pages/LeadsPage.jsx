@@ -67,14 +67,25 @@ export default function LeadsPage() {
       'proposal': 'yellow',
       'negotiation': 'yellow',
       'converted': 'green',
-      'lost': 'red'
+      'lost': 'red',
+      'discard': 'red'
     };
     return colorMap[status?.toLowerCase()] || 'blue';
   };
 
   const handleAddLead = async (formData) => {
     try {
-      const response = await apiService.createLead(formData);
+      // Transform snake_case to camelCase for backend
+      const apiData = {
+        ...formData,
+        budgetRange: formData.budget_range,
+        propertyType: formData.property_type
+      };
+      // Remove snake_case fields
+      delete apiData.budget_range;
+      delete apiData.property_type;
+
+      const response = await apiService.createLead(apiData);
       console.log('Create Lead Response:', response);
       
       if (response.success || response.status === 200 || response.status === 201) {
@@ -99,6 +110,80 @@ export default function LeadsPage() {
     } catch (error) {
       console.error('Create lead error:', error);
       return { success: false, error: error.message };
+    }
+  };
+
+  const handleStatusChange = async (e, lead) => {
+    const newStatus = e.target.value;
+    
+    // If no change, return
+    if (newStatus === lead.stage?.toLowerCase() || newStatus === '') {
+      return;
+    }
+
+    try {
+      // If converting to client, handle conversion
+      if (newStatus === 'converted') {
+        if (!window.confirm(`Convert "${lead.name}" to a client?`)) {
+          e.target.value = lead.stage?.toLowerCase() || 'new';
+          return;
+        }
+
+        const clientData = {
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          city: lead.city,
+          source: lead.source,
+          notes: lead.notes
+        };
+
+        const response = await apiService.convertLeadToClient(lead.id, clientData);
+        console.log('Convert Lead Response:', response);
+
+        if (response.success || response.status === 200 || response.status === 201) {
+          alert('Lead successfully converted to client!');
+          await fetchLeads();
+        } else {
+          alert(`Failed to convert lead: ${response.message || 'Unknown error'}`);
+          e.target.value = lead.stage?.toLowerCase() || 'new';
+        }
+        return;
+      }
+
+      // For other status changes, update the lead via API
+      const updateData = {
+        status: newStatus
+      };
+
+      const response = await apiService.updateLead(lead.id, updateData);
+      console.log('Update Lead Status Response:', response);
+
+      if (response.success || response.status === 200) {
+        // Update local state immediately for better UX
+        setLeads(prevLeads => 
+          prevLeads.map(l => 
+            l.id === lead.id 
+              ? {
+                  ...l,
+                  stage: newStatus.charAt(0).toUpperCase() + newStatus.slice(1),
+                  stageColor: getStageColor(newStatus)
+                }
+              : l
+          )
+        );
+        
+        // Optional: Show success message
+        console.log('Lead status updated successfully');
+      } else {
+        alert(`Failed to update status: ${response.message || 'Unknown error'}`);
+        e.target.value = lead.stage?.toLowerCase() || 'new';
+      }
+      
+    } catch (error) {
+      console.error('Update status error:', error);
+      alert(`Error updating status: ${error.message}`);
+      e.target.value = lead.stage?.toLowerCase() || 'new';
     }
   };
 
@@ -298,20 +383,18 @@ export default function LeadsPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={(e) => handleConvertLead(e, lead)}
-                        className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
-                      >
-                        <span>➜</span> Convert
-                      </button>
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-gray-text hover:text-white transition"
-                      >
-                        <span className="text-lg">⋮</span>
-                      </button>
-                    </div>
+                    <select
+                      value={lead.stage?.toLowerCase() || 'new'}
+                      onChange={(e) => handleStatusChange(e, lead)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="bg-dark border border-gray-border text-white px-3 py-2 rounded text-sm focus:outline-none focus:border-accent transition cursor-pointer hover:border-accent"
+                    >
+                      <option value="">Change Status...</option>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="converted">Converted</option>
+                      <option value="lost">Discard</option>
+                    </select>
                   </td>
                 </tr>
               ))}
@@ -338,12 +421,6 @@ export default function LeadsPage() {
                   <span>📞</span> {lead.phone}
                 </div>
               </div>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="text-gray-text hover:text-white transition p-2"
-              >
-                <span className="text-lg">⋮</span>
-              </button>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
@@ -369,6 +446,18 @@ export default function LeadsPage() {
               <span className={`border ${stageBorderColors[lead.stageColor]} text-${lead.stageColor === 'yellow' ? 'accent' : lead.stageColor === 'green' ? 'green-400' : lead.stageColor === 'blue' ? 'blue-400' : 'red-400'} px-3 py-1 rounded text-xs font-medium`}>
                 {lead.stage}
               </span>
+              <select
+                value={lead.stage?.toLowerCase() || 'new'}
+                onChange={(e) => handleStatusChange(e, lead)}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-dark border border-gray-border text-white px-3 py-1.5 rounded text-sm focus:outline-none focus:border-accent transition"
+              >
+                <option value="">Change Status...</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="converted">Converted</option>
+                <option value="lost">Discard</option>
+              </select>
             </div>
           </div>
         ))}

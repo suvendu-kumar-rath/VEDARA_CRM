@@ -67,7 +67,7 @@ export default function UsersPage() {
   const createEmployee = async (userData) => {
     try {
       const response = await apiService.createUser(userData);
-      console.log('Create User Response:', response);
+      console.log('Create Employee Response:', response);
       
       if (response.success || response.status === 200 || response.status === 201) {
         // Since GET endpoint doesn't exist, add the created employee to local state
@@ -268,9 +268,9 @@ export default function UsersPage() {
                       {emp.email && <div className="text-sm text-gray-400">{emp.email}</div>}
                     </div>
                   </td>
-                    <td className="p-4 text-gray-300">
-                      {emp.mobile || emp.phone || emp.phoneNumber || emp.contact || emp.number || emp.mobile_number || emp.telephone || emp.cell || emp.cellphone || ''}
-                    </td>
+                  <td className="p-4 text-gray-300">
+                    {emp.mobile || emp.phone || emp.phoneNumber || emp.contact || emp.number || emp.mobile_number || emp.telephone || emp.cell || emp.cellphone || 'N/A'}
+                  </td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded text-xs border ${getRoleColor(emp.role)}`}>
                       {emp.role?.charAt(0).toUpperCase() + emp.role?.slice(1)}

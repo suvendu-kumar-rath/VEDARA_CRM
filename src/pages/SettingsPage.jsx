@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import Modal from "../components/Modal";
+import apiService from "../services/api";
 
 const tabs = [
   { id: "company", label: "Company", icon: "🏢" },
   { id: "pricing", label: "Pricing", icon: "₹" },
   { id: "branding", label: "Branding", icon: "🎨" },
   { id: "tax", label: "Tax & GST", icon: "📋" },
-  { id: "users", label: "User Roles", icon: "👥" },
+  { id: "users", label: "Employee", icon: "👥" },
   { id: "notifications", label: "Notifications", icon: "🔔" }
 ];
 
@@ -14,10 +15,14 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("company");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({
-    fullName: "",
+    username: "",
     email: "",
-    role: "Admin"
+    mobile: "",
+    password: "",
+    role: "designer"
   });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     companyName: "Luxe Interiors Studio",
     legalName: "Luxe Interiors Design Pvt. Ltd.",
@@ -59,11 +64,43 @@ export default function SettingsPage() {
     // Here you would typically save to backend
   };
 
-  const handleAddUser = () => {
-    console.log("Adding new user:", newUser);
-    // Here you would typically add user to backend
-    setIsAddUserModalOpen(false);
-    setNewUser({ fullName: "", email: "", role: "Admin" });
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    // Validation
+    const newErrors = {};
+    if (!newUser.username.trim()) newErrors.username = 'Name is required';
+    if (!newUser.email.trim()) newErrors.email = 'Email is required';
+    if (!newUser.mobile.trim()) newErrors.mobile = 'Mobile is required';
+    if (!newUser.password.trim()) newErrors.password = 'Password is required';
+    if (newUser.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await apiService.createUser(newUser);
+      console.log('Create Employee Response:', response);
+      
+      if (response.success || response.status === 200 || response.status === 201) {
+        alert('Employee created successfully!');
+        setIsAddUserModalOpen(false);
+        setNewUser({ username: "", email: "", mobile: "", password: "", role: "designer" });
+        setErrors({});
+      } else {
+        setErrors({ general: response.message || 'Failed to create employee' });
+      }
+    } catch (error) {
+      console.error('Create employee error:', error);
+      setErrors({ general: error.message || 'Failed to create employee' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -419,14 +456,14 @@ export default function SettingsPage() {
         <div className="bg-dark-light border border-gray-border rounded-lg p-6 md:p-8">
           <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-white">User Roles</h2>
+              <h2 className="text-xl font-bold text-white">Employee Management</h2>
               <p className="text-gray-text text-sm mt-1">Manage team members and their permissions</p>
             </div>
             <button 
               onClick={() => setIsAddUserModalOpen(true)}
               className="bg-accent text-dark px-5 py-2 rounded flex items-center gap-2 hover:bg-yellow-500 transition text-sm font-medium"
             >
-              <span className="text-lg">+</span> Add User
+              <span className="text-lg">+</span> Add Employee
             </button>
           </div>
           <div className="divide-y divide-gray-border">
@@ -475,72 +512,120 @@ export default function SettingsPage() {
     {/* Add User Modal */}
     <Modal 
       isOpen={isAddUserModalOpen} 
-      onClose={() => setIsAddUserModalOpen(false)}
-      title="Add New User"
+      onClose={() => {
+        setIsAddUserModalOpen(false);
+        setNewUser({ username: "", email: "", mobile: "", password: "", role: "designer" });
+        setErrors({});
+      }}
+      title="Create New Employee"
     >
-      <p className="text-gray-text text-sm mb-6">Add a new team member and assign their role.</p>
-      
-      <div className="space-y-5">
-        {/* Full Name */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Full Name
-          </label>
-          <input
-            type="text"
-            value={newUser.fullName}
-            onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-            placeholder="Enter full name"
-            className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-          />
-        </div>
+      <form onSubmit={handleAddUser}>
+        {errors.general && (
+          <div className="mb-4 bg-red-900/20 border border-red-500/50 text-red-400 p-3 rounded text-sm">
+            {errors.general}
+          </div>
+        )}
+        
+        <div className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              value={newUser.username}
+              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+              placeholder="Enter name"
+              className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+            />
+            {errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
+          </div>
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            placeholder="Enter email address"
-            className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-          />
-        </div>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              value={newUser.email}
+              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              placeholder="Enter email address"
+              className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+            />
+            {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+          </div>
 
-        {/* Role */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Role
-          </label>
-          <select
-            value={newUser.role}
-            onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-            className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white focus:outline-none focus:border-accent transition"
-          >
-            <option value="Admin">Admin</option>
-            <option value="Leads">Leads</option>
-            <option value="Designer">Designer</option>
-          </select>
+          {/* Mobile */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Mobile
+            </label>
+            <input
+              type="tel"
+              value={newUser.mobile}
+              onChange={(e) => setNewUser({ ...newUser, mobile: e.target.value })}
+              placeholder="Enter mobile number"
+              className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+            />
+            {errors.mobile && <p className="text-red-400 text-sm mt-1">{errors.mobile}</p>}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              value={newUser.password}
+              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+              placeholder="Enter password"
+              className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+            />
+            {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Role
+            </label>
+            <select
+              value={newUser.role}
+              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white focus:outline-none focus:border-accent transition"
+            >
+              <option value="designer">Designer</option>
+              <option value="lead">Lead Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-3 pt-6">
           <button
-            onClick={() => setIsAddUserModalOpen(false)}
+            type="button"
+            onClick={() => {
+              setIsAddUserModalOpen(false);
+              setNewUser({ username: "", email: "", mobile: "", password: "", role: "designer" });
+              setErrors({});
+            }}
             className="px-6 py-2.5 rounded text-sm font-medium text-gray-text hover:text-white transition"
           >
             Cancel
           </button>
           <button
-            onClick={handleAddUser}
-            className="px-6 py-2.5 rounded text-sm font-medium bg-accent text-dark hover:bg-yellow-500 transition"
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2.5 rounded text-sm font-medium bg-accent text-dark hover:bg-yellow-500 transition disabled:opacity-50"
           >
-            Add User
+            {loading ? 'Creating...' : 'Create Employee'}
           </button>
         </div>
-      </div>
+      </form>
     </Modal>
     </>
   );

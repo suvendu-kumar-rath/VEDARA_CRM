@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import CreateQuotationModal from "../components/CreateQuotationModal";
 import api from "../services/api";
+import jsPDF from "jspdf";
+import autoTable from 'jspdf-autotable';
 
 const quotationsData = [
   {
@@ -183,6 +185,213 @@ export default function QuotationsPage() {
   };
 
   const summary = selectedQuote ? calculateQuoteSummary(selectedQuote) : null;
+
+  const handleDownloadPDF = () => {
+    if (!selectedQuote || !summary) {
+      alert("Please select a quotation first");
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Colors
+    const accentColor = [255, 215, 0]; // Gold/Yellow
+    const darkColor = [17, 24, 39]; // Dark background
+    const textColor = [255, 255, 255]; // White
+    const grayColor = [156, 163, 175]; // Gray
+
+    // Header - Company Name
+    doc.setFillColor(...accentColor);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(...darkColor);
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text('Luxe Interiors Studio', 105, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('301, Design Tower, Linking Road, Bandra West, Mumbai - 400050', 105, 28, { align: 'center' });
+    doc.text('Email: hello@luxeinteriors.in | Phone: +91 22 4567 8900', 105, 34, { align: 'center' });
+
+    // Reset text color for rest of document
+    doc.setTextColor(0, 0, 0);
+
+    // Quotation Title
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('QUOTATION', 14, 55);
+
+    // Quote Details
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const quoteId = selectedQuote.quote_id || selectedQuote.quoteId || selectedQuote.id || 'N/A';
+    const projectName = selectedQuote.project_name || selectedQuote.projectName || 'N/A';
+    const clientName = selectedQuote.client_name || selectedQuote.client || 'N/A';
+    const validUntil = selectedQuote.valid_until 
+      ? new Date(selectedQuote.valid_until).toLocaleDateString() 
+      : 'N/A';
+    const date = selectedQuote.date || new Date().toLocaleDateString();
+
+    doc.text(`Quote ID: ${quoteId}`, 14, 65);
+    doc.text(`Date: ${date}`, 14, 71);
+    doc.text(`Valid Until: ${validUntil}`, 14, 77);
+    doc.text(`Project: ${projectName}`, 14, 83);
+    doc.text(`Client: ${clientName}`, 14, 89);
+
+    let yPosition = 100;
+
+    // Sections Table - if sections exist
+    if (selectedQuote.sections && selectedQuote.sections.length > 0) {
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('Project Breakdown', 14, yPosition);
+      yPosition += 5;
+
+      const sectionsData = selectedQuote.sections.map(section => {
+        const items = section.items && section.items.length > 0
+          ? section.items.map(item => `  • ${item.name}: ${item.amount}`).join('\n')
+          : '';
+        return [
+          section.name,
+          items || 'Details included',
+          section.total
+        ];
+      });
+
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Section', 'Items', 'Amount']],
+        body: sectionsData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: accentColor,
+          textColor: darkColor,
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 5
+        },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 90 },
+          2: { cellWidth: 40, halign: 'right' }
+        }
+      });
+
+      yPosition = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Financial Summary
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Financial Summary', 14, yPosition);
+    yPosition += 5;
+
+    const summaryData = [
+      ['Base Amount', `₹${summary.subtotal.toLocaleString('en-IN')}`],
+    ];
+
+    if (summary.discount > 0) {
+      summaryData.push([`Discount (${summary.discountPercent}%)`, `-₹${summary.discount.toLocaleString('en-IN')}`]);
+    }
+
+    if (summary.designFee) {
+      summaryData.push(['Design Fee (8%)', `₹${summary.designFee.toLocaleString('en-IN')}`]);
+    }
+
+    summaryData.push(
+      ['GST (18%)', `₹${summary.gst.toLocaleString('en-IN')}`],
+      ['Total Amount', `₹${Math.round(summary.total).toLocaleString('en-IN')}`]
+    );
+
+    autoTable(doc, {
+      startY: yPosition,
+      body: summaryData,
+      theme: 'plain',
+      styles: {
+        fontSize: 10,
+        cellPadding: 3
+      },
+      columnStyles: {
+        0: { cellWidth: 140, fontStyle: 'normal' },
+        1: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
+      }
+    });
+
+    yPosition = doc.lastAutoTable.finalY + 10;
+
+    // Payment Milestones
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Payment Milestones', 14, yPosition);
+    yPosition += 5;
+
+    const milestonesData = [
+      ['Advance Payment (30%)', `₹${Math.round(summary.advance).toLocaleString('en-IN')}`],
+      ['Mid Payment (50%)', `₹${Math.round(summary.midPayment).toLocaleString('en-IN')}`],
+      ['Final Payment (20%)', `₹${Math.round(summary.final).toLocaleString('en-IN')}`]
+    ];
+
+    autoTable(doc, {
+      startY: yPosition,
+      body: milestonesData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: accentColor,
+        textColor: darkColor
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4
+      },
+      columnStyles: {
+        0: { cellWidth: 140 },
+        1: { cellWidth: 40, halign: 'right' }
+      }
+    });
+
+    yPosition = doc.lastAutoTable.finalY + 15;
+
+    // Notes if available
+    if (selectedQuote.notes) {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text('Notes:', 14, yPosition);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      const splitNotes = doc.splitTextToSize(selectedQuote.notes, 180);
+      doc.text(splitNotes, 14, yPosition + 6);
+      yPosition += splitNotes.length * 5 + 10;
+    }
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        105,
+        287,
+        { align: 'center' }
+      );
+      doc.text(
+        'This is a computer-generated quotation and does not require a signature.',
+        105,
+        292,
+        { align: 'center' }
+      );
+    }
+
+    // Save the PDF
+    const fileName = `Quotation_${quoteId}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+  };
 
   return (
     <div className="flex-1 flex bg-dark">
@@ -407,7 +616,10 @@ export default function QuotationsPage() {
               <button className="w-full bg-accent text-dark px-4 py-3 rounded font-medium hover:bg-yellow-500 transition">
                 Send to Client
               </button>
-              <button className="w-full bg-dark border border-gray-border text-white px-4 py-3 rounded font-medium hover:border-accent hover:text-accent transition">
+              <button 
+                onClick={handleDownloadPDF}
+                className="w-full bg-dark border border-gray-border text-white px-4 py-3 rounded font-medium hover:border-accent hover:text-accent transition"
+              >
                 Download PDF
               </button>
               <button className="w-full bg-dark border border-gray-border text-white px-4 py-3 rounded font-medium hover:border-accent hover:text-accent transition">
