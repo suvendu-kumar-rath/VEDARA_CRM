@@ -141,6 +141,12 @@ class ApiService {
     return this.request(endpoint, { method: 'GET' });
   }
 
+  async getConvertedClients() {
+    return this.request('admin/leads/convertedclient', {
+      method: 'GET',
+    });
+  }
+
   async createClient(clientData) {
     return this.request('admin/clients', {
       method: 'POST',

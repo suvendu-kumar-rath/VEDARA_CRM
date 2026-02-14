@@ -1,104 +1,5 @@
 import React, { useState } from "react";
 
-const projectsData = [
-  {
-    id: 1,
-    projectId: "VED-2024-001",
-    name: "Luxury Villa - Juhu",
-    client: "Rajesh Patel",
-    type: "Residential",
-    phase: "Execution",
-    progress: 65,
-    assignedManager: {
-      name: "Arjun K.",
-      avatar: "AK"
-    },
-    startDate: "Jan 15, 2024",
-    status: "On Track",
-    statusColor: "green"
-  },
-  {
-    id: 2,
-    projectId: "VED-2024-002",
-    name: "Corporate Office - BKC",
-    client: "Neha Sharma",
-    type: "Commercial",
-    phase: "Design",
-    progress: 30,
-    assignedManager: {
-      name: "Priya S.",
-      avatar: "PS"
-    },
-    startDate: "Feb 01, 2024",
-    status: "On Track",
-    statusColor: "green"
-  },
-  {
-    id: 3,
-    projectId: "VED-2023-045",
-    name: "Penthouse - Worli",
-    client: "Amit Desai",
-    type: "Residential",
-    phase: "Execution",
-    progress: 42,
-    assignedManager: {
-      name: "Rohan M.",
-      avatar: "RM"
-    },
-    startDate: "Dec 10, 2023",
-    status: "Delayed",
-    statusColor: "red"
-  },
-  {
-    id: 4,
-    projectId: "VED-2024-003",
-    name: "Boutique Hotel - Goa",
-    client: "Kavita Mehta",
-    type: "Commercial",
-    phase: "Design",
-    progress: 18,
-    assignedManager: {
-      name: "Ananya R.",
-      avatar: "AR"
-    },
-    startDate: "Feb 20, 2024",
-    status: "On Track",
-    statusColor: "green"
-  },
-  {
-    id: 5,
-    projectId: "VED-2023-042",
-    name: "Modern Apartment - Powai",
-    client: "Vikram Singh",
-    type: "Residential",
-    phase: "Completed",
-    progress: 100,
-    assignedManager: {
-      name: "Karan P.",
-      avatar: "KP"
-    },
-    startDate: "Oct 05, 2023",
-    status: "Completed",
-    statusColor: "yellow"
-  },
-  {
-    id: 6,
-    projectId: "VED-2024-004",
-    name: "Café Interiors - Bandra",
-    client: "Sanjay Kumar",
-    type: "Commercial",
-    phase: "Execution",
-    progress: 78,
-    assignedManager: {
-      name: "Priya S.",
-      avatar: "PS"
-    },
-    startDate: "Jan 08, 2024",
-    status: "On Track",
-    statusColor: "green"
-  }
-];
-
 const statusColors = {
   green: "bg-green-500/10 border-green-500 text-green-400",
   red: "bg-red-500/10 border-red-500 text-red-400",
@@ -107,7 +8,7 @@ const statusColors = {
 
 export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [projects] = useState(projectsData);
+  const [projects] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // Filter states

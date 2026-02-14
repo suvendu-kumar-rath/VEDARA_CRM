@@ -23,11 +23,12 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getClients();
-      console.log('Get Clients Response:', response);
+      const response = await apiService.getConvertedClients();
+      console.log('Get Converted Clients Response:', response);
       
       if (response.success && response.data) {
-        const clientsData = response.data.items || response.data || [];
+        // Get converted clients from the response
+        const clientsData = response.data.convertedClients || [];
         
         // Transform API data to match UI format
         const transformedClients = clientsData.map(client => ({
@@ -37,11 +38,13 @@ export default function ClientsPage() {
           phone: client.phone,
           type: client.type || "Residential",
           projects: client.projects || 0,
-          city: client.city || "N/A",
+          city: client.address || client.city || "N/A",
           totalValue: client.totalValue || "₹0 L",
           manager: client.manager || "Unassigned",
           status: client.status || "Active",
-          statusColor: getStatusColor(client.status)
+          statusColor: getStatusColor(client.status),
+          createdAt: client.createdAt,
+          address: client.address
         }));
         setClients(transformedClients);
       }
@@ -88,8 +91,11 @@ export default function ClientsPage() {
 
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.status === "Active").length;
-  const completedProjects = 1;
-  const totalRevenue = "₹3.8 Cr";
+  const completedProjects = clients.reduce((sum, c) => sum + (c.projects || 0), 0);
+  const totalRevenue = clients.reduce((sum, c) => {
+    const value = parseFloat(c.totalValue?.replace(/[^0-9.]/g, '') || 0);
+    return sum + value;
+  }, 0);
 
   return (
     <main className="flex-1 p-6 md:p-10 bg-dark">
@@ -99,19 +105,12 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-bold text-white">Clients</h1>
           <p className="text-gray-text mt-1">Manage your customer relationships</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsAddClientModalOpen(true)}
-            className="bg-dark border border-gray-border text-white px-4 py-2 rounded flex items-center gap-2 hover:border-accent hover:text-accent transition text-sm font-medium"
-          >
-            <span className="text-lg">+</span> Add Client
-          </button>
-          <button 
-            className="bg-accent text-dark px-4 py-2 rounded flex items-center gap-2 hover:bg-yellow-500 transition text-sm font-medium"
-          >
-            <span className="text-lg">📁</span> Create Project
-          </button>
-        </div>
+        <button 
+          onClick={() => setIsAddClientModalOpen(true)}
+          className="bg-dark border border-gray-border text-white px-4 py-2 rounded flex items-center gap-2 hover:border-accent hover:text-accent transition text-sm font-medium w-fit"
+        >
+          <span className="text-lg">+</span> Add Client
+        </button>
       </div>
 
       {/* Summary Cards */}
@@ -147,7 +146,7 @@ export default function ClientsPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">💰</div>
             <div>
-              <div className="text-2xl font-bold text-white">{totalRevenue}</div>
+              <div className="text-2xl font-bold text-white">₹{totalRevenue.toFixed(1)} L</div>
               <div className="text-sm text-gray-text">Total Revenue</div>
             </div>
           </div>
@@ -234,23 +233,15 @@ export default function ClientsPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('New project for client:', client.id);
-                        }}
-                        className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
-                      >
-                        <span>📁</span> New Project
-                      </button>
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-gray-text hover:text-white transition"
-                      >
-                        <span className="text-lg">⋮</span>
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Upload project for client:', client.id);
+                      }}
+                      className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
+                    >
+                      <span>📁</span> Upload Project
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -270,19 +261,11 @@ export default function ClientsPage() {
             key={client.id}
             className="bg-dark-light border border-gray-border rounded-lg p-4 cursor-pointer hover:border-accent transition"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="text-white font-medium text-base mb-1">{client.name}</h3>
-                <div className="text-gray-text text-sm flex items-center gap-1">
-                  <span>✉</span> {client.email}
-                </div>
+            <div className="mb-3">
+              <h3 className="text-white font-medium text-base mb-1">{client.name}</h3>
+              <div className="text-gray-text text-sm flex items-center gap-1">
+                <span>✉</span> {client.email}
               </div>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="text-gray-text hover:text-white transition p-2"
-              >
-                <span className="text-lg">⋮</span>
-              </button>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>

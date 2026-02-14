@@ -387,7 +387,12 @@ export default function LeadsPage() {
                       value={lead.stage?.toLowerCase() || 'new'}
                       onChange={(e) => handleStatusChange(e, lead)}
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-dark border border-gray-border text-white px-3 py-2 rounded text-sm focus:outline-none focus:border-accent transition cursor-pointer hover:border-accent"
+                      disabled={lead.stage?.toLowerCase() === 'converted'}
+                      className={`bg-dark border border-gray-border text-white px-3 py-2 rounded text-sm focus:outline-none transition ${
+                        lead.stage?.toLowerCase() === 'converted' 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : 'cursor-pointer hover:border-accent focus:border-accent'
+                      }`}
                     >
                       <option value="">Change Status...</option>
                       <option value="new">New</option>
@@ -450,7 +455,12 @@ export default function LeadsPage() {
                 value={lead.stage?.toLowerCase() || 'new'}
                 onChange={(e) => handleStatusChange(e, lead)}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-dark border border-gray-border text-white px-3 py-1.5 rounded text-sm focus:outline-none focus:border-accent transition"
+                disabled={lead.stage?.toLowerCase() === 'converted'}
+                className={`bg-dark border border-gray-border text-white px-3 py-1.5 rounded text-sm focus:outline-none transition ${
+                  lead.stage?.toLowerCase() === 'converted'
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'focus:border-accent'
+                }`}
               >
                 <option value="">Change Status...</option>
                 <option value="new">New</option>

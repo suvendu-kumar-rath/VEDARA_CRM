@@ -1,88 +1,5 @@
 import React, { useState } from "react";
 
-const designsData = [
-  {
-    id: 1,
-    title: "Luxury Villa - Living Room",
-    project: "Juhu Villa Project",
-    version: "Living Room v.V3",
-    status: "Approved",
-    statusColor: "yellow",
-    date: "Mar 15, 2024",
-    imageColor: "#F5F5F5" // Light cream/white
-  },
-  {
-    id: 2,
-    title: "Corporate Office - Reception",
-    project: "BKC Office Project",
-    version: "Reception v.V2",
-    status: "Pending Approval",
-    statusColor: "orange",
-    date: "Mar 12, 2024",
-    imageColor: "#2C3E50" // Dark blue-grey
-  },
-  {
-    id: 3,
-    title: "Penthouse - Master Bedroom",
-    project: "Worli Penthouse",
-    version: "Bedroom v.V1",
-    status: "Changes Requested",
-    statusColor: "orange",
-    date: "Mar 10, 2024",
-    imageColor: "#8B7355" // Warm brown
-  },
-  {
-    id: 4,
-    title: "Boutique Hotel - Lobby",
-    project: "Goa Hotel Project",
-    version: "Lobby v.V2",
-    status: "Approved",
-    statusColor: "yellow",
-    date: "Mar 08, 2024",
-    imageColor: "#4A4A4A" // Dark grey
-  },
-  {
-    id: 5,
-    title: "Modern Apartment - Kitchen",
-    project: "Powai Apartment",
-    version: "Kitchen v.V1",
-    status: "Approved",
-    statusColor: "yellow",
-    date: "Mar 05, 2024",
-    imageColor: "#D4B896" // Light wood tone
-  },
-  {
-    id: 6,
-    title: "Café Interiors - Main Seating",
-    project: "Bandra Cafe Project",
-    version: "Seating Area v.V3",
-    status: "Pending Approval",
-    statusColor: "orange",
-    date: "Mar 03, 2024",
-    imageColor: "#5A9B9B" // Teal
-  },
-  {
-    id: 7,
-    title: "Villa - Master Bathroom",
-    project: "Juhu Villa Project",
-    version: "Bathroom v.V2",
-    status: "Approved",
-    statusColor: "yellow",
-    date: "Feb 28, 2024",
-    imageColor: "#E8E8E8" // Light grey marble
-  },
-  {
-    id: 8,
-    title: "Office - Conference Room",
-    project: "BKC Office Project",
-    version: "Conference v.V1",
-    status: "Changes Requested",
-    statusColor: "orange",
-    date: "Feb 25, 2024",
-    imageColor: "#F5F5F5" // White/grey
-  }
-];
-
 const statusStyles = {
   yellow: "bg-accent text-dark",
   orange: "bg-orange-500/10 border border-orange-500 text-orange-400"
@@ -90,7 +7,7 @@ const statusStyles = {
 
 export default function DesignsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [designs] = useState(designsData);
+  const [designs] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const filteredDesigns = designs.filter(design =>
@@ -99,10 +16,10 @@ export default function DesignsPage() {
     design.version.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalDesigns = designs.length * 18; // 146 ≈ 8 * 18
-  const pendingApproval = designs.filter(d => d.status === "Pending Approval").length * 6;
-  const approvedDesigns = designs.filter(d => d.status === "Approved").length * 32;
-  const revisionsRequested = designs.filter(d => d.status === "Changes Requested").length * 3;
+  const totalDesigns = designs.length;
+  const pendingApproval = designs.filter(d => d.status === "Pending Approval").length;
+  const approvedDesigns = designs.filter(d => d.status === "Approved").length;
+  const revisionsRequested = designs.filter(d => d.status === "Changes Requested").length;
 
   return (
     <main className="flex-1 p-6 md:p-10 bg-dark overflow-y-auto">

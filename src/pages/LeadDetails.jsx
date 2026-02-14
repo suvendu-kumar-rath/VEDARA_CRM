@@ -4,96 +4,25 @@ import Breadcrumb from "../components/Breadcrumb";
 import LeadSummaryCard from "../components/LeadSummaryCard";
 import ActivityTimeline from "../components/ActivityTimeline";
 
-// Sample lead data
-const leadsDatabase = {
-  1: {
-    id: 1,
-    name: "Rajesh Sharma",
-    phone: "+91 98705 43210",
-    source: "Instagram",
-    budget: "₹25-35 Lakhs",
-    property: "Apartment",
-    city: "Mumbai",
-    followUp: "20 Jan",
-    stage: "Site Visit",
-    createdOn: "15 Jan 2026",
-    email: "rajesh.sharma@email.com",
-    address: "Andheri West, Mumbai, Maharashtra"
-  },
-  2: {
-    id: 2,
-    name: "Ananya Patel",
-    phone: "+91 87654 32109",
-    source: "Referral",
-    budget: "₹40-50 Lakhs",
-    property: "Villa",
-    city: "Bangalore",
-    followUp: "18 Jan",
-    stage: "Quote Shared",
-    createdOn: "12 Jan 2026",
-    email: "ananya.patel@email.com",
-    address: "Whitefield, Bangalore, Karnataka"
-  },
-  3: {
-    id: 3,
-    name: "Vikram Malhotra",
-    phone: "+91 76543 21098",
-    source: "Website",
-    budget: "₹15-20 Lakhs",
-    property: "Apartment",
-    city: "Delhi",
-    followUp: "22 Jan",
-    stage: "New",
-    createdOn: "14 Jan 2026",
-    email: "vikram.m@email.com",
-    address: "Dwarka, New Delhi"
-  }
-};
-
-const sampleActivities = [
-  {
-    type: "Site Visit",
-    title: "Site Visit Scheduled",
-    description: "Client wants to visit the Andheri project site this weekend",
-    time: "2 hours ago",
-    by: "Arpita Singh",
-    note: "Client is specifically interested in 2BHK units with sea view. Budget confirmed at ₹30 Lakhs."
-  },
-  {
-    type: "Call",
-    title: "Follow-up Call",
-    description: "Discussed project amenities and payment plans",
-    time: "Yesterday, 4:30 PM",
-    by: "Arpita Singh"
-  },
-  {
-    type: "Email",
-    title: "Brochure Sent",
-    description: "Sent project brochure and floor plans via email",
-    time: "2 days ago",
-    by: "System"
-  },
-  {
-    type: "Discussion",
-    title: "Initial Discussion",
-    description: "First consultation about interior requirements",
-    time: "3 days ago",
-    by: "Arpita Singh",
-    note: "Client prefers modern contemporary style. Timeline: 6-8 months."
-  },
-  {
-    type: "Meeting",
-    title: "Lead Created",
-    description: "New lead inquiry from Instagram",
-    time: "5 days ago",
-    by: "System"
-  }
-];
-
 export default function LeadDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const lead = leadsDatabase[id] || leadsDatabase[1];
+  
+  // Default lead structure - should be fetched from API using the id
+  const lead = {
+    id: id,
+    name: "",
+    phone: "",
+    source: "",
+    budget: "",
+    property: "",
+    city: "",
+    followUp: "",
+    stage: "",
+    createdOn: "",
+    email: "",
+    address: ""
+  };
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -282,7 +211,7 @@ export default function LeadDetails() {
           </div>
 
           {/* Activity Timeline */}
-          <ActivityTimeline activities={sampleActivities} />
+          <ActivityTimeline activities={[]} />
         </div>
 
         {/* Right Column - Quick Actions & Stats */}
