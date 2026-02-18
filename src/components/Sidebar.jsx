@@ -9,6 +9,7 @@ const navItems = [
   // { label: "Projects", icon: "📁", path: "/projects", roles: ["admin", "lead"] },
   { label: "Designs", icon: "🎨", path: "/designs", roles: ["admin", "lead", "designer"] },
   { label: "Quotations", icon: "📄", path: "/quotations", roles: ["admin", "lead"] },
+  { label: "Forms", icon: "📋", path: "/forms", roles: ["admin", "lead"] },
   { label: "Employee", icon: "👥", path: "/users", roles: ["admin"] },
   { label: "Settings", icon: "⚙️", path: "/settings", roles: ["admin", "lead"] },
 ];

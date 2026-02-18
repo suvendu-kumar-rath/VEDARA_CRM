@@ -14,6 +14,7 @@ import DesignsPage from "./pages/DesignsPage";
 import UsersPage from "./pages/UsersPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
+import FormsPage from "./pages/FormsPage";
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -74,6 +75,11 @@ function AppContent() {
           <Route path="/users" element={
             <ProtectedRoute requiredRole="admin">
               <UsersPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/forms" element={
+            <ProtectedRoute allowedRoles={["admin", "lead"]}>
+              <FormsPage />
             </ProtectedRoute>
           } />
           <Route path="/settings" element={<SettingsPage />} />

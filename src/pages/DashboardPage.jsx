@@ -6,23 +6,22 @@ import RecentActivity from "../components/RecentActivity";
 import QuickStats from "../components/QuickStats";
 import { useNavigate } from "react-router-dom";
 import AddLeadModal from "../components/AddLeadModal";
+import CreateQuotationModal from "../components/CreateQuotationModal";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // ...existing code...
 
-  const handleAddLead = (formData) => {
-    // In a real app, this would save to backend or global state
-    console.log("New lead added:", formData);
-    // Navigate to leads page to see the new lead
-    navigate('/leads');
-  };
+  // ...existing code...
 
   return (
     <main className="flex-1 p-6 md:p-10 bg-dark">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
-        <p className="text-gray-text mt-1">Welcome back, Arpita. Here's what's happening today.</p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
+          <p className="text-gray-text mt-1">Welcome back, Arpita. Here's what's happening today.</p>
+        </div>
+        {/* Quick Actions removed */}
       </div>
       <StatCards />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -36,12 +35,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Add Lead Modal */}
-      <AddLeadModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddLead={handleAddLead}
-      />
+      {/* Add Lead and Quotation Modals removed */}
     </main>
   );
 }
