@@ -66,6 +66,9 @@ export default function FormsPage() {
   // State for which rooms are expanded
   const [expandedRooms, setExpandedRooms] = useState({});
 
+  // State for removed/hidden rooms
+  const [removedRooms, setRemovedRooms] = useState([]);
+
   // State for dynamic Bedroom + Washroom instances
   const [bedroomWashroomInstances, setBedroomWashroomInstances] = useState([]);
   const [expandedBedroomWashrooms, setExpandedBedroomWashrooms] = useState({});
@@ -96,6 +99,72 @@ export default function FormsPage() {
     const isDiningArea = roomName === "Dining Area" || roomName === "Dining Room";
     const isDomesticHelpRoom = roomName === "Domestic Help Room";
     const isStoreRoom = roomName === "Store Room";
+
+    // Store Room has its own structure without base fields
+    if (isStoreRoom) {
+      return {
+        storeRoom: {
+          basicInfo: {
+            length: "",
+            width: "",
+            ceilingHeight: "",
+          },
+          wardrobe: {
+            suggestedWidth: "",
+            suggestedHeight: "",
+            material: "",
+            carcass: "",
+            hardwareLevel: "",
+            lofts: "",
+            shelfConfiguration: "",
+            storageZoning: {
+              luggage: false,
+              grocery: false,
+              cleaningSupplies: false,
+              seasonalStorage: false,
+            },
+          },
+          lighting: {
+            ceilingLightType: "",
+            stripLightingInsideShelves: false,
+            sensorLights: false,
+            emergencyBackupLight: false,
+          },
+          ventilation: {
+            exhaustFan: false,
+            louverVents: false,
+            dehumidifierProvision: false,
+            windowOption: false,
+          },
+          paint: {
+            wallFinish: "",
+            moistureResistantPaint: false,
+            ceilingFinish: "",
+          },
+          electrical: {
+            wiringBrand: "",
+            wireType: "",
+            switches: "",
+            lightPoints: "",
+            extraPlugPoints: {
+              vacuum: false,
+              iron: false,
+              inverter: false,
+              other: false,
+            },
+          },
+          optionalEnhancements: {
+            heavyDutyRackingSystem: false,
+            metalStorageRacks: false,
+            lockableCabinet: false,
+            cctvCameraPoint: false,
+            automationSensorLight: false,
+          },
+          budgetRange: "",
+          notes: "",
+        },
+      };
+    }
 
     const baseRoom = {
       // Basic Information
@@ -804,70 +873,6 @@ export default function FormsPage() {
       };
     }
 
-    // Add Store Room-specific fields
-    if (isStoreRoom) {
-      baseRoom.storeRoom = {
-        basicInfo: {
-          length: "",
-          width: "",
-          ceilingHeight: "",
-        },
-        wardrobe: {
-          suggestedWidth: "",
-          suggestedHeight: "",
-          material: "",
-          carcass: "",
-          hardwareLevel: "",
-          lofts: "",
-          shelfConfiguration: "",
-          storageZoning: {
-            luggage: false,
-            grocery: false,
-            cleaningSupplies: false,
-            seasonalStorage: false,
-          },
-        },
-        lighting: {
-          ceilingLightType: "",
-          stripLightingInsideShelves: false,
-          sensorLights: false,
-          emergencyBackupLight: false,
-        },
-        ventilation: {
-          exhaustFan: false,
-          louverVents: false,
-          dehumidifierProvision: false,
-          windowOption: false,
-        },
-        paint: {
-          wallFinish: "",
-          moistureResistantPaint: false,
-          ceilingFinish: "",
-        },
-        electrical: {
-          wiringBrand: "",
-          wireType: "",
-          switches: "",
-          lightPoints: "",
-          extraPlugPoints: {
-            vacuum: false,
-            iron: false,
-            inverter: false,
-            other: false,
-          },
-        },
-        optionalEnhancements: {
-          heavyDutyRackingSystem: false,
-          metalStorageRacks: false,
-          lockableCabinet: false,
-          cctvCameraPoint: false,
-          automationSensorLight: false,
-        },
-        budgetRange: "",
-        notes: "",
-      };
-    }
-
     return baseRoom;
   };
 
@@ -938,6 +943,23 @@ export default function FormsPage() {
         },
       }));
     }
+  };
+
+  // Remove/hide a room
+  const removeRoom = (roomName) => {
+    if (window.confirm(`Are you sure you want to remove ${roomName}? You can add it back later.`)) {
+      setRemovedRooms((prev) => [...prev, roomName]);
+      setExpandedRooms((prev) => {
+        const newExpanded = { ...prev };
+        delete newExpanded[roomName];
+        return newExpanded;
+      });
+    }
+  };
+
+  // Restore a removed room
+  const restoreRoom = (roomName) => {
+    setRemovedRooms((prev) => prev.filter(room => room !== roomName));
   };
 
   // Initialize a new Bedroom + Washroom instance
@@ -1662,8 +1684,29 @@ export default function FormsPage() {
 
             {expandedSections.rooms && (
               <div className="p-6 border-t border-gray-border space-y-4">
+                {/* Show removed rooms for restore option */}
+                {removedRooms.length > 0 && (
+                  <div className="mb-4 p-4 bg-dark-light border border-gray-border rounded-lg">
+                    <h4 className="text-white font-semibold mb-2 text-sm">Removed Rooms (Click to restore)</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {removedRooms.map((roomName) => (
+                        <button
+                          key={roomName}
+                          type="button"
+                          onClick={() => restoreRoom(roomName)}
+                          className="px-3 py-1 bg-dark border border-accent text-accent rounded text-sm hover:bg-accent hover:text-dark transition"
+                        >
+                          ➕ {roomName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Rooms before Kitchen */}
-                {roomsList.slice(0, roomsList.indexOf("Kitchen") + 1).map((roomName) => (
+                {roomsList.slice(0, roomsList.indexOf("Kitchen") + 1)
+                  .filter(roomName => !removedRooms.includes(roomName))
+                  .map((roomName) => (
                   <RoomSection
                     key={roomName}
                     roomName={roomName}
@@ -1671,6 +1714,7 @@ export default function FormsPage() {
                     isExpanded={expandedRooms[roomName]}
                     onToggle={() => toggleRoom(roomName)}
                     onChange={handleRoomChange}
+                    onRemove={() => removeRoom(roomName)}
                   />
                 ))}
 
@@ -1713,7 +1757,9 @@ export default function FormsPage() {
                 </div>
 
                 {/* Rooms after Kitchen */}
-                {roomsList.slice(roomsList.indexOf("Kitchen") + 1).map((roomName) => (
+                {roomsList.slice(roomsList.indexOf("Kitchen") + 1)
+                  .filter(roomName => !removedRooms.includes(roomName))
+                  .map((roomName) => (
                   <RoomSection
                     key={roomName}
                     roomName={roomName}
@@ -1721,6 +1767,7 @@ export default function FormsPage() {
                     isExpanded={expandedRooms[roomName]}
                     onToggle={() => toggleRoom(roomName)}
                     onChange={handleRoomChange}
+                    onRemove={() => removeRoom(roomName)}
                   />
                 ))}
 
@@ -1792,7 +1839,7 @@ export default function FormsPage() {
 }
 
 // Room Section Component
-function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
+function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange, onRemove }) {
   const isKitchen = roomName === "Kitchen";
   const isWashroom = roomName.includes("Washroom");
   const isBalcony = roomName.includes("Balcony");
@@ -1805,14 +1852,24 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
 
   return (
     <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full px-5 py-3 flex items-center justify-between hover:bg-dark-light transition"
-      >
-        <span className="text-white font-semibold">{roomName}</span>
-        <span className="text-accent">{isExpanded ? "▲" : "▼"}</span>
-      </button>
+      <div className="w-full px-5 py-3 flex items-center justify-between hover:bg-dark-light transition">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 flex items-center justify-between"
+        >
+          <span className="text-white font-semibold">{roomName}</span>
+          <span className="text-accent">{isExpanded ? "▲" : "▼"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-3 px-3 py-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition text-sm font-medium"
+          title="Remove this room section"
+        >
+          ✕ Remove
+        </button>
+      </div>
 
       {isExpanded && (
         <div className="p-5 space-y-6 border-t border-gray-border">
@@ -7124,7 +7181,7 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
             />
           </div>
             </>
-          ) : !isDomesticHelpRoom ? (
+          ) : !isDomesticHelpRoom && !isStoreRoom ? (
             <>
           {/* A. BASIC INFORMATION */}
           <div>
@@ -8869,65 +8926,6 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
                   </div>
                 </div>
               </div>
-
-              {/* ✨ 7️⃣ OPTIONAL ENHANCEMENTS */}
-              <div className="mb-6">
-                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
-                  ✨ 7️⃣ OPTIONAL ENHANCEMENTS
-                </h5>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    { key: "heavyDutyRackingSystem", label: "Heavy-Duty Racking System" },
-                    { key: "metalStorageRacks", label: "Metal Storage Racks" },
-                    { key: "lockableCabinet", label: "Lockable Cabinet" },
-                    { key: "cctvCameraPoint", label: "CCTV Camera Point" },
-                    { key: "automationSensorLight", label: "Automation Sensor Light" },
-                  ].map(({ key, label }) => (
-                    <label key={key} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={roomData.storeRoom.optionalEnhancements[key]}
-                        onChange={(e) => onChange(roomName, `storeRoom.optionalEnhancements.${key}`, e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
-                      />
-                      <span className="text-white text-sm">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* 💰 8️⃣ BUDGET RANGE & RECOMMENDATIONS */}
-              <div className="mb-6">
-                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
-                  💰 8️⃣ BUDGET RANGE & RECOMMENDATIONS
-                </h5>
-                <div>
-                  <label className="block text-xs text-gray-text mb-2">Budget Range</label>
-                  <div className="flex flex-wrap gap-4">
-                    {["Basic Setup", "Mid-Range Setup", "Premium Setup"].map((range) => (
-                      <label key={range} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`budgetRange-${roomName}`}
-                          value={range}
-                          checked={roomData.storeRoom.budgetRange === range}
-                          onChange={(e) => onChange(roomName, "storeRoom.budgetRange", e.target.value)}
-                          className="w-4 h-4 text-accent focus:ring-accent"
-                        />
-                        <span className="text-white text-sm">{range}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-4 p-4 bg-dark-light border border-gray-border rounded">
-                  <p className="text-xs text-gray-text mb-2">💡 <strong>Recommendations:</strong></p>
-                  <ul className="text-xs text-gray-text space-y-1 ml-4">
-                    <li>• <strong>Small Apartments:</strong> Utilize vertical space with ceiling-height cabinets, adjustable shelves, and compact organization systems</li>
-                    <li>• <strong>Large Villas:</strong> Consider dedicated zoning for different storage types, heavy-duty racks for bulk items, and climate control options</li>
-                  </ul>
-                </div>
-              </div>
-
               {/* 📝 9️⃣ NOTES */}
               <div className="mb-6">
                 <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
@@ -11170,3 +11168,4 @@ function getFurnitureOptions(roomName) {
 
   return furnitureMap[roomName] || ["Storage Unit", "Seating", "Display Unit"];
 }
+
