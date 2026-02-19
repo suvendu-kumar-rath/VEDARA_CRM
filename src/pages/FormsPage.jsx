@@ -1712,6 +1712,18 @@ export default function FormsPage() {
                   )}
                 </div>
 
+                {/* Rooms after Kitchen */}
+                {roomsList.slice(roomsList.indexOf("Kitchen") + 1).map((roomName) => (
+                  <RoomSection
+                    key={roomName}
+                    roomName={roomName}
+                    roomData={formData.rooms[roomName] || initializeRoom(roomName)}
+                    isExpanded={expandedRooms[roomName]}
+                    onToggle={() => toggleRoom(roomName)}
+                    onChange={handleRoomChange}
+                  />
+                ))}
+
                 {/* Balconies Dynamic Section */}
                 <div className="mt-6 pt-6 border-t-2 border-accent">
                   <div className="flex items-center justify-between mb-4">
@@ -1749,18 +1761,6 @@ export default function FormsPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Rooms after Kitchen */}
-                {roomsList.slice(roomsList.indexOf("Kitchen") + 1).map((roomName) => (
-                  <RoomSection
-                    key={roomName}
-                    roomName={roomName}
-                    roomData={formData.rooms[roomName] || initializeRoom(roomName)}
-                    isExpanded={expandedRooms[roomName]}
-                    onToggle={() => toggleRoom(roomName)}
-                    onChange={handleRoomChange}
-                  />
-                ))}
               </div>
             )}
           </div>
