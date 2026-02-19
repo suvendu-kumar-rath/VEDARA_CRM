@@ -14,12 +14,6 @@ export default function FormsPage() {
       living: "",
       dining: "",
       kitchen: "",
-      bedroom1: "",
-      bedroom2: "",
-      bedroom3: "",
-      bedroom4: "",
-      bedroom5: "",
-      storeRoom: "",
       helpRoom: "",
     },
     windowInfo: {
@@ -66,10 +60,19 @@ export default function FormsPage() {
     globalScope: true,
     deliverables: true,
     rooms: true,
+    bedroomWashrooms: true,
   });
 
   // State for which rooms are expanded
   const [expandedRooms, setExpandedRooms] = useState({});
+
+  // State for dynamic Bedroom + Washroom instances
+  const [bedroomWashroomInstances, setBedroomWashroomInstances] = useState([]);
+  const [expandedBedroomWashrooms, setExpandedBedroomWashrooms] = useState({});
+
+  // State for dynamic Balcony instances
+  const [balconyInstances, setBalconyInstances] = useState([]);
+  const [expandedBalconies, setExpandedBalconies] = useState({});
 
   // Available rooms
   const roomsList = [
@@ -78,18 +81,8 @@ export default function FormsPage() {
     "Living Room",
     "Dining Area",
     "Kitchen",
-    "Bedroom 1",
-    "Bedroom 2",
-    "Bedroom 3",
-    "Bedroom 4",
-    "Bedroom 5",
-    "Washroom 1",
-    "Washroom 2",
-    "Washroom 3",
     "Domestic Help Room",
     "Store Room",
-    "Balcony 1",
-    "Balcony 2",
   ];
 
   // Initialize room data structure
@@ -101,6 +94,8 @@ export default function FormsPage() {
     const isFoyer = roomName === "Foyer";
     const isLivingRoom = roomName === "Living Room" || roomName === "Drawing Room";
     const isDiningArea = roomName === "Dining Area" || roomName === "Dining Room";
+    const isDomesticHelpRoom = roomName === "Domestic Help Room";
+    const isStoreRoom = roomName === "Store Room";
 
     const baseRoom = {
       // Basic Information
@@ -752,6 +747,127 @@ export default function FormsPage() {
       };
     }
 
+    // Add Domestic Help Room-specific fields
+    if (isDomesticHelpRoom) {
+      baseRoom.domesticHelpRoom = {
+        basicInfo: {
+          length: "",
+          width: "",
+          height: "",
+        },
+        wardrobe: {
+          width: "",
+          height: "",
+          material: "",
+          finish: "",
+          hardwareLevel: "",
+          lofts: "",
+          shelves: "",
+        },
+        bedNiche: {
+          required: "",
+        },
+        electrical: {
+          wiringBrand: "",
+          wireType: "",
+          switches: "",
+          fan: "",
+          lights: "",
+          ventilation: "",
+        },
+        paint: {
+          wallPaint: "",
+          ceilingPaint: "",
+        },
+        helpBathroom: {
+          wallCovering: {
+            tile: false,
+            marble: false,
+            granite: false,
+          },
+          floorCovering: {
+            antiSkidTile: false,
+            marble: false,
+            granite: false,
+          },
+          wc: "",
+          basin: "",
+          fittings: "",
+          fittingsOther: "",
+          plumbingLineMaterial: "",
+          exhaust: "",
+          switches: "",
+          geyser: "",
+          paint: "",
+        },
+        notes: "",
+      };
+    }
+
+    // Add Store Room-specific fields
+    if (isStoreRoom) {
+      baseRoom.storeRoom = {
+        basicInfo: {
+          length: "",
+          width: "",
+          ceilingHeight: "",
+        },
+        wardrobe: {
+          suggestedWidth: "",
+          suggestedHeight: "",
+          material: "",
+          carcass: "",
+          hardwareLevel: "",
+          lofts: "",
+          shelfConfiguration: "",
+          storageZoning: {
+            luggage: false,
+            grocery: false,
+            cleaningSupplies: false,
+            seasonalStorage: false,
+          },
+        },
+        lighting: {
+          ceilingLightType: "",
+          stripLightingInsideShelves: false,
+          sensorLights: false,
+          emergencyBackupLight: false,
+        },
+        ventilation: {
+          exhaustFan: false,
+          louverVents: false,
+          dehumidifierProvision: false,
+          windowOption: false,
+        },
+        paint: {
+          wallFinish: "",
+          moistureResistantPaint: false,
+          ceilingFinish: "",
+        },
+        electrical: {
+          wiringBrand: "",
+          wireType: "",
+          switches: "",
+          lightPoints: "",
+          extraPlugPoints: {
+            vacuum: false,
+            iron: false,
+            inverter: false,
+            other: false,
+          },
+        },
+        optionalEnhancements: {
+          heavyDutyRackingSystem: false,
+          metalStorageRacks: false,
+          lockableCabinet: false,
+          cctvCameraPoint: false,
+          automationSensorLight: false,
+        },
+        budgetRange: "",
+        notes: "",
+      };
+    }
+
     return baseRoom;
   };
 
@@ -824,17 +940,391 @@ export default function FormsPage() {
     }
   };
 
+  // Initialize a new Bedroom + Washroom instance
+  const initializeBedroomWashroom = (id) => ({
+    id,
+    name: `Bedroom + Washroom ${id}`,
+    bedroom: {
+      basicInfo: {
+        length: "",
+        width: "",
+        ceilingHeight: "",
+        windowCount: "",
+        sillHeight: "",
+        lintelHeight: "",
+        balconyAccess: "",
+        balconyDoorType: "",
+        balconyDoorWidth: "",
+        balconyDoorHeight: "",
+        balconyRailingType: "",
+      },
+      civilWork: {
+        demolitionFlooring: false,
+        demolitionWalls: false,
+        newPartitions: false,
+        floorLeveling: false,
+        newFlooring: false,
+        skirting: false,
+        beamCovering: false,
+        windowModification: false,
+        doorModification: false,
+      },
+      falseCeiling: {
+        required: "",
+        type: "",
+        coveLighting: "",
+        design: "",
+      },
+      floorCovering: {
+        glossTile: false,
+        mattTile: false,
+        marble: false,
+        granite: false,
+      },
+      wallPaneling: {
+        required: "",
+        numberOfWalls: "",
+        material: "",
+      },
+      wardrobe: {
+        type: "",
+        height: "",
+        width: "",
+        depth: "",
+        loftHeight: "",
+        internalLayout: {
+          hangingRod: false,
+          hangingPullout: false,
+          shelves: false,
+          drawers: false,
+          shoeRack: false,
+          trouserPullout: false,
+          tieRack: false,
+          jewelleryTray: false,
+          mirrorInside: false,
+          sensorLight: false,
+        },
+        shutterFinish: "",
+        hardwareLevel: "",
+      },
+      otherCarpentry: {
+        bed: "",
+        headboard: false,
+        footboard: false,
+        sideTables: false,
+        studyTable: false,
+        dressingTable: false,
+        tvPanel: false,
+        bookshelf: false,
+        looseFurniture: {
+          chair: false,
+          ottoman: false,
+          sofa: false,
+          bench: false,
+        },
+      },
+      electrical: {
+        wiringBrand: "",
+        wireType: "",
+        switchType: "",
+        lighting: {
+          cob: false,
+          downlights: false,
+          panelLights: false,
+          profileLights: false,
+          coveLights: false,
+          chandelier: false,
+          wallLights: false,
+          wallLightsQty: "",
+        },
+        fansQty: "",
+        acWiringQty: "",
+        automation: {
+          required: "",
+          lights: false,
+          curtains: false,
+          ac: false,
+          tv: false,
+          speakers: false,
+          sceneSettings: false,
+        },
+        acType: "",
+        wiringLength: "",
+      },
+      paint: {
+        wallPaint: "",
+        ceilingPaint: "",
+      },
+    },
+    washroom: {
+      basicInfo: {
+        length: "",
+        width: "",
+        ceilingHeight: "",
+        windowCount: "",
+        sillHeight: "",
+        lintelHeight: "",
+      },
+      civil: {
+        waterproofing: false,
+        replaceFittingsOnly: false,
+        fullDemolition: false,
+        drainPipeChange: false,
+        supplyPipeChange: false,
+      },
+      wallCoverings: {
+        tile: false,
+        marble: false,
+        granite: false,
+        featureTile: false,
+        groutColor: "",
+      },
+      floorCoverings: {
+        antiSkidTile: false,
+        marble: false,
+        granite: false,
+        groutColor: "",
+      },
+      basinType: "",
+      showerType: "",
+      fittingBrand: "",
+      fittingBrandOther: "",
+      plumbingMaterial: "",
+      electrical: {
+        mirrorLight: false,
+        ceilingLight: false,
+        exhaustFan: false,
+        geyser: false,
+        wiringBrand: "",
+        wireType: "",
+        switchType: "",
+      },
+      paint: {
+        ceilingPaint: "",
+      },
+    },
+  });
+
+  // Add new Bedroom + Washroom instance
+  const addBedroomWashroomInstance = () => {
+    const newId = bedroomWashroomInstances.length > 0 
+      ? Math.max(...bedroomWashroomInstances.map(i => i.id)) + 1 
+      : 1;
+    const newInstance = initializeBedroomWashroom(newId);
+    setBedroomWashroomInstances([...bedroomWashroomInstances, newInstance]);
+    setExpandedBedroomWashrooms({ ...expandedBedroomWashrooms, [newId]: true });
+  };
+
+  // Remove Bedroom + Washroom instance
+  const removeBedroomWashroomInstance = (id) => {
+    if (window.confirm("Are you sure you want to remove this Bedroom + Washroom?")) {
+      setBedroomWashroomInstances(bedroomWashroomInstances.filter(instance => instance.id !== id));
+      const newExpanded = { ...expandedBedroomWashrooms };
+      delete newExpanded[id];
+      setExpandedBedroomWashrooms(newExpanded);
+    }
+  };
+
+  // Toggle Bedroom + Washroom expansion
+  const toggleBedroomWashroom = (id) => {
+    setExpandedBedroomWashrooms({
+      ...expandedBedroomWashrooms,
+      [id]: !expandedBedroomWashrooms[id],
+    });
+  };
+
+  // Handle Bedroom + Washroom data change
+  const handleBedroomWashroomChange = (id, path, value) => {
+    setBedroomWashroomInstances(instances =>
+      instances.map(instance => {
+        if (instance.id !== id) return instance;
+        
+        const pathArray = path.split(".");
+        const newInstance = JSON.parse(JSON.stringify(instance));
+        let target = newInstance;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          target = target[pathArray[i]];
+        }
+        target[pathArray[pathArray.length - 1]] = value;
+        
+        return newInstance;
+      })
+    );
+  };
+
+  // Initialize a new Balcony instance
+  const initializeBalcony = (id) => ({
+    id,
+    name: `Balcony ${id}`,
+    basic: {
+      length: "",
+      width: "",
+      ceilingHeight: "",
+      doorType: "",
+      doorWindowSize: "",
+      railingType: "",
+      railingTypeOther: "",
+      railingHeight: "",
+    },
+    civil: {
+      waterproofingRequired: false,
+      slopeCorrection: false,
+      pccLeveling: false,
+      tileRemoval: false,
+      wallPlasterRepair: false,
+      ceilingRepairWaterproofing: false,
+      drainCleaningNewDrain: false,
+    },
+    floorCoverings: {
+      antiSkidTile: false,
+      stone: false,
+      granite: false,
+      woodenTile: false,
+      concreteTexture: false,
+      tileStoneSize: "",
+      groutColor: "",
+    },
+    wallCoverings: {
+      exteriorPaint: false,
+      texturePaint: false,
+      stoneCladding: false,
+      tileCladding: false,
+      brickCladding: false,
+      featureWall: "",
+      featureWallMaterial: "",
+    },
+    ceiling: {
+      exteriorPaint: false,
+      cementSheetCeiling: false,
+      woodenSlats: false,
+      metalUpvcCeiling: false,
+      waterproofCoatRequired: false,
+      lighting: "",
+      fanPoint: "",
+    },
+    carpentryBuiltIn: {
+      seatingBench: "",
+      seatingBenchMaterial: "",
+      storageUnit: "",
+      storageUnitMaterial: "",
+      outdoorCabinet: false,
+      planterBox: false,
+      privacyScreen: false,
+      privacyScreenMaterial: "",
+      privacyScreenMaterialOther: "",
+    },
+    looseFurniture: {
+      outdoorChairs: false,
+      outdoorChairsQty: "",
+      outdoorTable: false,
+      outdoorTableQty: "",
+      outdoorSofa: false,
+      swingJhoola: false,
+      swingType: "",
+      weatherproofCushions: false,
+    },
+    electrical: {
+      wallLamps: false,
+      outdoorSpotlights: false,
+      outdoorStripLights: false,
+      profileLights: false,
+      fanPoint: false,
+      heaterPoint: false,
+      speakers: false,
+      cctvCameraPoint: false,
+    },
+    waterPlumbing: {
+      waterTapRequired: "",
+      waterTapType: "",
+      drainPosition: "",
+      reRoutingRequired: "",
+    },
+    greeneryPlanters: {
+      potsRequired: false,
+      dripIrrigation: false,
+      artificialTurf: false,
+      verticalGarden: false,
+      material: "",
+    },
+    safety: {
+      childSafetyGrill: false,
+      birdNet: false,
+      antiSlipCoating: false,
+      checkRailingHeightCompliance: false,
+    },
+    notes: "",
+  });
+
+  // Add new Balcony instance
+  const addBalconyInstance = () => {
+    const newId = balconyInstances.length > 0 
+      ? Math.max(...balconyInstances.map(i => i.id)) + 1 
+      : 1;
+    const newInstance = initializeBalcony(newId);
+    setBalconyInstances([...balconyInstances, newInstance]);
+    setExpandedBalconies({ ...expandedBalconies, [newId]: true });
+  };
+
+  // Remove Balcony instance
+  const removeBalconyInstance = (id) => {
+    if (window.confirm("Are you sure you want to remove this Balcony?")) {
+      setBalconyInstances(balconyInstances.filter(instance => instance.id !== id));
+      const newExpanded = { ...expandedBalconies };
+      delete newExpanded[id];
+      setExpandedBalconies(newExpanded);
+    }
+  };
+
+  // Toggle Balcony expansion
+  const toggleBalcony = (id) => {
+    setExpandedBalconies({
+      ...expandedBalconies,
+      [id]: !expandedBalconies[id],
+    });
+  };
+
+  // Handle Balcony data change
+  const handleBalconyChange = (id, path, value) => {
+    setBalconyInstances(instances =>
+      instances.map(instance => {
+        if (instance.id !== id) return instance;
+        
+        const pathArray = path.split(".");
+        const newInstance = JSON.parse(JSON.stringify(instance));
+        let target = newInstance;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          target = target[pathArray[i]];
+        }
+        target[pathArray[pathArray.length - 1]] = value;
+        
+        return newInstance;
+      })
+    );
+  };
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
+    const completeFormData = {
+      ...formData,
+      bedroomWashroomInstances,
+      balconyInstances,
+    };
+    console.log("Form Data:", completeFormData);
     alert("Form submitted! Check console for data.");
     // Here you would typically send the data to your API
   };
 
   // Handle save as draft
   const handleSaveDraft = () => {
-    localStorage.setItem("interiorDesignForm", JSON.stringify(formData));
+    const completeFormData = {
+      formData,
+      bedroomWashroomInstances,
+      balconyInstances,
+    };
+    localStorage.setItem("interiorDesignForm", JSON.stringify(completeFormData));
     alert("Form saved as draft!");
   };
 
@@ -842,7 +1332,14 @@ export default function FormsPage() {
   const handleLoadDraft = () => {
     const draft = localStorage.getItem("interiorDesignForm");
     if (draft) {
-      setFormData(JSON.parse(draft));
+      const parsedDraft = JSON.parse(draft);
+      setFormData(parsedDraft.formData || parsedDraft);
+      if (parsedDraft.bedroomWashroomInstances) {
+        setBedroomWashroomInstances(parsedDraft.bedroomWashroomInstances);
+      }
+      if (parsedDraft.balconyInstances) {
+        setBalconyInstances(parsedDraft.balconyInstances);
+      }
       alert("Draft loaded!");
     } else {
       alert("No draft found!");
@@ -1165,7 +1662,96 @@ export default function FormsPage() {
 
             {expandedSections.rooms && (
               <div className="p-6 border-t border-gray-border space-y-4">
-                {roomsList.map((roomName) => (
+                {/* Rooms before Kitchen */}
+                {roomsList.slice(0, roomsList.indexOf("Kitchen") + 1).map((roomName) => (
+                  <RoomSection
+                    key={roomName}
+                    roomName={roomName}
+                    roomData={formData.rooms[roomName] || initializeRoom(roomName)}
+                    isExpanded={expandedRooms[roomName]}
+                    onToggle={() => toggleRoom(roomName)}
+                    onChange={handleRoomChange}
+                  />
+                ))}
+
+                {/* Bedroom + Washroom Dynamic Section */}
+                <div className="mt-6 pt-6 border-t-2 border-accent">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-accent font-bold text-lg">🛏 Bedroom + Attached Washroom</h3>
+                      <p className="text-gray-text text-sm mt-1">
+                        Add multiple bedroom + washroom combinations dynamically. Each instance is independent.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addBedroomWashroomInstance}
+                      className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <span className="text-lg">➕</span> Add Bedroom + Washroom
+                    </button>
+                  </div>
+
+                  {bedroomWashroomInstances.length === 0 ? (
+                    <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                      No bedroom + washroom added yet. Click "Add Bedroom + Washroom" to create one.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {bedroomWashroomInstances.map((instance) => (
+                        <BedroomWithWashroomSection
+                          key={instance.id}
+                          instance={instance}
+                          isExpanded={expandedBedroomWashrooms[instance.id]}
+                          onToggle={() => toggleBedroomWashroom(instance.id)}
+                          onChange={handleBedroomWashroomChange}
+                          onRemove={() => removeBedroomWashroomInstance(instance.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Balconies Dynamic Section */}
+                <div className="mt-6 pt-6 border-t-2 border-accent">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-accent font-bold text-lg">🏡 Balconies</h3>
+                      <p className="text-gray-text text-sm mt-1">
+                        Add multiple balconies dynamically. Each balcony is independent with full customization.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addBalconyInstance}
+                      className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <span className="text-lg">➕</span> Add Balcony
+                    </button>
+                  </div>
+
+                  {balconyInstances.length === 0 ? (
+                    <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                      No balcony added yet. Click "Add Balcony" to create one.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {balconyInstances.map((instance) => (
+                        <BalconySection
+                          key={instance.id}
+                          instance={instance}
+                          isExpanded={expandedBalconies[instance.id]}
+                          onToggle={() => toggleBalcony(instance.id)}
+                          onChange={handleBalconyChange}
+                          onRemove={() => removeBalconyInstance(instance.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Rooms after Kitchen */}
+                {roomsList.slice(roomsList.indexOf("Kitchen") + 1).map((roomName) => (
                   <RoomSection
                     key={roomName}
                     roomName={roomName}
@@ -1214,6 +1800,8 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
   const isFoyer = roomName === "Foyer";
   const isLivingRoom = roomName === "Living Room" || roomName === "Drawing Room";
   const isDiningArea = roomName === "Dining Area" || roomName === "Dining Room";
+  const isDomesticHelpRoom = roomName === "Domestic Help Room";
+  const isStoreRoom = roomName === "Store Room";
 
   return (
     <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
@@ -6536,7 +7124,7 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
             />
           </div>
             </>
-          ) : (
+          ) : !isDomesticHelpRoom ? (
             <>
           {/* A. BASIC INFORMATION */}
           <div>
@@ -7064,6 +7652,1296 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
             </div>
           </div>
             </>
+          ) : null}
+
+          {/* DOMESTIC HELP ROOM SECTIONS */}
+          {isDomesticHelpRoom && roomData.domesticHelpRoom && (
+            <>
+              {/* 🏠 1️⃣ BASIC INFO */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🏠 1️⃣ BASIC INFO
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.domesticHelpRoom.basicInfo.length}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.basicInfo.length", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.domesticHelpRoom.basicInfo.width}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.basicInfo.width", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.domesticHelpRoom.basicInfo.height}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.basicInfo.height", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 🪵 2️⃣ WARDROBE */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🪵 2️⃣ WARDROBE
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wardrobe Width (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.domesticHelpRoom.wardrobe.width}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.width", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wardrobe Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.domesticHelpRoom.wardrobe.height}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.height", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Material</label>
+                    <select
+                      value={roomData.domesticHelpRoom.wardrobe.material}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.material", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="laminate">Laminate</option>
+                      <option value="veneer">Veneer</option>
+                      <option value="pu">PU</option>
+                      <option value="acrylic">Acrylic</option>
+                      <option value="hdhmr">HDHMR</option>
+                      <option value="ply">Ply</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Finish</label>
+                    <select
+                      value={roomData.domesticHelpRoom.wardrobe.finish}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.finish", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="laminateFinish">Laminate Finish</option>
+                      <option value="veneerFinish">Veneer Finish</option>
+                      <option value="puFinish">PU Finish</option>
+                      <option value="acrylicFinish">Acrylic Finish</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Hardware Level */}
+                <div className="mt-4">
+                  <label className="block text-xs text-gray-text mb-2">Hardware Level</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`hardwareLevel-${roomName}`}
+                        value="basic"
+                        checked={roomData.domesticHelpRoom.wardrobe.hardwareLevel === "basic"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.hardwareLevel", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Basic</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`hardwareLevel-${roomName}`}
+                        value="mid"
+                        checked={roomData.domesticHelpRoom.wardrobe.hardwareLevel === "mid"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.hardwareLevel", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Mid</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`hardwareLevel-${roomName}`}
+                        value="premium"
+                        checked={roomData.domesticHelpRoom.wardrobe.hardwareLevel === "premium"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.hardwareLevel", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Premium</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`hardwareLevel-${roomName}`}
+                        value="ultraPremium"
+                        checked={roomData.domesticHelpRoom.wardrobe.hardwareLevel === "ultraPremium"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.hardwareLevel", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Ultra Premium</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Lofts and Shelves */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Lofts</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`lofts-${roomName}`}
+                          value="yes"
+                          checked={roomData.domesticHelpRoom.wardrobe.lofts === "yes"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.lofts", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`lofts-${roomName}`}
+                          value="no"
+                          checked={roomData.domesticHelpRoom.wardrobe.lofts === "no"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.lofts", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">No</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Shelves (Quantity)</label>
+                    <input
+                      type="number"
+                      value={roomData.domesticHelpRoom.wardrobe.shelves}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.wardrobe.shelves", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 🛏 3️⃣ BED NICHE */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🛏 3️⃣ BED NICHE
+                </h5>
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Bed Niche Required</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`bedNiche-${roomName}`}
+                        value="yes"
+                        checked={roomData.domesticHelpRoom.bedNiche.required === "yes"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.bedNiche.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`bedNiche-${roomName}`}
+                        value="no"
+                        checked={roomData.domesticHelpRoom.bedNiche.required === "no"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.bedNiche.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* 💡 4️⃣ ELECTRICAL */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  💡 4️⃣ ELECTRICAL
+                </h5>
+                
+                {/* Wiring Brand */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Wiring Brand</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wiringBrand-${roomName}`}
+                        value="havells"
+                        checked={roomData.domesticHelpRoom.electrical.wiringBrand === "havells"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wiringBrand", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Havells</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wiringBrand-${roomName}`}
+                        value="polycab"
+                        checked={roomData.domesticHelpRoom.electrical.wiringBrand === "polycab"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wiringBrand", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Polycab</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wiringBrand-${roomName}`}
+                        value="finolex"
+                        checked={roomData.domesticHelpRoom.electrical.wiringBrand === "finolex"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wiringBrand", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Finolex</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wiringBrand-${roomName}`}
+                        value="local"
+                        checked={roomData.domesticHelpRoom.electrical.wiringBrand === "local"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wiringBrand", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Local</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Wire Type */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Wire Type</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wireType-${roomName}`}
+                        value="fr"
+                        checked={roomData.domesticHelpRoom.electrical.wireType === "fr"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wireType", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">FR</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wireType-${roomName}`}
+                        value="frls"
+                        checked={roomData.domesticHelpRoom.electrical.wireType === "frls"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wireType", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">FRLS</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wireType-${roomName}`}
+                        value="nonFr"
+                        checked={roomData.domesticHelpRoom.electrical.wireType === "nonFr"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.wireType", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Non-FR</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Switches */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Switches</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`switches-${roomName}`}
+                        value="anchor"
+                        checked={roomData.domesticHelpRoom.electrical.switches === "anchor"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.switches", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Anchor</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`switches-${roomName}`}
+                        value="gm"
+                        checked={roomData.domesticHelpRoom.electrical.switches === "gm"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.switches", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">GM</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`switches-${roomName}`}
+                        value="legrand"
+                        checked={roomData.domesticHelpRoom.electrical.switches === "legrand"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.switches", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Legrand</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`switches-${roomName}`}
+                        value="schneider"
+                        checked={roomData.domesticHelpRoom.electrical.switches === "schneider"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.switches", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Schneider</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`switches-${roomName}`}
+                        value="basic"
+                        checked={roomData.domesticHelpRoom.electrical.switches === "basic"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.switches", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Basic</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Fan and Lights */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Fan</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`fan-${roomName}`}
+                          value="yes"
+                          checked={roomData.domesticHelpRoom.electrical.fan === "yes"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.fan", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`fan-${roomName}`}
+                          value="no"
+                          checked={roomData.domesticHelpRoom.electrical.fan === "no"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.fan", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">No</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Lights</label>
+                    <input
+                      type="text"
+                      value={roomData.domesticHelpRoom.electrical.lights}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.lights", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="Specify lights"
+                    />
+                  </div>
+                </div>
+
+                {/* Ventilation */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Ventilation</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`ventilation-${roomName}`}
+                        value="window"
+                        checked={roomData.domesticHelpRoom.electrical.ventilation === "window"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.ventilation", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Window</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`ventilation-${roomName}`}
+                        value="exhaust"
+                        checked={roomData.domesticHelpRoom.electrical.ventilation === "exhaust"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.ventilation", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Exhaust</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`ventilation-${roomName}`}
+                        value="both"
+                        checked={roomData.domesticHelpRoom.electrical.ventilation === "both"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.electrical.ventilation", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Both</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* 🎨 5️⃣ PAINT */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🎨 5️⃣ PAINT
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wall Paint</label>
+                    <select
+                      value={roomData.domesticHelpRoom.paint.wallPaint}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.paint.wallPaint", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="royaleShine">Royale Shine</option>
+                      <option value="pu">PU</option>
+                      <option value="texture">Texture</option>
+                      <option value="royaleMatt">Royale Matt</option>
+                      <option value="satin">Satin</option>
+                      <option value="plasticPremium">Plastic Premium</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Ceiling Paint</label>
+                    <select
+                      value={roomData.domesticHelpRoom.paint.ceilingPaint}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.paint.ceilingPaint", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="royaleShine">Royale Shine</option>
+                      <option value="pu">PU</option>
+                      <option value="texture">Texture</option>
+                      <option value="royaleMatt">Royale Matt</option>
+                      <option value="satin">Satin</option>
+                      <option value="plasticPremium">Plastic Premium</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 🚿 6️⃣ HELP BATHROOM */}
+              <div className="mb-6 p-4 bg-dark border border-gray-border rounded">
+                <h5 className="text-accent font-medium mb-4 text-sm flex items-center gap-2">
+                  🚿 6️⃣ HELP BATHROOM
+                </h5>
+
+                {/* Wall Covering */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Wall Covering</label>
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.domesticHelpRoom.helpBathroom.wallCovering.tile}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.wallCovering.tile", e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">Tile</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.domesticHelpRoom.helpBathroom.wallCovering.marble}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.wallCovering.marble", e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">Marble</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.domesticHelpRoom.helpBathroom.wallCovering.granite}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.wallCovering.granite", e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">Granite</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Floor Covering */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Floor Covering</label>
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.domesticHelpRoom.helpBathroom.floorCovering.antiSkidTile}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.floorCovering.antiSkidTile", e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">Anti-Skid Tile</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.domesticHelpRoom.helpBathroom.floorCovering.marble}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.floorCovering.marble", e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">Marble</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.domesticHelpRoom.helpBathroom.floorCovering.granite}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.floorCovering.granite", e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">Granite</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* WC */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">WC</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wc-${roomName}`}
+                        value="floorMounted"
+                        checked={roomData.domesticHelpRoom.helpBathroom.wc === "floorMounted"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.wc", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Floor Mounted</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wc-${roomName}`}
+                        value="wallMounted"
+                        checked={roomData.domesticHelpRoom.helpBathroom.wc === "wallMounted"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.wc", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Wall Mounted</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Basin */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Basin</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`basin-${roomName}`}
+                        value="wallMounted"
+                        checked={roomData.domesticHelpRoom.helpBathroom.basin === "wallMounted"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.basin", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Wall Mounted</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`basin-${roomName}`}
+                        value="tableTop"
+                        checked={roomData.domesticHelpRoom.helpBathroom.basin === "tableTop"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.basin", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Table Top</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`basin-${roomName}`}
+                        value="basic"
+                        checked={roomData.domesticHelpRoom.helpBathroom.basin === "basic"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.basin", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Basic</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Fittings */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-1">Fittings</label>
+                  <select
+                    value={roomData.domesticHelpRoom.helpBathroom.fittings}
+                    onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.fittings", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="cera">Cera</option>
+                    <option value="hindware">Hindware</option>
+                    <option value="jaquar">Jaquar</option>
+                    <option value="kohler">Kohler</option>
+                    <option value="grohe">Grohe</option>
+                    <option value="other">Other</option>
+                  </select>
+                  {roomData.domesticHelpRoom.helpBathroom.fittings === "other" && (
+                    <input
+                      type="text"
+                      value={roomData.domesticHelpRoom.helpBathroom.fittingsOther}
+                      onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.fittingsOther", e.target.value)}
+                      placeholder="Specify other brand"
+                      className="w-full mt-2 bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  )}
+                </div>
+
+                {/* Plumbing Line Material */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-2">Plumbing Line Material</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`plumbingLine-${roomName}`}
+                        value="astral"
+                        checked={roomData.domesticHelpRoom.helpBathroom.plumbingLineMaterial === "astral"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.plumbingLineMaterial", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Astral</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`plumbingLine-${roomName}`}
+                        value="supreme"
+                        checked={roomData.domesticHelpRoom.helpBathroom.plumbingLineMaterial === "supreme"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.plumbingLineMaterial", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Supreme</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`plumbingLine-${roomName}`}
+                        value="prakash"
+                        checked={roomData.domesticHelpRoom.helpBathroom.plumbingLineMaterial === "prakash"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.plumbingLineMaterial", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Prakash</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`plumbingLine-${roomName}`}
+                        value="ashirvad"
+                        checked={roomData.domesticHelpRoom.helpBathroom.plumbingLineMaterial === "ashirvad"}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.plumbingLineMaterial", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Ashirvad</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Exhaust and Geyser */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Exhaust</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`exhaust-${roomName}`}
+                          value="yes"
+                          checked={roomData.domesticHelpRoom.helpBathroom.exhaust === "yes"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.exhaust", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`exhaust-${roomName}`}
+                          value="no"
+                          checked={roomData.domesticHelpRoom.helpBathroom.exhaust === "no"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.exhaust", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">No</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Geyser</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`geyser-${roomName}`}
+                          value="yes"
+                          checked={roomData.domesticHelpRoom.helpBathroom.geyser === "yes"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.geyser", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`geyser-${roomName}`}
+                          value="no"
+                          checked={roomData.domesticHelpRoom.helpBathroom.geyser === "no"}
+                          onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.geyser", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">No</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Switches */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-text mb-1">Switches</label>
+                  <select
+                    value={roomData.domesticHelpRoom.helpBathroom.switches}
+                    onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.switches", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="anchor">Anchor</option>
+                    <option value="gm">GM</option>
+                    <option value="legrand">Legrand</option>
+                    <option value="schneider">Schneider</option>
+                    <option value="basic">Basic</option>
+                  </select>
+                </div>
+
+                {/* Paint (Ceiling) */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Ceiling Paint</label>
+                  <select
+                    value={roomData.domesticHelpRoom.helpBathroom.paint}
+                    onChange={(e) => onChange(roomName, "domesticHelpRoom.helpBathroom.paint", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="royaleShine">Royale Shine</option>
+                    <option value="pu">PU</option>
+                    <option value="texture">Texture</option>
+                    <option value="royaleMatt">Royale Matt</option>
+                    <option value="satin">Satin</option>
+                    <option value="plasticPremium">Plastic Premium</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 📝 7️⃣ NOTES */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  📝 7️⃣ NOTES
+                </h5>
+                <textarea
+                  value={roomData.domesticHelpRoom.notes}
+                  onChange={(e) => onChange(roomName, "domesticHelpRoom.notes", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  rows="4"
+                  placeholder="Add any additional notes for the domestic help room..."
+                />
+              </div>
+            </>
+          )}
+
+          {/* STORE ROOM SECTIONS */}
+          {isStoreRoom && roomData.storeRoom && (
+            <>
+              {/* 🏠 1️⃣ BASIC INFORMATION */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🏠 1️⃣ BASIC INFORMATION
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.storeRoom.basicInfo.length}
+                      onChange={(e) => onChange(roomName, "storeRoom.basicInfo.length", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.storeRoom.basicInfo.width}
+                      onChange={(e) => onChange(roomName, "storeRoom.basicInfo.width", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Ceiling Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.storeRoom.basicInfo.ceilingHeight}
+                      onChange={(e) => onChange(roomName, "storeRoom.basicInfo.ceilingHeight", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 🗄️ 2️⃣ STORE WARDROBE DETAILS */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🗄️ 2️⃣ STORE WARDROBE DETAILS
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Suggested Width (ft)</label>
+                    <input
+                      type="text"
+                      value={roomData.storeRoom.wardrobe.suggestedWidth}
+                      onChange={(e) => onChange(roomName, "storeRoom.wardrobe.suggestedWidth", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="e.g., 4-6 ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Suggested Height (ft)</label>
+                    <input
+                      type="text"
+                      value={roomData.storeRoom.wardrobe.suggestedHeight}
+                      onChange={(e) => onChange(roomName, "storeRoom.wardrobe.suggestedHeight", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="e.g., 7-8 ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Material</label>
+                    <select
+                      value={roomData.storeRoom.wardrobe.material}
+                      onChange={(e) => onChange(roomName, "storeRoom.wardrobe.material", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="laminate">Laminate</option>
+                      <option value="veneer">Veneer</option>
+                      <option value="pu">PU</option>
+                      <option value="acrylic">Acrylic</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Carcass</label>
+                    <select
+                      value={roomData.storeRoom.wardrobe.carcass}
+                      onChange={(e) => onChange(roomName, "storeRoom.wardrobe.carcass", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="hdhmr">HDHMR</option>
+                      <option value="bwp">BWP</option>
+                      <option value="plywood">Plywood</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-xs text-gray-text mb-2">Hardware Level</label>
+                  <div className="flex flex-wrap gap-4">
+                    {["Basic", "Mid", "Premium", "Ultra Premium"].map((level) => (
+                      <label key={level} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`hardwareLevel-${roomName}`}
+                          value={level}
+                          checked={roomData.storeRoom.wardrobe.hardwareLevel === level}
+                          onChange={(e) => onChange(roomName, "storeRoom.wardrobe.hardwareLevel", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">{level}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Lofts Required</label>
+                    <div className="flex gap-4">
+                      {["Yes", "No"].map((val) => (
+                        <label key={val} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`lofts-${roomName}`}
+                            value={val}
+                            checked={roomData.storeRoom.wardrobe.lofts === val}
+                            onChange={(e) => onChange(roomName, "storeRoom.wardrobe.lofts", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{val}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Shelf Configuration</label>
+                    <select
+                      value={roomData.storeRoom.wardrobe.shelfConfiguration}
+                      onChange={(e) => onChange(roomName, "storeRoom.wardrobe.shelfConfiguration", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="adjustable">Adjustable</option>
+                      <option value="fixed">Fixed</option>
+                      <option value="heavyDuty">Heavy-Duty</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-xs text-gray-text mb-2">Storage Zoning</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { key: "luggage", label: "Luggage" },
+                      { key: "grocery", label: "Grocery" },
+                      { key: "cleaningSupplies", label: "Cleaning Supplies" },
+                      { key: "seasonalStorage", label: "Seasonal Storage" },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={roomData.storeRoom.wardrobe.storageZoning[key]}
+                          onChange={(e) => onChange(roomName, `storeRoom.wardrobe.storageZoning.${key}`, e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                        />
+                        <span className="text-white text-sm">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 💡 3️⃣ LIGHTING OPTIONS */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  💡 3️⃣ LIGHTING OPTIONS
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Ceiling Light Type</label>
+                    <select
+                      value={roomData.storeRoom.lighting.ceilingLightType}
+                      onChange={(e) => onChange(roomName, "storeRoom.lighting.ceilingLightType", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="ledPanel">LED Panel</option>
+                      <option value="cob">COB</option>
+                      <option value="tubeLight">Tube Light</option>
+                      <option value="bulb">Bulb</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { key: "stripLightingInsideShelves", label: "Strip Lighting Inside Shelves" },
+                    { key: "sensorLights", label: "Sensor Lights" },
+                    { key: "emergencyBackupLight", label: "Emergency Backup Light" },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.storeRoom.lighting[key]}
+                        onChange={(e) => onChange(roomName, `storeRoom.lighting.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 🌬️ 4️⃣ VENTILATION */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🌬️ 4️⃣ VENTILATION
+                </h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { key: "exhaustFan", label: "Exhaust Fan" },
+                    { key: "louverVents", label: "Louver Vents" },
+                    { key: "dehumidifierProvision", label: "Dehumidifier Provision" },
+                    { key: "windowOption", label: "Window Option" },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.storeRoom.ventilation[key]}
+                        onChange={(e) => onChange(roomName, `storeRoom.ventilation.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 🎨 5️⃣ PAINT */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  🎨 5️⃣ PAINT
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wall Finish</label>
+                    <select
+                      value={roomData.storeRoom.paint.wallFinish}
+                      onChange={(e) => onChange(roomName, "storeRoom.paint.wallFinish", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="royaleMatt">Royale Matt</option>
+                      <option value="plasticPremium">Plastic Premium</option>
+                      <option value="washablePaint">Washable Paint</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Ceiling Finish</label>
+                    <select
+                      value={roomData.storeRoom.paint.ceilingFinish}
+                      onChange={(e) => onChange(roomName, "storeRoom.paint.ceilingFinish", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="royaleMatt">Royale Matt</option>
+                      <option value="plasticPremium">Plastic Premium</option>
+                      <option value="washablePaint">Washable Paint</option>
+                    </select>
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={roomData.storeRoom.paint.moistureResistantPaint}
+                    onChange={(e) => onChange(roomName, "storeRoom.paint.moistureResistantPaint", e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">Moisture-Resistant Paint</span>
+                </label>
+              </div>
+
+              {/* ⚡ 6️⃣ ELECTRICAL */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  ⚡ 6️⃣ ELECTRICAL
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Wiring Brand</label>
+                    <div className="flex flex-wrap gap-3">
+                      {["Havells", "Polycab", "Finolex"].map((brand) => (
+                        <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`wiringBrand-${roomName}`}
+                            value={brand}
+                            checked={roomData.storeRoom.electrical.wiringBrand === brand}
+                            onChange={(e) => onChange(roomName, "storeRoom.electrical.wiringBrand", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{brand}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Wire Type</label>
+                    <div className="flex gap-4">
+                      {["FR", "FRLS"].map((type) => (
+                        <label key={type} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`wireType-${roomName}`}
+                            value={type}
+                            checked={roomData.storeRoom.electrical.wireType === type}
+                            onChange={(e) => onChange(roomName, "storeRoom.electrical.wireType", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Switches</label>
+                    <div className="flex flex-wrap gap-3">
+                      {["Anchor", "GM", "Legrand", "Schneider", "Smart"].map((brand) => (
+                        <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`switches-${roomName}`}
+                            value={brand}
+                            checked={roomData.storeRoom.electrical.switches === brand}
+                            onChange={(e) => onChange(roomName, "storeRoom.electrical.switches", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{brand}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Number of Light Points</label>
+                    <input
+                      type="number"
+                      value={roomData.storeRoom.electrical.lightPoints}
+                      onChange={(e) => onChange(roomName, "storeRoom.electrical.lightPoints", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Extra Plug Points</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { key: "vacuum", label: "Vacuum" },
+                      { key: "iron", label: "Iron" },
+                      { key: "inverter", label: "Inverter" },
+                      { key: "other", label: "Other" },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={roomData.storeRoom.electrical.extraPlugPoints[key]}
+                          onChange={(e) => onChange(roomName, `storeRoom.electrical.extraPlugPoints.${key}`, e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                        />
+                        <span className="text-white text-sm">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* ✨ 7️⃣ OPTIONAL ENHANCEMENTS */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  ✨ 7️⃣ OPTIONAL ENHANCEMENTS
+                </h5>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { key: "heavyDutyRackingSystem", label: "Heavy-Duty Racking System" },
+                    { key: "metalStorageRacks", label: "Metal Storage Racks" },
+                    { key: "lockableCabinet", label: "Lockable Cabinet" },
+                    { key: "cctvCameraPoint", label: "CCTV Camera Point" },
+                    { key: "automationSensorLight", label: "Automation Sensor Light" },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={roomData.storeRoom.optionalEnhancements[key]}
+                        onChange={(e) => onChange(roomName, `storeRoom.optionalEnhancements.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 💰 8️⃣ BUDGET RANGE & RECOMMENDATIONS */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  💰 8️⃣ BUDGET RANGE & RECOMMENDATIONS
+                </h5>
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Budget Range</label>
+                  <div className="flex flex-wrap gap-4">
+                    {["Basic Setup", "Mid-Range Setup", "Premium Setup"].map((range) => (
+                      <label key={range} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`budgetRange-${roomName}`}
+                          value={range}
+                          checked={roomData.storeRoom.budgetRange === range}
+                          onChange={(e) => onChange(roomName, "storeRoom.budgetRange", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">{range}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-4 p-4 bg-dark-light border border-gray-border rounded">
+                  <p className="text-xs text-gray-text mb-2">💡 <strong>Recommendations:</strong></p>
+                  <ul className="text-xs text-gray-text space-y-1 ml-4">
+                    <li>• <strong>Small Apartments:</strong> Utilize vertical space with ceiling-height cabinets, adjustable shelves, and compact organization systems</li>
+                    <li>• <strong>Large Villas:</strong> Consider dedicated zoning for different storage types, heavy-duty racks for bulk items, and climate control options</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* 📝 9️⃣ NOTES */}
+              <div className="mb-6">
+                <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
+                  📝 9️⃣ NOTES
+                </h5>
+                <textarea
+                  value={roomData.storeRoom.notes}
+                  onChange={(e) => onChange(roomName, "storeRoom.notes", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  rows="4"
+                  placeholder="Add any additional notes or special requirements for the store room..."
+                />
+              </div>
+            </>
           )}
 
           {/* WASHROOM-SPECIFIC SECTIONS */}
@@ -7077,7 +8955,7 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange }) {
 
           {/* BALCONY-SPECIFIC SECTIONS */}
           {isBalcony && roomData.balcony && (
-            <BalconySection
+            <RoomBalconySection
               roomName={roomName}
               balconyData={roomData.balcony}
               onChange={onChange}
@@ -7214,7 +9092,7 @@ function WashroomSection({ roomName, washroomData, onChange }) {
 }
 
 // Balcony-specific component
-function BalconySection({ roomName, balconyData, onChange }) {
+function RoomBalconySection({ roomName, balconyData, onChange }) {
   return (
     <div className="space-y-4 border-t border-gray-border pt-4">
       <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
@@ -7358,58 +9236,1933 @@ function BalconySection({ roomName, balconyData, onChange }) {
   );
 }
 
+// Bedroom + Washroom Dynamic Section Component
+function BedroomWithWashroomSection({ instance, isExpanded, onToggle, onChange, onRemove }) {
+  const { id, name, bedroom, washroom } = instance;
+
+  return (
+    <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 bg-dark-light">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 flex items-center justify-between hover:text-accent transition"
+        >
+          <span className="text-white font-semibold">{name}</span>
+          <span className="text-accent">{isExpanded ? "▲" : "▼"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-4 px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition"
+        >
+          Remove
+        </button>
+      </div>
+
+      {/* Content */}
+      {isExpanded && (
+        <div className="p-5 space-y-8 border-t border-gray-border">
+          
+          {/* ==================== PART 1: BEDROOM DETAILS ==================== */}
+          <div className="space-y-6">
+            <h3 className="text-accent font-bold text-lg">🛏 PART 1 – BEDROOM DETAILS</h3>
+
+            {/* 1️⃣ Basic Information */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                1️⃣ Basic Information
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={bedroom.basicInfo.length}
+                    onChange={(e) => onChange(id, "bedroom.basicInfo.length", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={bedroom.basicInfo.width}
+                    onChange={(e) => onChange(id, "bedroom.basicInfo.width", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Ceiling Height (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={bedroom.basicInfo.ceilingHeight}
+                    onChange={(e) => onChange(id, "bedroom.basicInfo.ceilingHeight", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Window Count</label>
+                  <input
+                    type="number"
+                    value={bedroom.basicInfo.windowCount}
+                    onChange={(e) => onChange(id, "bedroom.basicInfo.windowCount", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Sill Height (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={bedroom.basicInfo.sillHeight}
+                    onChange={(e) => onChange(id, "bedroom.basicInfo.sillHeight", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Lintel Height (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={bedroom.basicInfo.lintelHeight}
+                    onChange={(e) => onChange(id, "bedroom.basicInfo.lintelHeight", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+              </div>
+
+              {/* Balcony Access */}
+              <div className="mt-4">
+                <label className="block text-xs text-gray-text mb-2">Balcony Access</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`balconyAccess-${id}`}
+                      value="yes"
+                      checked={bedroom.basicInfo.balconyAccess === "yes"}
+                      onChange={(e) => onChange(id, "bedroom.basicInfo.balconyAccess", e.target.value)}
+                      className="w-4 h-4 text-accent focus:ring-accent"
+                    />
+                    <span className="text-white text-sm">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`balconyAccess-${id}`}
+                      value="no"
+                      checked={bedroom.basicInfo.balconyAccess === "no"}
+                      onChange={(e) => onChange(id, "bedroom.basicInfo.balconyAccess", e.target.value)}
+                      className="w-4 h-4 text-accent focus:ring-accent"
+                    />
+                    <span className="text-white text-sm">No</span>
+                  </label>
+                </div>
+
+                {/* Conditional Balcony Details */}
+                {bedroom.basicInfo.balconyAccess === "yes" && (
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-dark-light rounded">
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Balcony Door Type</label>
+                      <select
+                        value={bedroom.basicInfo.balconyDoorType}
+                        onChange={(e) => onChange(id, "bedroom.basicInfo.balconyDoorType", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="sliding">Sliding</option>
+                        <option value="hingedSingle">Hinged Single</option>
+                        <option value="hingedDouble">Hinged Double</option>
+                        <option value="fixed">Fixed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Door Width (ft)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={bedroom.basicInfo.balconyDoorWidth}
+                        onChange={(e) => onChange(id, "bedroom.basicInfo.balconyDoorWidth", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Door Height (ft)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={bedroom.basicInfo.balconyDoorHeight}
+                        onChange={(e) => onChange(id, "bedroom.basicInfo.balconyDoorHeight", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      />
+                    </div>
+                    <div className="md:col-span-3">
+                      <label className="block text-xs text-gray-text mb-1">Balcony Railing Type</label>
+                      <select
+                        value={bedroom.basicInfo.balconyRailingType}
+                        onChange={(e) => onChange(id, "bedroom.basicInfo.balconyRailingType", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="brick">Brick</option>
+                        <option value="glass">Glass</option>
+                        <option value="aluminiumGlass">Aluminium + Glass</option>
+                        <option value="ss">SS</option>
+                        <option value="ms">MS</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2️⃣ Civil Work */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                2️⃣ Civil Work (Multi Select)
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries({
+                  demolitionFlooring: "Demolition of flooring",
+                  demolitionWalls: "Demolition of walls",
+                  newPartitions: "New partitions / wall shifting",
+                  floorLeveling: "Floor leveling",
+                  newFlooring: "New flooring installation",
+                  skirting: "Skirting installation",
+                  beamCovering: "Beam/column covering",
+                  windowModification: "Window enlargement/reduction",
+                  doorModification: "Door shifting / enlargement",
+                }).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={bedroom.civilWork[key]}
+                      onChange={(e) => onChange(id, `bedroom.civilWork.${key}`, e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    />
+                    <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* 3️⃣ False Ceiling */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                3️⃣ False Ceiling
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">False Ceiling Required</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`falseCeilingRequired-${id}`}
+                        value="yes"
+                        checked={bedroom.falseCeiling.required === "yes"}
+                        onChange={(e) => onChange(id, "bedroom.falseCeiling.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`falseCeilingRequired-${id}`}
+                        value="no"
+                        checked={bedroom.falseCeiling.required === "no"}
+                        onChange={(e) => onChange(id, "bedroom.falseCeiling.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+
+                {bedroom.falseCeiling.required === "yes" && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-dark-light rounded">
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Ceiling Type</label>
+                      <select
+                        value={bedroom.falseCeiling.type}
+                        onChange={(e) => onChange(id, "bedroom.falseCeiling.type", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="pop">POP</option>
+                        <option value="wooden">Wooden</option>
+                        <option value="stretch">Stretch</option>
+                        <option value="grid">Grid</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Cove Lighting</label>
+                      <select
+                        value={bedroom.falseCeiling.coveLighting}
+                        onChange={(e) => onChange(id, "bedroom.falseCeiling.coveLighting", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="outside">Outside</option>
+                        <option value="inside">Inside</option>
+                        <option value="both">Both</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Ceiling Design</label>
+                      <select
+                        value={bedroom.falseCeiling.design}
+                        onChange={(e) => onChange(id, "bedroom.falseCeiling.design", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="grooves">Grooves</option>
+                        <option value="mouldings">Mouldings</option>
+                        <option value="beamCovering">Beam Covering</option>
+                        <option value="noDesign">No Design</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 4️⃣ Floor Covering */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                4️⃣ Floor Covering
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {Object.entries({
+                  glossTile: "Gloss Tile",
+                  mattTile: "Matt Tile",
+                  marble: "Marble",
+                  granite: "Granite",
+                }).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={bedroom.floorCovering[key]}
+                      onChange={(e) => onChange(id, `bedroom.floorCovering.${key}`, e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    />
+                    <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* 5️⃣ Wall Paneling */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                5️⃣ Wall Paneling
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Wall Paneling Required</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wallPanelingRequired-${id}`}
+                        value="yes"
+                        checked={bedroom.wallPaneling.required === "yes"}
+                        onChange={(e) => onChange(id, "bedroom.wallPaneling.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`wallPanelingRequired-${id}`}
+                        value="no"
+                        checked={bedroom.wallPaneling.required === "no"}
+                        onChange={(e) => onChange(id, "bedroom.wallPaneling.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+
+                {bedroom.wallPaneling.required === "yes" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-dark-light rounded">
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Number of Walls</label>
+                      <select
+                        value={bedroom.wallPaneling.numberOfWalls}
+                        onChange={(e) => onChange(id, "bedroom.wallPaneling.numberOfWalls", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-text mb-1">Material</label>
+                      <select
+                        value={bedroom.wallPaneling.material}
+                        onChange={(e) => onChange(id, "bedroom.wallPaneling.material", e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      >
+                        <option value="">Select</option>
+                        <option value="pop">POP</option>
+                        <option value="laminate">Laminate</option>
+                        <option value="veneer">Veneer</option>
+                        <option value="pu">PU</option>
+                        <option value="mdf">MDF</option>
+                        <option value="fabric">Fabric</option>
+                        <option value="glass">Glass</option>
+                        <option value="acrylic">Acrylic</option>
+                        <option value="stone">Stone</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 6️⃣ Wardrobe Details */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                6️⃣ Wardrobe Details
+              </h4>
+              <div className="space-y-4">
+                {/* Wardrobe Type */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Wardrobe Type</label>
+                  <select
+                    value={bedroom.wardrobe.type}
+                    onChange={(e) => onChange(id, "bedroom.wardrobe.type", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="normal">Normal Wardrobe</option>
+                    <option value="walkIn">Walk-In Wardrobe</option>
+                  </select>
+                </div>
+
+                {/* Wardrobe Height */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Wardrobe Height</label>
+                  <select
+                    value={bedroom.wardrobe.height}
+                    onChange={(e) => onChange(id, "bedroom.wardrobe.height", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="fullHeight">Full Height</option>
+                    <option value="8ft">8 ft</option>
+                    <option value="8ftLoft">8 ft + Loft</option>
+                  </select>
+                </div>
+
+                {/* Dimensions */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={bedroom.wardrobe.width}
+                      onChange={(e) => onChange(id, "bedroom.wardrobe.width", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Depth (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={bedroom.wardrobe.depth}
+                      onChange={(e) => onChange(id, "bedroom.wardrobe.depth", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Loft Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={bedroom.wardrobe.loftHeight}
+                      onChange={(e) => onChange(id, "bedroom.wardrobe.loftHeight", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Internal Layout */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Internal Layout (Multi Select)</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {Object.entries({
+                      hangingRod: "Hanging Rod",
+                      hangingPullout: "Hanging Pullout",
+                      shelves: "Shelves",
+                      drawers: "Drawers",
+                      shoeRack: "Shoe Rack",
+                      trouserPullout: "Trouser Pullout",
+                      tieRack: "Tie Rack",
+                      jewelleryTray: "Jewellery Tray",
+                      mirrorInside: "Mirror Inside",
+                      sensorLight: "Sensor Light",
+                    }).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={bedroom.wardrobe.internalLayout[key]}
+                          onChange={(e) => onChange(id, `bedroom.wardrobe.internalLayout.${key}`, e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                        />
+                        <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shutter Finish & Hardware */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Shutter Finish</label>
+                    <select
+                      value={bedroom.wardrobe.shutterFinish}
+                      onChange={(e) => onChange(id, "bedroom.wardrobe.shutterFinish", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="laminate">Laminate</option>
+                      <option value="veneer">Veneer</option>
+                      <option value="pu">PU</option>
+                      <option value="acrylic">Acrylic</option>
+                      <option value="glass">Glass</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Hardware Level</label>
+                    <select
+                      value={bedroom.wardrobe.hardwareLevel}
+                      onChange={(e) => onChange(id, "bedroom.wardrobe.hardwareLevel", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="basic">Basic</option>
+                      <option value="mid">Mid</option>
+                      <option value="premium">Premium</option>
+                      <option value="ultraPremium">Ultra Premium</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 7️⃣ Other Carpentry */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                7️⃣ Other Carpentry
+              </h4>
+              <div className="space-y-4">
+                {/* Bed Type */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Bed</label>
+                  <select
+                    value={bedroom.otherCarpentry.bed}
+                    onChange={(e) => onChange(id, "bedroom.otherCarpentry.bed", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="singleBox">Single Box</option>
+                    <option value="doubleBox">Double Box</option>
+                  </select>
+                </div>
+
+                {/* Other Items */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {Object.entries({
+                    headboard: "Headboard",
+                    footboard: "Footboard",
+                    sideTables: "Side Tables",
+                    studyTable: "Study Table",
+                    dressingTable: "Dressing Table",
+                    tvPanel: "TV Panel",
+                    bookshelf: "Bookshelf",
+                  }).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={bedroom.otherCarpentry[key]}
+                        onChange={(e) => onChange(id, `bedroom.otherCarpentry.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Loose Furniture */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Loose Furniture</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries({
+                      chair: "Chair",
+                      ottoman: "Ottoman",
+                      sofa: "Sofa",
+                      bench: "Bench",
+                    }).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={bedroom.otherCarpentry.looseFurniture[key]}
+                          onChange={(e) => onChange(id, `bedroom.otherCarpentry.looseFurniture.${key}`, e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                        />
+                        <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 8️⃣ Electrical */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                8️⃣ Electrical
+              </h4>
+              <div className="space-y-4">
+                {/* Wiring Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wiring Brand</label>
+                    <select
+                      value={bedroom.electrical.wiringBrand}
+                      onChange={(e) => onChange(id, "bedroom.electrical.wiringBrand", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="havells">Havells</option>
+                      <option value="polycab">Polycab</option>
+                      <option value="finolex">Finolex</option>
+                      <option value="local">Local</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wire Type</label>
+                    <select
+                      value={bedroom.electrical.wireType}
+                      onChange={(e) => onChange(id, "bedroom.electrical.wireType", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="fr">FR</option>
+                      <option value="frls">FRLS</option>
+                      <option value="nonFr">Non-FR</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Switch Type</label>
+                    <select
+                      value={bedroom.electrical.switchType}
+                      onChange={(e) => onChange(id, "bedroom.electrical.switchType", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="anchor">Anchor</option>
+                      <option value="gm">GM</option>
+                      <option value="legrand">Legrand</option>
+                      <option value="schneider">Schneider</option>
+                      <option value="smart">Smart</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Lighting */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Lighting</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {Object.entries({
+                      cob: "COB",
+                      downlights: "Downlights",
+                      panelLights: "Panel Lights",
+                      profileLights: "Profile Lights",
+                      coveLights: "Cove Lights",
+                      chandelier: "Chandelier",
+                      wallLights: "Wall Lights",
+                    }).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={bedroom.electrical.lighting[key]}
+                          onChange={(e) => onChange(id, `bedroom.electrical.lighting.${key}`, e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                        />
+                        <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {bedroom.electrical.lighting.wallLights && (
+                    <div className="mt-2">
+                      <label className="block text-xs text-gray-text mb-1">Wall Lights Quantity</label>
+                      <input
+                        type="number"
+                        value={bedroom.electrical.lighting.wallLightsQty}
+                        onChange={(e) => onChange(id, "bedroom.electrical.lighting.wallLightsQty", e.target.value)}
+                        className="w-full max-w-xs bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Fans & AC */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Fans (Quantity)</label>
+                    <input
+                      type="number"
+                      value={bedroom.electrical.fansQty}
+                      onChange={(e) => onChange(id, "bedroom.electrical.fansQty", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">AC Wiring (Quantity)</label>
+                    <input
+                      type="number"
+                      value={bedroom.electrical.acWiringQty}
+                      onChange={(e) => onChange(id, "bedroom.electrical.acWiringQty", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Automation */}
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Automation Required</label>
+                  <div className="flex gap-4 mb-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`automationRequired-${id}`}
+                        value="yes"
+                        checked={bedroom.electrical.automation.required === "yes"}
+                        onChange={(e) => onChange(id, "bedroom.electrical.automation.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`automationRequired-${id}`}
+                        value="no"
+                        checked={bedroom.electrical.automation.required === "no"}
+                        onChange={(e) => onChange(id, "bedroom.electrical.automation.required", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">No</span>
+                    </label>
+                  </div>
+
+                  {bedroom.electrical.automation.required === "yes" && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-dark-light rounded">
+                      {Object.entries({
+                        lights: "Lights",
+                        curtains: "Curtains",
+                        ac: "AC",
+                        tv: "TV",
+                        speakers: "Speakers",
+                        sceneSettings: "Scene Settings",
+                      }).map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={bedroom.electrical.automation[key]}
+                            onChange={(e) => onChange(id, `bedroom.electrical.automation.${key}`, e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                          />
+                          <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* AC Type & Wiring Length */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Air Conditioning Type</label>
+                    <select
+                      value={bedroom.electrical.acType}
+                      onChange={(e) => onChange(id, "bedroom.electrical.acType", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="split">Split</option>
+                      <option value="cassette">Cassette</option>
+                      <option value="ductable">Ductable</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Approx. Wiring Length (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={bedroom.electrical.wiringLength}
+                      onChange={(e) => onChange(id, "bedroom.electrical.wiringLength", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 9️⃣ Paint */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                9️⃣ Paint
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Wall Paint</label>
+                  <select
+                    value={bedroom.paint.wallPaint}
+                    onChange={(e) => onChange(id, "bedroom.paint.wallPaint", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="royaleShine">Royale Shine</option>
+                    <option value="pu">PU</option>
+                    <option value="texture">Texture</option>
+                    <option value="royaleMatt">Royale Matt</option>
+                    <option value="satin">Satin</option>
+                    <option value="plasticPremium">Plastic Premium</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Ceiling Paint</label>
+                  <select
+                    value={bedroom.paint.ceilingPaint}
+                    onChange={(e) => onChange(id, "bedroom.paint.ceilingPaint", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="royaleShine">Royale Shine</option>
+                    <option value="pu">PU</option>
+                    <option value="texture">Texture</option>
+                    <option value="royaleMatt">Royale Matt</option>
+                    <option value="satin">Satin</option>
+                    <option value="plasticPremium">Plastic Premium</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ==================== PART 2: ATTACHED WASHROOM DETAILS ==================== */}
+          <div className="space-y-6 border-t-2 border-accent pt-6">
+            <h3 className="text-accent font-bold text-lg">🚿 PART 2 – ATTACHED WASHROOM DETAILS</h3>
+
+            {/* 1️⃣ Basic */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                1️⃣ Basic
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={washroom.basicInfo.length}
+                    onChange={(e) => onChange(id, "washroom.basicInfo.length", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={washroom.basicInfo.width}
+                    onChange={(e) => onChange(id, "washroom.basicInfo.width", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Ceiling Height (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={washroom.basicInfo.ceilingHeight}
+                    onChange={(e) => onChange(id, "washroom.basicInfo.ceilingHeight", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Window Count</label>
+                  <input
+                    type="number"
+                    value={washroom.basicInfo.windowCount}
+                    onChange={(e) => onChange(id, "washroom.basicInfo.windowCount", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Sill Height (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={washroom.basicInfo.sillHeight}
+                    onChange={(e) => onChange(id, "washroom.basicInfo.sillHeight", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Lintel Height (ft)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={washroom.basicInfo.lintelHeight}
+                    onChange={(e) => onChange(id, "washroom.basicInfo.lintelHeight", e.target.value)}
+                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2️⃣ Civil */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                2️⃣ Civil
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.entries({
+                  waterproofing: "Waterproofing",
+                  replaceFittingsOnly: "Replace Fittings Only",
+                  fullDemolition: "Full Demolition",
+                  drainPipeChange: "Drain Pipe Change",
+                  supplyPipeChange: "Supply Pipe Change",
+                }).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={washroom.civil[key]}
+                      onChange={(e) => onChange(id, `washroom.civil.${key}`, e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    />
+                    <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* 3️⃣ Wall Coverings */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                3️⃣ Wall Coverings
+              </h4>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries({
+                    tile: "Tile",
+                    marble: "Marble",
+                    granite: "Granite",
+                    featureTile: "Feature Tile",
+                  }).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={washroom.wallCoverings[key]}
+                        onChange={(e) => onChange(id, `washroom.wallCoverings.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Grout Color</label>
+                  <input
+                    type="text"
+                    value={washroom.wallCoverings.groutColor}
+                    onChange={(e) => onChange(id, "washroom.wallCoverings.groutColor", e.target.value)}
+                    className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    placeholder="Enter grout color"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4️⃣ Floor Coverings */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                4️⃣ Floor Coverings
+              </h4>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries({
+                    antiSkidTile: "Anti-Skid Tile",
+                    marble: "Marble",
+                    granite: "Granite",
+                  }).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={washroom.floorCoverings[key]}
+                        onChange={(e) => onChange(id, `washroom.floorCoverings.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-text mb-1">Grout Color</label>
+                  <input
+                    type="text"
+                    value={washroom.floorCoverings.groutColor}
+                    onChange={(e) => onChange(id, "washroom.floorCoverings.groutColor", e.target.value)}
+                    className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    placeholder="Enter grout color"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 5️⃣ Basin Type */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                5️⃣ Basin Type
+              </h4>
+              <select
+                value={washroom.basinType}
+                onChange={(e) => onChange(id, "washroom.basinType", e.target.value)}
+                className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+              >
+                <option value="">Select</option>
+                <option value="overCounter">Over-Counter</option>
+                <option value="underCounter">Under-Counter</option>
+                <option value="tableTop">Table-Top</option>
+                <option value="integrated">Integrated</option>
+                <option value="wallMounted">Wall-Mounted</option>
+              </select>
+            </div>
+
+            {/* 6️⃣ Shower Type */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                6️⃣ Shower Type
+              </h4>
+              <select
+                value={washroom.showerType}
+                onChange={(e) => onChange(id, "washroom.showerType", e.target.value)}
+                className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+              >
+                <option value="">Select</option>
+                <option value="wallMounted">Wall-Mounted</option>
+                <option value="ceilingMounted">Ceiling-Mounted</option>
+                <option value="showerPanel">Shower Panel</option>
+                <option value="bodyJets">Body Jets</option>
+              </select>
+            </div>
+
+            {/* 7️⃣ Fitting Brands */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                7️⃣ Fitting Brands
+              </h4>
+              <div className="space-y-2">
+                <select
+                  value={washroom.fittingBrand}
+                  onChange={(e) => onChange(id, "washroom.fittingBrand", e.target.value)}
+                  className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                >
+                  <option value="">Select</option>
+                  <option value="cera">Cera</option>
+                  <option value="hindware">Hindware</option>
+                  <option value="jaquar">Jaquar</option>
+                  <option value="kohler">Kohler</option>
+                  <option value="grohe">Grohe</option>
+                  <option value="hansgrohe">Hansgrohe</option>
+                  <option value="other">Other</option>
+                </select>
+                {washroom.fittingBrand === "other" && (
+                  <input
+                    type="text"
+                    value={washroom.fittingBrandOther}
+                    onChange={(e) => onChange(id, "washroom.fittingBrandOther", e.target.value)}
+                    placeholder="Specify other brand"
+                    className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* 8️⃣ Plumbing Material */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                8️⃣ Plumbing Material
+              </h4>
+              <select
+                value={washroom.plumbingMaterial}
+                onChange={(e) => onChange(id, "washroom.plumbingMaterial", e.target.value)}
+                className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+              >
+                <option value="">Select</option>
+                <option value="astral">Astral</option>
+                <option value="supreme">Supreme</option>
+                <option value="prakash">Prakash</option>
+                <option value="ashirvad">Ashirvad</option>
+              </select>
+            </div>
+
+            {/* 9️⃣ Electrical */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                9️⃣ Electrical
+              </h4>
+              <div className="space-y-4">
+                {/* Electrical Items */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries({
+                    mirrorLight: "Mirror Light",
+                    ceilingLight: "Ceiling Light",
+                    exhaustFan: "Exhaust Fan",
+                    geyser: "Geyser",
+                  }).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={washroom.electrical[key]}
+                        onChange={(e) => onChange(id, `washroom.electrical.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm group-hover:text-accent transition">{label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Wiring Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wiring Brand</label>
+                    <select
+                      value={washroom.electrical.wiringBrand}
+                      onChange={(e) => onChange(id, "washroom.electrical.wiringBrand", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="havells">Havells</option>
+                      <option value="polycab">Polycab</option>
+                      <option value="finolex">Finolex</option>
+                      <option value="local">Local</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Wire Type</label>
+                    <select
+                      value={washroom.electrical.wireType}
+                      onChange={(e) => onChange(id, "washroom.electrical.wireType", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="fr">FR</option>
+                      <option value="frls">FRLS</option>
+                      <option value="nonFr">Non-FR</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-text mb-1">Switch Type</label>
+                    <select
+                      value={washroom.electrical.switchType}
+                      onChange={(e) => onChange(id, "washroom.electrical.switchType", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select</option>
+                      <option value="anchor">Anchor</option>
+                      <option value="gm">GM</option>
+                      <option value="legrand">Legrand</option>
+                      <option value="schneider">Schneider</option>
+                      <option value="smart">Smart</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 🔟 Paint */}
+            <div>
+              <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                🔟 Paint
+              </h4>
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Ceiling Paint</label>
+                <select
+                  value={washroom.paint.ceilingPaint}
+                  onChange={(e) => onChange(id, "washroom.paint.ceilingPaint", e.target.value)}
+                  className="w-full max-w-md bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                >
+                  <option value="">Select</option>
+                  <option value="royaleShine">Royale Shine</option>
+                  <option value="pu">PU</option>
+                  <option value="texture">Texture</option>
+                  <option value="royaleMatt">Royale Matt</option>
+                  <option value="satin">Satin</option>
+                  <option value="plasticPremium">Plastic Premium</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// BalconySection Component
+function BalconySection({ instance, isExpanded, onToggle, onChange, onRemove }) {
+  const { id, name, basic, civil, floorCoverings, wallCoverings, ceiling, carpentryBuiltIn, looseFurniture, electrical, waterPlumbing, greeneryPlanters, safety, notes } = instance;
+
+  return (
+    <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 bg-dark-light">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 flex items-center justify-between hover:text-accent transition"
+        >
+          <span className="text-white font-semibold">{name}</span>
+          <span className="text-accent">{isExpanded ? "▲" : "▼"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-4 px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition"
+        >
+          Remove
+        </button>
+      </div>
+
+      {/* Content */}
+      {isExpanded && (
+        <div className="p-5 space-y-6">
+          
+          {/* 🏠 1️⃣ BASIC */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🏠 1️⃣ BASIC</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={basic.length}
+                  onChange={(e) => onChange(id, "basic.length", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={basic.width}
+                  onChange={(e) => onChange(id, "basic.width", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Ceiling Height (ft)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={basic.ceilingHeight}
+                  onChange={(e) => onChange(id, "basic.ceilingHeight", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Door / Window Size (W x H)</label>
+                <input
+                  type="text"
+                  value={basic.doorWindowSize}
+                  onChange={(e) => onChange(id, "basic.doorWindowSize", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                  placeholder="e.g., 4x7"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Door Type</label>
+                <div className="flex gap-4">
+                  {["Sliding", "Hinged Single", "Hinged Double"].map((type) => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`doorType-${id}`}
+                        value={type}
+                        checked={basic.doorType === type}
+                        onChange={(e) => onChange(id, "basic.doorType", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Railing Type</label>
+                <div className="flex flex-wrap gap-3">
+                  {["Glass", "MS", "SS", "Brick", "Other"].map((type) => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`railingType-${id}`}
+                        value={type}
+                        checked={basic.railingType === type}
+                        onChange={(e) => onChange(id, "basic.railingType", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm">{type}</span>
+                    </label>
+                  ))}
+                </div>
+                {basic.railingType === "Other" && (
+                  <input
+                    type="text"
+                    value={basic.railingTypeOther}
+                    onChange={(e) => onChange(id, "basic.railingTypeOther", e.target.value)}
+                    className="w-full mt-2 bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    placeholder="Specify other railing type"
+                  />
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-text mb-1">Railing Height</label>
+              <input
+                type="text"
+                value={basic.railingHeight}
+                onChange={(e) => onChange(id, "basic.railingHeight", e.target.value)}
+                className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                placeholder="Enter railing height"
+              />
+            </div>
+          </div>
+
+          {/* 🧱 2️⃣ CIVIL */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🧱 2️⃣ CIVIL</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { key: "waterproofingRequired", label: "Waterproofing Required" },
+                { key: "slopeCorrection", label: "Slope Correction" },
+                { key: "pccLeveling", label: "PCC / Leveling" },
+                { key: "tileRemoval", label: "Tile Removal" },
+                { key: "wallPlasterRepair", label: "Wall Plaster Repair" },
+                { key: "ceilingRepairWaterproofing", label: "Ceiling Repair / Waterproofing" },
+                { key: "drainCleaningNewDrain", label: "Drain Cleaning / New Drain" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={civil[key]}
+                    onChange={(e) => onChange(id, `civil.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 🪵 3️⃣ FLOOR COVERINGS */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🪵 3️⃣ FLOOR COVERINGS</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              {[
+                { key: "antiSkidTile", label: "Anti-Skid Tile" },
+                { key: "stone", label: "Stone" },
+                { key: "granite", label: "Granite" },
+                { key: "woodenTile", label: "Wooden Tile" },
+                { key: "concreteTexture", label: "Concrete Texture" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={floorCoverings[key]}
+                    onChange={(e) => onChange(id, `floorCoverings.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Tile / Stone Size</label>
+                <input
+                  type="text"
+                  value={floorCoverings.tileStoneSize}
+                  onChange={(e) => onChange(id, "floorCoverings.tileStoneSize", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Grout Color</label>
+                <input
+                  type="text"
+                  value={floorCoverings.groutColor}
+                  onChange={(e) => onChange(id, "floorCoverings.groutColor", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 🧱 4️⃣ WALL COVERINGS */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🧱 4️⃣ WALL COVERINGS</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              {[
+                { key: "exteriorPaint", label: "Exterior Paint" },
+                { key: "texturePaint", label: "Texture Paint" },
+                { key: "stoneCladding", label: "Stone Cladding" },
+                { key: "tileCladding", label: "Tile Cladding" },
+                { key: "brickCladding", label: "Brick Cladding" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={wallCoverings[key]}
+                    onChange={(e) => onChange(id, `wallCoverings.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-text mb-2">Feature Wall</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`featureWall-${id}`}
+                    value="yes"
+                    checked={wallCoverings.featureWall === "yes"}
+                    onChange={(e) => onChange(id, "wallCoverings.featureWall", e.target.value)}
+                    className="w-4 h-4 text-accent focus:ring-accent"
+                  />
+                  <span className="text-white text-sm">Yes</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`featureWall-${id}`}
+                    value="no"
+                    checked={wallCoverings.featureWall === "no"}
+                    onChange={(e) => onChange(id, "wallCoverings.featureWall", e.target.value)}
+                    className="w-4 h-4 text-accent focus:ring-accent"
+                  />
+                  <span className="text-white text-sm">No</span>
+                </label>
+              </div>
+            </div>
+            {wallCoverings.featureWall === "yes" && (
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Feature Wall Material</label>
+                <input
+                  type="text"
+                  value={wallCoverings.featureWallMaterial}
+                  onChange={(e) => onChange(id, "wallCoverings.featureWallMaterial", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* 🏗 5️⃣ CEILING */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🏗 5️⃣ CEILING</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              {[
+                { key: "exteriorPaint", label: "Exterior Paint" },
+                { key: "cementSheetCeiling", label: "Cement Sheet Ceiling" },
+                { key: "woodenSlats", label: "Wooden Slats" },
+                { key: "metalUpvcCeiling", label: "Metal / UPVC Ceiling" },
+                { key: "waterproofCoatRequired", label: "Waterproof Coat Required" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ceiling[key]}
+                    onChange={(e) => onChange(id, `ceiling.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Lighting</label>
+                <div className="flex gap-4">
+                  {["yes", "no"].map((val) => (
+                    <label key={val} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`lighting-${id}`}
+                        value={val}
+                        checked={ceiling.lighting === val}
+                        onChange={(e) => onChange(id, "ceiling.lighting", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Fan Point</label>
+                <div className="flex gap-4">
+                  {["yes", "no"].map((val) => (
+                    <label key={val} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`fanPoint-${id}`}
+                        value={val}
+                        checked={ceiling.fanPoint === val}
+                        onChange={(e) => onChange(id, "ceiling.fanPoint", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 🪑 6️⃣ CARPENTRY / BUILT-IN ELEMENTS */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🪑 6️⃣ CARPENTRY / BUILT-IN ELEMENTS</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Seating Bench</label>
+                <div className="flex gap-4 mb-2">
+                  {["yes", "no"].map((val) => (
+                    <label key={val} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`seatingBench-${id}`}
+                        value={val}
+                        checked={carpentryBuiltIn.seatingBench === val}
+                        onChange={(e) => onChange(id, "carpentryBuiltIn.seatingBench", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+                {carpentryBuiltIn.seatingBench === "yes" && (
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Material</label>
+                    <div className="flex flex-wrap gap-3">
+                      {["Stone", "Wood", "WPC", "Composite"].map((mat) => (
+                        <label key={mat} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`seatingBenchMaterial-${id}`}
+                            value={mat}
+                            checked={carpentryBuiltIn.seatingBenchMaterial === mat}
+                            onChange={(e) => onChange(id, "carpentryBuiltIn.seatingBenchMaterial", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{mat}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Storage Unit</label>
+                <div className="flex gap-4 mb-2">
+                  {["yes", "no"].map((val) => (
+                    <label key={val} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`storageUnit-${id}`}
+                        value={val}
+                        checked={carpentryBuiltIn.storageUnit === val}
+                        onChange={(e) => onChange(id, "carpentryBuiltIn.storageUnit", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+                {carpentryBuiltIn.storageUnit === "yes" && (
+                  <div>
+                    <label className="block text-xs text-gray-text mb-2">Material</label>
+                    <div className="flex flex-wrap gap-3">
+                      {["Laminate", "PU", "Veneer", "Exterior Ply", "WPC"].map((mat) => (
+                        <label key={mat} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`storageUnitMaterial-${id}`}
+                            value={mat}
+                            checked={carpentryBuiltIn.storageUnitMaterial === mat}
+                            onChange={(e) => onChange(id, "carpentryBuiltIn.storageUnitMaterial", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{mat}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Other Built-In Options</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { key: "outdoorCabinet", label: "Outdoor Cabinet" },
+                    { key: "planterBox", label: "Planter Box (Built-In)" },
+                    { key: "privacyScreen", label: "Privacy Screen / Jaali" },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={carpentryBuiltIn[key]}
+                        onChange={(e) => onChange(id, `carpentryBuiltIn.${key}`, e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      />
+                      <span className="text-white text-sm">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {carpentryBuiltIn.privacyScreen && (
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Privacy Screen Material</label>
+                  <div className="flex flex-wrap gap-3 mb-2">
+                    {["Metal", "WPC", "Cement", "Wood", "Other"].map((mat) => (
+                      <label key={mat} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`privacyScreenMaterial-${id}`}
+                          value={mat}
+                          checked={carpentryBuiltIn.privacyScreenMaterial === mat}
+                          onChange={(e) => onChange(id, "carpentryBuiltIn.privacyScreenMaterial", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">{mat}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {carpentryBuiltIn.privacyScreenMaterial === "Other" && (
+                    <input
+                      type="text"
+                      value={carpentryBuiltIn.privacyScreenMaterialOther}
+                      onChange={(e) => onChange(id, "carpentryBuiltIn.privacyScreenMaterialOther", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="Specify other material"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 🪑 7️⃣ LOOSE FURNITURE */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🪑 7️⃣ LOOSE FURNITURE</h4>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer mb-2">
+                    <input
+                      type="checkbox"
+                      checked={looseFurniture.outdoorChairs}
+                      onChange={(e) => onChange(id, "looseFurniture.outdoorChairs", e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    />
+                    <span className="text-white text-sm">Outdoor Chairs</span>
+                  </label>
+                  {looseFurniture.outdoorChairs && (
+                    <input
+                      type="number"
+                      value={looseFurniture.outdoorChairsQty}
+                      onChange={(e) => onChange(id, "looseFurniture.outdoorChairsQty", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="Quantity"
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer mb-2">
+                    <input
+                      type="checkbox"
+                      checked={looseFurniture.outdoorTable}
+                      onChange={(e) => onChange(id, "looseFurniture.outdoorTable", e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    />
+                    <span className="text-white text-sm">Outdoor Table</span>
+                  </label>
+                  {looseFurniture.outdoorTable && (
+                    <input
+                      type="number"
+                      value={looseFurniture.outdoorTableQty}
+                      onChange={(e) => onChange(id, "looseFurniture.outdoorTableQty", e.target.value)}
+                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="Quantity"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={looseFurniture.outdoorSofa}
+                    onChange={(e) => onChange(id, "looseFurniture.outdoorSofa", e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">Outdoor Sofa</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={looseFurniture.swingJhoola}
+                    onChange={(e) => onChange(id, "looseFurniture.swingJhoola", e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">Swing / Jhoola</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={looseFurniture.weatherproofCushions}
+                    onChange={(e) => onChange(id, "looseFurniture.weatherproofCushions", e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">Weatherproof Cushions</span>
+                </label>
+              </div>
+              {looseFurniture.swingJhoola && (
+                <div>
+                  <label className="block text-xs text-gray-text mb-2">Swing Type</label>
+                  <div className="flex gap-3">
+                    {["Rope", "Wood", "Metal"].map((type) => (
+                      <label key={type} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`swingType-${id}`}
+                          value={type}
+                          checked={looseFurniture.swingType === type}
+                          onChange={(e) => onChange(id, "looseFurniture.swingType", e.target.value)}
+                          className="w-4 h-4 text-accent focus:ring-accent"
+                        />
+                        <span className="text-white text-sm">{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 💡 8️⃣ ELECTRICAL */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">💡 8️⃣ ELECTRICAL</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { key: "wallLamps", label: "Wall Lamps" },
+                { key: "outdoorSpotlights", label: "Outdoor Spotlights" },
+                { key: "outdoorStripLights", label: "Outdoor Strip Lights" },
+                { key: "profileLights", label: "Profile Lights" },
+                { key: "fanPoint", label: "Fan Point" },
+                { key: "heaterPoint", label: "Heater Point" },
+                { key: "speakers", label: "Speakers" },
+                { key: "cctvCameraPoint", label: "CCTV / Camera Point" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={electrical[key]}
+                    onChange={(e) => onChange(id, `electrical.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 🚿 9️⃣ WATER / PLUMBING */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🚿 9️⃣ WATER / PLUMBING</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Water Tap Required</label>
+                <div className="flex gap-4 mb-3">
+                  {["yes", "no"].map((val) => (
+                    <label key={val} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`waterTapRequired-${id}`}
+                        value={val}
+                        checked={waterPlumbing.waterTapRequired === val}
+                        onChange={(e) => onChange(id, "waterPlumbing.waterTapRequired", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+                {waterPlumbing.waterTapRequired === "yes" && (
+                  <div className="mb-3">
+                    <label className="block text-xs text-gray-text mb-2">Type</label>
+                    <div className="flex gap-3">
+                      {["Standard", "Garden Tap", "Nozzle Tap"].map((type) => (
+                        <label key={type} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`waterTapType-${id}`}
+                            value={type}
+                            checked={waterPlumbing.waterTapType === type}
+                            onChange={(e) => onChange(id, "waterPlumbing.waterTapType", e.target.value)}
+                            className="w-4 h-4 text-accent focus:ring-accent"
+                          />
+                          <span className="text-white text-sm">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-1">Drain Position</label>
+                <input
+                  type="text"
+                  value={waterPlumbing.drainPosition}
+                  onChange={(e) => onChange(id, "waterPlumbing.drainPosition", e.target.value)}
+                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-text mb-2">Re-Routing Required</label>
+                <div className="flex gap-4">
+                  {["yes", "no"].map((val) => (
+                    <label key={val} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`reRoutingRequired-${id}`}
+                        value={val}
+                        checked={waterPlumbing.reRoutingRequired === val}
+                        onChange={(e) => onChange(id, "waterPlumbing.reRoutingRequired", e.target.value)}
+                        className="w-4 h-4 text-accent focus:ring-accent"
+                      />
+                      <span className="text-white text-sm capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 🌿 🔟 GREENERY / PLANTERS */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🌿 🔟 GREENERY / PLANTERS</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              {[
+                { key: "potsRequired", label: "Pots Required (Small / Medium / Large)" },
+                { key: "dripIrrigation", label: "Drip Irrigation" },
+                { key: "artificialTurf", label: "Artificial Turf" },
+                { key: "verticalGarden", label: "Vertical Garden" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={greeneryPlanters[key]}
+                    onChange={(e) => onChange(id, `greeneryPlanters.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+            <div>
+              <label className="block text-xs text-gray-text mb-1">Material</label>
+              <input
+                type="text"
+                value={greeneryPlanters.material}
+                onChange={(e) => onChange(id, "greeneryPlanters.material", e.target.value)}
+                className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+              />
+            </div>
+          </div>
+
+          {/* 🛡 1️⃣1️⃣ SAFETY */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">🛡 1️⃣1️⃣ SAFETY</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { key: "childSafetyGrill", label: "Child Safety Grill" },
+                { key: "birdNet", label: "Bird Net" },
+                { key: "antiSlipCoating", label: "Anti-Slip Coating" },
+                { key: "checkRailingHeightCompliance", label: "Check Railing Height Compliance" },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={safety[key]}
+                    onChange={(e) => onChange(id, `safety.${key}`, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 📝 1️⃣2️⃣ NOTES */}
+          <div>
+            <h4 className="text-accent font-semibold mb-3 text-sm">📝 1️⃣2️⃣ NOTES</h4>
+            <textarea
+              value={notes}
+              onChange={(e) => onChange(id, "notes", e.target.value)}
+              className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+              rows="4"
+              placeholder="Add any additional notes for this balcony..."
+            />
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Helper function to get room-specific furniture options
 function getFurnitureOptions(roomName) {
   const furnitureMap = {
     "Living Room": ["TV Unit", "Console", "Side Table", "Display Unit", "Shoe Rack"],
     "Dining Area": ["Crockery Unit", "Bar Unit", "Buffet Unit", "Console"],
     Kitchen: ["Base Units", "Wall Units", "Tall Units", "Loft", "Breakfast Counter"],
-    "Bedroom 1": [
-      "Wardrobe",
-      "Bed (Single Box)",
-      "Bed (Double Box)",
-      "Study Table",
-      "Dressing Table",
-      "Side Tables",
-      "TV Unit",
-    ],
-    "Bedroom 2": [
-      "Wardrobe",
-      "Bed (Single Box)",
-      "Bed (Double Box)",
-      "Study Table",
-      "Dressing Table",
-      "Side Tables",
-      "TV Unit",
-    ],
-    "Bedroom 3": [
-      "Wardrobe",
-      "Bed (Single Box)",
-      "Bed (Double Box)",
-      "Study Table",
-      "Dressing Table",
-      "Side Tables",
-      "TV Unit",
-    ],
-    "Bedroom 4": [
-      "Wardrobe",
-      "Bed (Single Box)",
-      "Bed (Double Box)",
-      "Study Table",
-      "Dressing Table",
-      "Side Tables",
-      "TV Unit",
-    ],
-    "Bedroom 5": [
-      "Wardrobe",
-      "Bed (Single Box)",
-      "Bed (Double Box)",
-      "Study Table",
-      "Dressing Table",
-      "Side Tables",
-      "TV Unit",
-    ],
-    "Store Room": ["Storage Units", "Shelving", "Overhead Storage"],
     "Domestic Help Room": ["Wardrobe", "Bed", "Storage Unit"],
     Foyer: ["Shoe Rack", "Console", "Mirror Frame", "Storage Bench"],
     "Main Entrance": ["Shoe Rack", "Key Holder", "Console"],
