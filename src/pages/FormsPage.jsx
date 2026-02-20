@@ -77,6 +77,13 @@ export default function FormsPage() {
   const [balconyInstances, setBalconyInstances] = useState([]);
   const [expandedBalconies, setExpandedBalconies] = useState({});
 
+  // State for multiple Room-Wise Details sections
+  const [roomWiseInstances, setRoomWiseInstances] = useState([{ id: 1, name: "Room Set 1" }]);
+  const [expandedRoomWiseSections, setExpandedRoomWiseSections] = useState({ 1: true });
+  const [roomWiseRooms, setRoomWiseRooms] = useState({ 1: {} });
+  const [roomWiseExpandedRooms, setRoomWiseExpandedRooms] = useState({ 1: {} });
+  const [roomWiseRemovedRooms, setRoomWiseRemovedRooms] = useState({ 1: [] });
+
   // Available rooms
   const roomsList = [
     "Main Entrance",
@@ -962,6 +969,107 @@ export default function FormsPage() {
     setRemovedRooms((prev) => prev.filter(room => room !== roomName));
   };
 
+  // Add new Room-Wise Details section
+  const addRoomWiseSection = () => {
+    const newId = roomWiseInstances.length > 0 
+      ? Math.max(...roomWiseInstances.map(i => i.id)) + 1 
+      : roomWiseInstances.length + 1;
+    const newInstance = { id: newId, name: `Room Set ${newId}` };
+    setRoomWiseInstances([...roomWiseInstances, newInstance]);
+    setExpandedRoomWiseSections({ ...expandedRoomWiseSections, [newId]: true });
+    setRoomWiseRooms({ ...roomWiseRooms, [newId]: {} });
+    setRoomWiseExpandedRooms({ ...roomWiseExpandedRooms, [newId]: {} });
+    setRoomWiseRemovedRooms({ ...roomWiseRemovedRooms, [newId]: [] });
+  };
+
+  // Remove Room-Wise Details section
+  const removeRoomWiseSection = (id) => {
+    if (window.confirm("Are you sure you want to remove this entire room-wise details section?")) {
+      setRoomWiseInstances(roomWiseInstances.filter(instance => instance.id !== id));
+      const newExpanded = { ...expandedRoomWiseSections };
+      delete newExpanded[id];
+      setExpandedRoomWiseSections(newExpanded);
+      const newRooms = { ...roomWiseRooms };
+      delete newRooms[id];
+      setRoomWiseRooms(newRooms);
+      const newExpandedRooms = { ...roomWiseExpandedRooms };
+      delete newExpandedRooms[id];
+      setRoomWiseExpandedRooms(newExpandedRooms);
+      const newRemovedRooms = { ...roomWiseRemovedRooms };
+      delete newRemovedRooms[id];
+      setRoomWiseRemovedRooms(newRemovedRooms);
+    }
+  };
+
+  // Toggle Room-Wise Details section expansion
+  const toggleRoomWiseSection = (id) => {
+    setExpandedRoomWiseSections({
+      ...expandedRoomWiseSections,
+      [id]: !expandedRoomWiseSections[id],
+    });
+  };
+
+  // Toggle room in a specific section
+  const toggleRoomInSection = (sectionId, roomName) => {
+    setRoomWiseExpandedRooms((prev) => ({
+      ...prev,
+      [sectionId]: {
+        ...(prev[sectionId] || {}),
+        [roomName]: !(prev[sectionId] || {})[roomName],
+      },
+    }));
+
+    // Initialize room data if not exists
+    if (!(roomWiseRooms[sectionId] || {})[roomName]) {
+      setRoomWiseRooms((prev) => ({
+        ...prev,
+        [sectionId]: {
+          ...(prev[sectionId] || {}),
+          [roomName]: initializeRoom(roomName),
+        },
+      }));
+    }
+  };
+
+  // Handle room change in a specific section
+  const handleRoomChangeInSection = (sectionId, roomName, field, value) => {
+    setRoomWiseRooms((prev) => ({
+      ...prev,
+      [sectionId]: {
+        ...(prev[sectionId] || {}),
+        [roomName]: {
+          ...(prev[sectionId] || {})[roomName],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  // Remove room in a specific section
+  const removeRoomInSection = (sectionId, roomName) => {
+    if (window.confirm(`Are you sure you want to remove ${roomName} from this section?`)) {
+      setRoomWiseRemovedRooms((prev) => ({
+        ...prev,
+        [sectionId]: [...(prev[sectionId] || []), roomName],
+      }));
+      setRoomWiseExpandedRooms((prev) => {
+        const newExpanded = { ...prev };
+        if (newExpanded[sectionId]) {
+          delete newExpanded[sectionId][roomName];
+        }
+        return newExpanded;
+      });
+    }
+  };
+
+  // Restore room in a specific section
+  const restoreRoomInSection = (sectionId, roomName) => {
+    setRoomWiseRemovedRooms((prev) => ({
+      ...prev,
+      [sectionId]: (prev[sectionId] || []).filter(room => room !== roomName),
+    }));
+  };
+
   // Initialize a new Bedroom + Washroom instance
   const initializeBedroomWashroom = (id) => ({
     id,
@@ -1331,6 +1439,11 @@ export default function FormsPage() {
     e.preventDefault();
     const completeFormData = {
       ...formData,
+      roomWiseInstances: roomWiseInstances.map(instance => ({
+        ...instance,
+        rooms: roomWiseRooms[instance.id] || {},
+        removedRooms: roomWiseRemovedRooms[instance.id] || [],
+      })),
       bedroomWashroomInstances,
       balconyInstances,
     };
@@ -1457,6 +1570,8 @@ export default function FormsPage() {
                       <option value="Apartment">Apartment</option>
                       <option value="Villa">Villa</option>
                       <option value="Farmhouse">Farmhouse</option>
+                      <option value="Farmhouse">Indivisual</option>
+                      <option value="Farmhouse">Commercial</option>
                     </select>
                   </div>
 
@@ -1683,131 +1798,190 @@ export default function FormsPage() {
             </button>
 
             {expandedSections.rooms && (
-              <div className="p-6 border-t border-gray-border space-y-4">
-                {/* Show removed rooms for restore option */}
-                {removedRooms.length > 0 && (
-                  <div className="mb-4 p-4 bg-dark-light border border-gray-border rounded-lg">
-                    <h4 className="text-white font-semibold mb-2 text-sm">Removed Rooms (Click to restore)</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {removedRooms.map((roomName) => (
+              <div className="p-6 border-t border-gray-border space-y-6">
+                {/* Add Room-Wise Details Section Button */}
+                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">📋 Room-Wise Details Sections</h3>
+                    <p className="text-gray-text text-sm mt-1">
+                      Add multiple room-wise detail sections if you have different areas or floors to specify.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addRoomWiseSection}
+                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span className="text-lg">➕</span> Add Section
+                  </button>
+                </div>
+
+                {/* Render all Room-Wise Details instances */}
+                {roomWiseInstances.map((instance, index) => (
+                  <div key={instance.id} className="bg-dark border-2 border-accent/30 rounded-lg overflow-hidden">
+                    {/* Section Header */}
+                    <div className="bg-dark-light px-6 py-4 flex items-center justify-between border-b border-accent/30">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          value={instance.name}
+                          onChange={(e) => {
+                            setRoomWiseInstances(roomWiseInstances.map(inst => 
+                              inst.id === instance.id ? { ...inst, name: e.target.value } : inst
+                            ));
+                          }}
+                          className="bg-dark border border-gray-border rounded px-3 py-1.5 text-white font-semibold focus:outline-none focus:border-accent transition"
+                        />
                         <button
-                          key={roomName}
                           type="button"
-                          onClick={() => restoreRoom(roomName)}
-                          className="px-3 py-1 bg-dark border border-accent text-accent rounded text-sm hover:bg-accent hover:text-dark transition"
+                          onClick={() => toggleRoomWiseSection(instance.id)}
+                          className="text-accent hover:text-yellow-500 transition"
                         >
-                          ➕ {roomName}
+                          {expandedRoomWiseSections[instance.id] ? "▲ Collapse" : "▼ Expand"}
                         </button>
-                      ))}
+                      </div>
+                      {roomWiseInstances.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeRoomWiseSection(instance.id)}
+                          className="text-red-500 hover:text-red-400 text-sm font-medium transition"
+                        >
+                          Remove Section
+                        </button>
+                      )}
                     </div>
-                  </div>
-                )}
 
-                {/* Rooms before Kitchen */}
-                {roomsList.slice(0, roomsList.indexOf("Kitchen") + 1)
-                  .filter(roomName => !removedRooms.includes(roomName))
-                  .map((roomName) => (
-                  <RoomSection
-                    key={roomName}
-                    roomName={roomName}
-                    roomData={formData.rooms[roomName] || initializeRoom(roomName)}
-                    isExpanded={expandedRooms[roomName]}
-                    onToggle={() => toggleRoom(roomName)}
-                    onChange={handleRoomChange}
-                    onRemove={() => removeRoom(roomName)}
-                  />
+                    {/* Section Content */}
+                    {expandedRoomWiseSections[instance.id] && (
+                      <div className="p-6 space-y-4">
+                        {/* Show removed rooms for restore option */}
+                        {(roomWiseRemovedRooms[instance.id] || []).length > 0 && (
+                          <div className="mb-4 p-4 bg-dark-light border border-gray-border rounded-lg">
+                            <h4 className="text-white font-semibold mb-2 text-sm">Removed Rooms (Click to restore)</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {(roomWiseRemovedRooms[instance.id] || []).map((roomName) => (
+                                <button
+                                  key={roomName}
+                                  type="button"
+                                  onClick={() => restoreRoomInSection(instance.id, roomName)}
+                                  className="px-3 py-1 bg-dark border border-accent text-accent rounded text-sm hover:bg-accent hover:text-dark transition"
+                                >
+                                  ➕ {roomName}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Rooms before Kitchen */}
+                        {roomsList.slice(0, roomsList.indexOf("Kitchen") + 1)
+                          .filter(roomName => !(roomWiseRemovedRooms[instance.id] || []).includes(roomName))
+                          .map((roomName) => (
+                          <RoomSection
+                            key={`${instance.id}-${roomName}`}
+                            roomName={roomName}
+                            roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
+                            isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
+                            onToggle={() => toggleRoomInSection(instance.id, roomName)}
+                            onChange={(roomName, field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
+                            onRemove={() => removeRoomInSection(instance.id, roomName)}
+                          />
+                        ))}
+
+                        {/* Bedroom + Washroom Dynamic Section */}
+                        <div className="mt-6 pt-6 border-t-2 border-accent">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="text-accent font-bold text-lg">🛏 Bedroom + Attached Washroom</h3>
+                              <p className="text-gray-text text-sm mt-1">
+                                Add multiple bedroom + washroom combinations dynamically. Each instance is independent.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={addBedroomWashroomInstance}
+                              className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                            >
+                              <span className="text-lg">➕</span> Add Bedroom + Washroom
+                            </button>
+                          </div>
+
+                          {bedroomWashroomInstances.length === 0 ? (
+                            <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                              No bedroom + washroom added yet. Click "Add Bedroom + Washroom" to create one.
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {bedroomWashroomInstances.map((instance) => (
+                                <BedroomWithWashroomSection
+                                  key={instance.id}
+                                  instance={instance}
+                                  isExpanded={expandedBedroomWashrooms[instance.id]}
+                                  onToggle={() => toggleBedroomWashroom(instance.id)}
+                                  onChange={handleBedroomWashroomChange}
+                                  onRemove={() => removeBedroomWashroomInstance(instance.id)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Rooms after Kitchen */}
+                        {roomsList.slice(roomsList.indexOf("Kitchen") + 1)
+                          .filter(roomName => !(roomWiseRemovedRooms[instance.id] || []).includes(roomName))
+                          .map((roomName) => (
+                          <RoomSection
+                            key={`${instance.id}-${roomName}`}
+                            roomName={roomName}
+                            roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
+                            isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
+                            onToggle={() => toggleRoomInSection(instance.id, roomName)}
+                            onChange={(roomName, field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
+                            onRemove={() => removeRoomInSection(instance.id, roomName)}
+                          />
+                        ))}
+
+                        {/* Balconies Dynamic Section */}
+                        <div className="mt-6 pt-6 border-t-2 border-accent">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="text-accent font-bold text-lg">🏡 Balconies</h3>
+                              <p className="text-gray-text text-sm mt-1">
+                                Add multiple balconies dynamically. Each balcony is independent with full customization.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={addBalconyInstance}
+                              className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                            >
+                              <span className="text-lg">➕</span> Add Balcony
+                            </button>
+                          </div>
+
+                          {balconyInstances.length === 0 ? (
+                            <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                              No balcony added yet. Click "Add Balcony" to create one.
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {balconyInstances.map((instance) => (
+                                <BalconySection
+                                  key={instance.id}
+                                  instance={instance}
+                                  isExpanded={expandedBalconies[instance.id]}
+                                  onToggle={() => toggleBalcony(instance.id)}
+                                  onChange={handleBalconyChange}
+                                  onRemove={() => removeBalconyInstance(instance.id)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ))}
-
-                {/* Bedroom + Washroom Dynamic Section */}
-                <div className="mt-6 pt-6 border-t-2 border-accent">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-accent font-bold text-lg">🛏 Bedroom + Attached Washroom</h3>
-                      <p className="text-gray-text text-sm mt-1">
-                        Add multiple bedroom + washroom combinations dynamically. Each instance is independent.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={addBedroomWashroomInstance}
-                      className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <span className="text-lg">➕</span> Add Bedroom + Washroom
-                    </button>
-                  </div>
-
-                  {bedroomWashroomInstances.length === 0 ? (
-                    <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
-                      No bedroom + washroom added yet. Click "Add Bedroom + Washroom" to create one.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {bedroomWashroomInstances.map((instance) => (
-                        <BedroomWithWashroomSection
-                          key={instance.id}
-                          instance={instance}
-                          isExpanded={expandedBedroomWashrooms[instance.id]}
-                          onToggle={() => toggleBedroomWashroom(instance.id)}
-                          onChange={handleBedroomWashroomChange}
-                          onRemove={() => removeBedroomWashroomInstance(instance.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Rooms after Kitchen */}
-                {roomsList.slice(roomsList.indexOf("Kitchen") + 1)
-                  .filter(roomName => !removedRooms.includes(roomName))
-                  .map((roomName) => (
-                  <RoomSection
-                    key={roomName}
-                    roomName={roomName}
-                    roomData={formData.rooms[roomName] || initializeRoom(roomName)}
-                    isExpanded={expandedRooms[roomName]}
-                    onToggle={() => toggleRoom(roomName)}
-                    onChange={handleRoomChange}
-                    onRemove={() => removeRoom(roomName)}
-                  />
-                ))}
-
-                {/* Balconies Dynamic Section */}
-                <div className="mt-6 pt-6 border-t-2 border-accent">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-accent font-bold text-lg">🏡 Balconies</h3>
-                      <p className="text-gray-text text-sm mt-1">
-                        Add multiple balconies dynamically. Each balcony is independent with full customization.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={addBalconyInstance}
-                      className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <span className="text-lg">➕</span> Add Balcony
-                    </button>
-                  </div>
-
-                  {balconyInstances.length === 0 ? (
-                    <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
-                      No balcony added yet. Click "Add Balcony" to create one.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {balconyInstances.map((instance) => (
-                        <BalconySection
-                          key={instance.id}
-                          instance={instance}
-                          isExpanded={expandedBalconies[instance.id]}
-                          onToggle={() => toggleBalcony(instance.id)}
-                          onChange={handleBalconyChange}
-                          onRemove={() => removeBalconyInstance(instance.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             )}
           </div>

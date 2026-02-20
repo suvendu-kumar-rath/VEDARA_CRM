@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "../components/Modal";
 import apiService from "../services/api";
 
@@ -10,6 +10,26 @@ const tabs = [
   { id: "users", label: "Employee", icon: "👥" },
   { id: "notifications", label: "Notifications", icon: "🔔" }
 ];
+
+// Default company profile data
+const defaultCompanyData = {
+  companyName: "Luxe Interiors Studio",
+  legalName: "Luxe Interiors Design Pvt. Ltd.",
+  email: "hello@luxeinteriors.in",
+  phone: "+91 22 4567 8900",
+  website: "www.luxeinteriors.in",
+  established: "2018",
+  address: "301, Design Tower, Linking Road, Bandra West, Mumbai - 400050"
+};
+
+// Default pricing data
+const defaultPricingData = {
+  apartment: "2500000",
+  villa: "5000000",
+  penthouse: "6500000",
+  commercial: "8000000",
+  bungalow: "4500000"
+};
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("company");
@@ -23,25 +43,82 @@ export default function SettingsPage() {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    companyName: "Luxe Interiors Studio",
-    legalName: "Luxe Interiors Design Pvt. Ltd.",
-    email: "hello@luxeinteriors.in",
-    phone: "+91 22 4567 8900",
-    website: "www.luxeinteriors.in",
-    established: "2018",
-    address: "301, Design Tower, Linking Road, Bandra West, Mumbai - 400050"
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(true);
+  
+  // Load company data from localStorage or use defaults
+  const [formData, setFormData] = useState(() => {
+    const savedData = localStorage.getItem('companyProfile');
+    return savedData ? JSON.parse(savedData) : defaultCompanyData;
   });
 
-  const [pricingData, setPricingData] = useState({
-    apartment: "2500000",
-    villa: "5000000",
-    penthouse: "6500000",
-    commercial: "8000000",
-    bungalow: "4500000"
+  // Load pricing data from localStorage or use defaults
+  const [pricingData, setPricingData] = useState(() => {
+    const savedData = localStorage.getItem('pricingData');
+    return savedData ? JSON.parse(savedData) : defaultPricingData;
   });
 
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const loadSavedData = () => {
+      const savedCompanyData = localStorage.getItem('companyProfile');
+      const savedPricingData = localStorage.getItem('pricingData');
+      
+      if (savedCompanyData) {
+        setFormData(JSON.parse(savedCompanyData));
+      }
+      
+      if (savedPricingData) {
+        setPricingData(JSON.parse(savedPricingData));
+      }
+    };
+    
+    loadSavedData();
+  }, []);
+
+  // Fetch employees from API
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      setEmployeesLoading(true);
+      const response = await apiService.getEmployees();
+      console.log('Get Employees Response:', response);
+      
+      let employeeData = [];
+      
+      // Handle different response structures
+      if (Array.isArray(response)) {
+        employeeData = response;
+      } else if (response?.data) {
+        if (Array.isArray(response.data)) {
+          employeeData = response.data;
+        } else if (response.data?.items) {
+          employeeData = response.data.items;
+        } else if (response.data?.users) {
+          employeeData = response.data.users;
+        } else if (response.data?.employees) {
+          employeeData = response.data.employees;
+        }
+      } else if (response?.users) {
+        employeeData = response.users;
+      } else if (response?.employees) {
+        employeeData = response.employees;
+      }
+      
+      console.log('Extracted Employee Data:', employeeData);
+      setEmployees(employeeData);
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+      setEmployees([]);
+    } finally {
+      setEmployeesLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,9 +136,16 @@ export default function SettingsPage() {
   };
 
   const handleSaveChanges = () => {
+    // Save to localStorage
+    localStorage.setItem('companyProfile', JSON.stringify(formData));
+    localStorage.setItem('pricingData', JSON.stringify(pricingData));
+    
     console.log("Saving changes:", { ...formData, pricing: pricingData });
     setHasChanges(false);
-    // Here you would typically save to backend
+    
+    // Show success message
+    alert('Changes saved successfully!');
+    // Here you would typically also save to backend if needed
   };
 
   const handleAddUser = async (e) => {
@@ -92,6 +176,8 @@ export default function SettingsPage() {
         setIsAddUserModalOpen(false);
         setNewUser({ username: "", email: "", mobile: "", password: "", role: "designer" });
         setErrors({});
+        // Refresh employee list
+        await fetchEmployees();
       } else {
         setErrors({ general: response.message || 'Failed to create employee' });
       }
@@ -100,6 +186,35 @@ export default function SettingsPage() {
       setErrors({ general: error.message || 'Failed to create employee' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Get initials from name
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Handle role change for employee
+  const handleEmployeeRoleChange = async (employeeId, newRole) => {
+    try {
+      const response = await apiService.updateUserRole(employeeId, newRole);
+      if (response.success || response.status === 200) {
+        // Update local state
+        setEmployees(employees.map(emp => 
+          emp.id === employeeId ? { ...emp, role: newRole } : emp
+        ));
+        alert('Role updated successfully!');
+      } else {
+        alert('Failed to update role');
+      }
+    } catch (error) {
+      console.error('Update role error:', error);
+      alert('Failed to update role');
     }
   };
 
@@ -236,6 +351,17 @@ export default function SettingsPage() {
                 className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
               />
             </div>
+
+            {/* Save Button */}
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={handleSaveChanges}
+                disabled={!hasChanges}
+                className="bg-accent text-dark px-6 py-2.5 rounded font-medium hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <span>💾</span> Save Company Profile
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -361,13 +487,24 @@ export default function SettingsPage() {
           </div>
 
           {/* Tip */}
-          <div className="bg-dark border border-gray-border rounded-lg p-4">
+          <div className="bg-dark border border-gray-border rounded-lg p-4 mb-6">
             <p className="text-gray-text text-sm flex items-start gap-2">
               <span className="text-lg">💡</span>
               <span>
                 <strong className="text-white">Tip:</strong> These base amounts will be automatically filled when creating a new quotation. You can always adjust the final amount manually.
               </span>
             </p>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveChanges}
+              disabled={!hasChanges}
+              className="bg-accent text-dark px-6 py-2.5 rounded font-medium hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <span>💾</span> Save Pricing Data
+            </button>
           </div>
         </div>
       )}
@@ -466,32 +603,38 @@ export default function SettingsPage() {
               <span className="text-lg">+</span> Add Employee
             </button>
           </div>
-          <div className="divide-y divide-gray-border">
-            {[
-              { initials: 'PM', name: 'Priya Mehta', role: 'Senior Designer', permission: 'Editor' },
-              { initials: 'VS', name: 'Vikram Singh', role: 'Project Manager', permission: 'Editor' },
-              { initials: 'NG', name: 'Neha Gupta', role: 'Sales Lead', permission: 'Editor' },
-              { initials: 'AD', name: 'Anita Desai', role: 'Principal Designer', permission: 'Editor' },
-              { initials: 'KM', name: 'Karthik Menon', role: 'Designer', permission: 'Editor' },
-              { initials: 'RK', name: 'Ramesh Kumar', role: 'Site Manager', permission: 'Editor' },
-              { initials: 'SP', name: 'Sunil Patil', role: 'Site Manager', permission: 'Editor' },
-            ].map((user, idx) => (
-              <div key={user.name} className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded bg-accent text-dark flex items-center justify-center text-lg font-bold">{user.initials}</div>
-                  <div>
-                    <div className="text-white font-medium text-base">{user.name}</div>
-                    <div className="text-gray-text text-sm">{user.role}</div>
+          
+          {employeesLoading ? (
+            <div className="text-center py-10 text-gray-text">Loading employees...</div>
+          ) : employees.length === 0 ? (
+            <div className="text-center py-10 text-gray-text">No employees found. Add your first employee above.</div>
+          ) : (
+            <div className="divide-y divide-gray-border">
+              {employees.map((employee) => (
+                <div key={employee.id} className="flex items-center justify-between py-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded bg-accent text-dark flex items-center justify-center text-lg font-bold">
+                      {getInitials(employee.username || employee.user || employee.name)}
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-base">
+                        {employee.username || employee.user || employee.name || 'Unknown'}
+                      </div>
+                      <div className="text-gray-text text-sm">{employee.email || 'No email'}</div>
+                    </div>
                   </div>
+                  <select 
+                    value={employee.role || 'designer'}
+                    onChange={(e) => handleEmployeeRoleChange(employee.id, e.target.value)}
+                    className="bg-dark-light border border-gray-border text-white px-4 py-2 rounded text-sm font-medium focus:outline-none focus:border-accent transition"
+                  >
+                    <option value="lead">Lead Manager</option>
+                    <option value="designer">Designer</option>
+                  </select>
                 </div>
-                <select className="bg-dark-light border border-gray-border text-white px-4 py-2 rounded text-sm font-medium focus:outline-none focus:border-accent transition">
-                  <option value="Admin">Admin</option>
-                  <option value="Leads">Leads</option>
-                  <option value="Designer">Designer</option>
-                </select>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -505,6 +648,18 @@ export default function SettingsPage() {
           <div className="text-gray-text text-center py-10">
             Notification settings coming soon...
           </div>
+        </div>
+      )}
+
+      {/* Floating Save Button - appears when there are unsaved changes */}
+      {hasChanges && (
+        <div className="fixed bottom-8 right-8 z-50">
+          <button
+            onClick={handleSaveChanges}
+            className="bg-accent text-dark px-6 py-3 rounded-lg shadow-lg hover:bg-yellow-500 transition flex items-center gap-2 font-semibold"
+          >
+            <span className="text-xl">💾</span> Save Changes
+          </button>
         </div>
       )}
     </main>
@@ -599,7 +754,6 @@ export default function SettingsPage() {
             >
               <option value="designer">Designer</option>
               <option value="lead">Lead Manager</option>
-              <option value="admin">Admin</option>
             </select>
           </div>
         </div>

@@ -483,27 +483,6 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Employee Role">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
-          <div className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-gray-400">
-            {user.username || user.user}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-          <div className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-gray-400">
-            {user.email}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Mobile</label>
-          <div className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-gray-400">
-            {user.mobile || 'N/A'}
-          </div>
-        </div>
-
-        <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
           <select
             value={role}
@@ -511,8 +490,7 @@ function EditUserModal({ isOpen, onClose, user, onUpdate }) {
             className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           >
             <option value="designer">Designer</option>
-            <option value="lead">Lead Manager</option>
-            <option value="admin">Admin</option>
+            <option value="lead">Lead</option>
           </select>
         </div>
 

@@ -5,10 +5,17 @@ const statusStyles = {
   orange: "bg-orange-500/10 border border-orange-500 text-orange-400"
 };
 
+// Your Google Drive folder URL - Replace with your actual Google Drive link
+const GOOGLE_DRIVE_UPLOAD_URL = "https://drive.google.com/drive/folders/1cJY7527w-k3gddTiBVDwJW02I_5m__W3";
+
 export default function DesignsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [designs] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const handleUploadClick = () => {
+    window.open(GOOGLE_DRIVE_UPLOAD_URL, '_blank');
+  };
 
   const filteredDesigns = designs.filter(design =>
     design.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -30,7 +37,10 @@ export default function DesignsPage() {
           <p className="text-gray-text mt-1">Visual designs, versions, and client approvals</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="bg-accent text-dark px-4 py-2 rounded flex items-center gap-2 hover:bg-yellow-500 transition text-sm font-medium">
+          <button 
+            onClick={handleUploadClick}
+            className="bg-accent text-dark px-4 py-2 rounded flex items-center gap-2 hover:bg-yellow-500 transition text-sm font-medium"
+          >
             <span className="text-lg">📤</span> Upload Design
           </button>
           <button 

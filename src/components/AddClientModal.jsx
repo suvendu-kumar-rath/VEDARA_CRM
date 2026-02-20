@@ -36,7 +36,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }) {
       newErrors.email = "Email is invalid";
     }
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
-    if (!formData.type) newErrors.type = "Client type is required";
+    if (!formData.type) newErrors.type = "Property type is required";
     if (!formData.city) newErrors.city = "City is required";
     if (!formData.manager) newErrors.manager = "Manager assignment is required";
 
@@ -127,7 +127,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }) {
           {/* Type */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
-              Client Type *
+              Property Type *
             </label>
             <select
               name="type"

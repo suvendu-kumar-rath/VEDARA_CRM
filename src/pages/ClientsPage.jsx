@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import AddClientModal from "../components/AddClientModal";
 import apiService from "../services/api";
 
+// Your Google Drive folder URL - Replace with your actual Google Drive link
+const GOOGLE_DRIVE_UPLOAD_URL = "https://drive.google.com/drive/folders/1cJY7527w-k3gddTiBVDwJW02I_5m__W3";
+
 const statusColors = {
   green: "border-green-500 text-green-400",
   yellow: "border-yellow-500 text-yellow-400",
@@ -15,6 +18,11 @@ export default function ClientsPage() {
   const [clients, setClients] = useState([]);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
+  const [filterPropertyType, setFilterPropertyType] = useState("");
+  const [filterCity, setFilterCity] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   useEffect(() => {
     fetchClients();
@@ -66,6 +74,11 @@ export default function ClientsPage() {
     return colorMap[status?.toLowerCase()] || 'green';
   };
 
+  const handleUploadClick = (clientId) => {
+    console.log('Upload project for client:', clientId);
+    window.open(GOOGLE_DRIVE_UPLOAD_URL, '_blank');
+  };
+
   const handleAddClient = async (formData) => {
     try {
       const response = await apiService.createClient(formData);
@@ -83,11 +96,43 @@ export default function ClientsPage() {
     }
   };
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.city.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Apply all filters
+  const filteredClients = clients.filter(client => {
+    // Client name/email search
+    const matchesSearch = searchTerm === "" || 
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Property type filter
+    const matchesPropertyType = filterPropertyType === "" || 
+      client.type === filterPropertyType;
+    
+    // City filter
+    const matchesCity = filterCity === "" || 
+      client.city === filterCity;
+    
+    // Status filter
+    const matchesStatus = filterStatus === "" || 
+      client.status === filterStatus;
+    
+    return matchesSearch && matchesPropertyType && matchesCity && matchesStatus;
+  });
+  
+  // Get unique values for filter dropdowns
+  const uniquePropertyTypes = [...new Set(clients.map(c => c.type))].filter(Boolean);
+  const uniqueCities = [...new Set(clients.map(c => c.city))].filter(Boolean).sort();
+  const uniqueStatuses = [...new Set(clients.map(c => c.status))].filter(Boolean);
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterPropertyType("");
+    setFilterCity("");
+    setFilterStatus("");
+  };
+  
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm || filterPropertyType || filterCity || filterStatus;
 
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.status === "Active").length;
@@ -155,23 +200,79 @@ export default function ClientsPage() {
 
       {/* Search & Filter Bar */}
       <div className="bg-dark-light border border-gray-border rounded-lg p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Client Name Search */}
+          <div className="lg:col-span-2">
+            <label className="block text-xs text-gray-text mb-1.5">Client Name</label>
             <input
               type="text"
-              placeholder="Search clients..."
+              placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm"
             />
           </div>
-          <select className="bg-dark border border-gray-border rounded px-4 py-2.5 text-gray-text focus:outline-none focus:border-accent transition">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Completed</option>
-            <option>On Hold</option>
-          </select>
+          
+          {/* Property Type Filter */}
+          <div>
+            <label className="block text-xs text-gray-text mb-1.5">Property Type</label>
+            <select 
+              value={filterPropertyType}
+              onChange={(e) => setFilterPropertyType(e.target.value)}
+              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition text-sm"
+            >
+              <option value="">All Types</option>
+              {uniquePropertyTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* City Filter */}
+          <div>
+            <label className="block text-xs text-gray-text mb-1.5">City</label>
+            <select 
+              value={filterCity}
+              onChange={(e) => setFilterCity(e.target.value)}
+              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition text-sm"
+            >
+              <option value="">All Cities</option>
+              {uniqueCities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Status Filter */}
+          <div>
+            <label className="block text-xs text-gray-text mb-1.5">Status</label>
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition text-sm"
+            >
+              <option value="">All Status</option>
+              {uniqueStatuses.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
         </div>
+        
+        {/* Clear Filters Button */}
+        {hasActiveFilters && (
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-sm text-gray-text">
+              Showing {filteredClients.length} of {totalClients} clients
+            </span>
+            <button
+              onClick={clearFilters}
+              className="text-accent hover:text-yellow-500 text-sm font-medium transition"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Clients Table - Desktop */}
@@ -181,10 +282,8 @@ export default function ClientsPage() {
             <thead>
               <tr className="border-b border-gray-border">
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Client Name</th>
-                <th className="text-left p-4 text-gray-text font-medium text-sm">Type</th>
-                <th className="text-left p-4 text-gray-text font-medium text-sm">Projects</th>
+                <th className="text-left p-4 text-gray-text font-medium text-sm">Property Type</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">City</th>
-                <th className="text-left p-4 text-gray-text font-medium text-sm">Total Value</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Manager</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Status</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Actions</th>
@@ -193,13 +292,13 @@ export default function ClientsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-text">
+                  <td colSpan="6" className="p-8 text-center text-gray-text">
                     Loading clients...
                   </td>
                 </tr>
               ) : filteredClients.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-text">
+                  <td colSpan="6" className="p-8 text-center text-gray-text">
                     No clients found
                   </td>
                 </tr>
@@ -219,13 +318,11 @@ export default function ClientsPage() {
                       {client.type}
                     </span>
                   </td>
-                  <td className="p-4 text-gray-text text-center">{client.projects}</td>
                   <td className="p-4 text-gray-text">
                     <span className="flex items-center gap-1">
                       <span>📍</span> {client.city}
                     </span>
                   </td>
-                  <td className="p-4 text-accent font-semibold">{client.totalValue}</td>
                   <td className="p-4 text-gray-text">{client.manager}</td>
                   <td className="p-4">
                     <span className={`border ${statusColors[client.statusColor]} px-3 py-1 rounded text-xs font-medium inline-block`}>
@@ -236,7 +333,7 @@ export default function ClientsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Upload project for client:', client.id);
+                        handleUploadClick(client.id);
                       }}
                       className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
                     >
@@ -269,7 +366,7 @@ export default function ClientsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <div className="text-gray-text text-xs mb-0.5">Type</div>
+                <div className="text-gray-text text-xs mb-0.5">Property Type</div>
                 <span className={`border ${client.type === 'Residential' ? 'border-blue-500 text-blue-400' : 'border-yellow-500 text-yellow-400'} px-2 py-0.5 rounded text-xs font-medium inline-block`}>
                   {client.type}
                 </span>
