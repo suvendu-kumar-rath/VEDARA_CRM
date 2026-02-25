@@ -8,8 +8,6 @@ import DashboardPage from "./pages/DashboardPage";
 import LeadsPage from "./pages/LeadsPage";
 import LeadDetails from "./pages/LeadDetails";
 import ClientsPage from "./pages/ClientsPage";
-import QuotationsPage from "./pages/QuotationsPage";
-import ProjectsPage from "./pages/ProjectsPage";
 import DesignsPage from "./pages/DesignsPage";
 import UsersPage from "./pages/UsersPage";
 import LoginPage from "./pages/LoginPage";
@@ -55,16 +53,6 @@ function AppContent() {
           <Route path="/clients" element={
             <ProtectedRoute allowedRoles={["admin", "lead"]}>
               <ClientsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/quotations" element={
-            <ProtectedRoute allowedRoles={["admin", "lead"]}>
-              <QuotationsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/projects" element={
-            <ProtectedRoute allowedRoles={["admin", "lead"]}>
-              <ProjectsPage />
             </ProtectedRoute>
           } />
           <Route path="/designs" element={

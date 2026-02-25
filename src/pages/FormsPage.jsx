@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import apiService from "../services/api";
 
 export default function FormsPage() {
   const [formData, setFormData] = useState({
@@ -7,6 +8,7 @@ export default function FormsPage() {
     propertyType: "",
     unitType: "",
     totalCarpetArea: "",
+    baseAmount: "",
     ceilingHeights: {
       general: "",
       floorToFloor: "",
@@ -15,6 +17,11 @@ export default function FormsPage() {
       dining: "",
       kitchen: "",
       helpRoom: "",
+      bedroom1CeilingHeight: "",
+      bedroom2CeilingHeight: "",
+      bedroom3CeilingHeight: "",
+      bedroom4CeilingHeight: "",
+      storeroomCeilingHeight: "",
     },
     windowInfo: {
       count: "",
@@ -77,6 +84,42 @@ export default function FormsPage() {
   const [balconyInstances, setBalconyInstances] = useState([]);
   const [expandedBalconies, setExpandedBalconies] = useState({});
 
+  // State for form submission
+  const [submitting, setSubmitting] = useState(false);
+
+  // State for clients dropdown
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [clientSelectionMode, setClientSelectionMode] = useState("dropdown"); // "dropdown" or "manual"
+
+  // Predefined prices per sqft for interior items
+  const interiorItemsPrices = {
+    "Modular Kitchen": 1200,
+    "False Ceiling": 150,
+    "Wardrobe": 800,
+    "Painting": 50,
+    "Flooring (Tiles)": 80,
+    "Flooring (Wooden)": 200,
+    "TV Unit": 900,
+    "Crockery Unit": 850,
+    "Study Table": 700,
+    "Bed (King)": 600,
+    "Bed (Queen)": 500,
+    "Lighting": 100,
+    "Wallpaper": 120,
+    "Window Treatment": 250,
+    "Bathroom Fittings": 400,
+    "Door": 15000,
+    "Window": 8000,
+  };
+
+  // State for interior items in different sections
+  const [globalScopeItems, setGlobalScopeItems] = useState([]);
+  const [deliverablesItems, setDeliverablesItems] = useState([]);
+  const [roomWiseItems, setRoomWiseItems] = useState({});
+  const [bedroomWashroomItems, setBedroomWashroomItems] = useState({});
+  const [balconyItems, setBalconyItems] = useState({});
+
   // State for multiple Room-Wise Details sections
   const [roomWiseInstances, setRoomWiseInstances] = useState([{ id: 1, name: "Room Set 1" }]);
   const [expandedRoomWiseSections, setExpandedRoomWiseSections] = useState({ 1: true });
@@ -94,6 +137,128 @@ export default function FormsPage() {
     "Domestic Help Room",
     "Store Room",
   ];
+
+  // Fetch clients on component mount
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      setLoadingClients(true);
+      const response = await apiService.getConvertedClients();
+      
+      if (response.success && response.data) {
+        const clientsData = response.data.items || response.data.convertedClients || response.data || [];
+        setClients(clientsData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch clients:', error);
+      setClients([]);
+    } finally {
+      setLoadingClients(false);
+    }
+  };
+
+  // Interior Items Management Functions
+  const addInteriorItem = (section, sectionId = null) => {
+    const newItem = {
+      id: Date.now(),
+      itemName: "",
+      area: "",
+      pricePerSqft: 0,
+      totalAmount: 0,
+    };
+
+    if (section === "globalScope") {
+      setGlobalScopeItems([...globalScopeItems, newItem]);
+    } else if (section === "deliverables") {
+      setDeliverablesItems([...deliverablesItems, newItem]);
+    } else if (section === "roomWise" && sectionId) {
+      setRoomWiseItems({
+        ...roomWiseItems,
+        [sectionId]: [...(roomWiseItems[sectionId] || []), newItem],
+      });
+    } else if (section === "bedroomWashroom" && sectionId) {
+      setBedroomWashroomItems({
+        ...bedroomWashroomItems,
+        [sectionId]: [...(bedroomWashroomItems[sectionId] || []), newItem],
+      });
+    } else if (section === "balcony" && sectionId) {
+      setBalconyItems({
+        ...balconyItems,
+        [sectionId]: [...(balconyItems[sectionId] || []), newItem],
+      });
+    }
+  };
+
+  const removeInteriorItem = (section, itemId, sectionId = null) => {
+    if (section === "globalScope") {
+      setGlobalScopeItems(globalScopeItems.filter(item => item.id !== itemId));
+    } else if (section === "deliverables") {
+      setDeliverablesItems(deliverablesItems.filter(item => item.id !== itemId));
+    } else if (section === "roomWise" && sectionId) {
+      setRoomWiseItems({
+        ...roomWiseItems,
+        [sectionId]: roomWiseItems[sectionId].filter(item => item.id !== itemId),
+      });
+    } else if (section === "bedroomWashroom" && sectionId) {
+      setBedroomWashroomItems({
+        ...bedroomWashroomItems,
+        [sectionId]: bedroomWashroomItems[sectionId].filter(item => item.id !== itemId),
+      });
+    } else if (section === "balcony" && sectionId) {
+      setBalconyItems({
+        ...balconyItems,
+        [sectionId]: balconyItems[sectionId].filter(item => item.id !== itemId),
+      });
+    }
+  };
+
+  const updateInteriorItem = (section, itemId, field, value, sectionId = null) => {
+    const updateItemInArray = (items) => {
+      return items.map(item => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item, [field]: value };
+          
+          // If item name changed, update price per sqft
+          if (field === "itemName") {
+            updatedItem.pricePerSqft = interiorItemsPrices[value] || 0;
+            updatedItem.totalAmount = updatedItem.area * updatedItem.pricePerSqft;
+          }
+          
+          // If area changed, recalculate total
+          if (field === "area") {
+            updatedItem.totalAmount = value * item.pricePerSqft;
+          }
+          
+          return updatedItem;
+        }
+        return item;
+      });
+    };
+
+    if (section === "globalScope") {
+      setGlobalScopeItems(updateItemInArray(globalScopeItems));
+    } else if (section === "deliverables") {
+      setDeliverablesItems(updateItemInArray(deliverablesItems));
+    } else if (section === "roomWise" && sectionId) {
+      setRoomWiseItems({
+        ...roomWiseItems,
+        [sectionId]: updateItemInArray(roomWiseItems[sectionId] || []),
+      });
+    } else if (section === "bedroomWashroom" && sectionId) {
+      setBedroomWashroomItems({
+        ...bedroomWashroomItems,
+        [sectionId]: updateItemInArray(bedroomWashroomItems[sectionId] || []),
+      });
+    } else if (section === "balcony" && sectionId) {
+      setBalconyItems({
+        ...balconyItems,
+        [sectionId]: updateItemInArray(balconyItems[sectionId] || []),
+      });
+    }
+  };
 
   // Initialize room data structure
   const initializeRoom = (roomName) => {
@@ -1435,21 +1600,51 @@ export default function FormsPage() {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     const completeFormData = {
       ...formData,
       roomWiseInstances: roomWiseInstances.map(instance => ({
         ...instance,
         rooms: roomWiseRooms[instance.id] || {},
         removedRooms: roomWiseRemovedRooms[instance.id] || [],
+        interiorItems: roomWiseItems[instance.id] || [],
       })),
-      bedroomWashroomInstances,
-      balconyInstances,
+      bedroomWashroomInstances: bedroomWashroomInstances.map(instance => ({
+        ...instance,
+        interiorItems: bedroomWashroomItems[instance.id] || [],
+      })),
+      balconyInstances: balconyInstances.map(instance => ({
+        ...instance,
+        interiorItems: balconyItems[instance.id] || [],
+      })),
+      globalScopeInteriorItems: globalScopeItems,
+      deliverablesInteriorItems: deliverablesItems,
     };
+    
     console.log("Form Data:", completeFormData);
-    alert("Form submitted! Check console for data.");
-    // Here you would typically send the data to your API
+    
+    try {
+      setSubmitting(true);
+      const response = await apiService.createQuotation(completeFormData);
+      console.log('Quotation Response:', response);
+      
+      if (response.success || response.status === 200 || response.status === 201) {
+        alert('Quotation created successfully!');
+        // Optionally reset form or redirect
+        if (window.confirm('Would you like to create another quotation?')) {
+          window.location.reload();
+        }
+      } else {
+        alert(`Failed to create quotation: ${response.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error creating quotation:', error);
+      alert(`Error: ${error.message || 'Failed to create quotation'}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Handle save as draft
@@ -1485,7 +1680,7 @@ export default function FormsPage() {
     <div className="flex-1 bg-dark overflow-y-auto">
       <main className="p-6 md:p-10">
         {/* Header */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Residential Interior Design Scope Form</h1>
             <p className="text-gray-text mt-1">Complete interior execution details for residential projects</p>
@@ -1506,7 +1701,7 @@ export default function FormsPage() {
               💾 Save Draft
             </button>
           </div>
-        </div>
+        </div> */}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 1️⃣ PROJECT INFORMATION */}
@@ -1546,14 +1741,59 @@ export default function FormsPage() {
                     <label className="block text-sm font-medium text-gray-text mb-2">
                       Client Name *
                     </label>
-                    <input
-                      type="text"
-                      value={formData.clientName}
-                      onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      placeholder="Enter client name"
-                      required
-                    />
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        {clientSelectionMode === "dropdown" ? (
+                          <select
+                            value={formData.clientName}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === "__manual__") {
+                                setClientSelectionMode("manual");
+                                setFormData({ ...formData, clientName: "" });
+                              } else {
+                                setFormData({ ...formData, clientName: value });
+                              }
+                            }}
+                            className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                            required
+                            disabled={loadingClients}
+                          >
+                            <option value="">
+                              {loadingClients ? "Loading clients..." : "Select client"}
+                            </option>
+                            {clients.map((client) => (
+                              <option key={client.id} value={client.name}>
+                                {client.name}
+                              </option>
+                            ))}
+                            <option value="__manual__">✏️ Enter Manually</option>
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={formData.clientName}
+                            onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                            className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                            placeholder="Enter client name"
+                            required
+                          />
+                        )}
+                      </div>
+                      {clientSelectionMode === "manual" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setClientSelectionMode("dropdown");
+                            setFormData({ ...formData, clientName: "" });
+                          }}
+                          className="px-4 py-2.5 bg-dark-light border border-gray-border rounded text-gray-text hover:text-accent hover:border-accent transition text-sm"
+                          title="Switch to dropdown"
+                        >
+                          📋
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -1569,9 +1809,9 @@ export default function FormsPage() {
                       <option value="">Select property type</option>
                       <option value="Apartment">Apartment</option>
                       <option value="Villa">Villa</option>
-                      <option value="Farmhouse">Farmhouse</option>
-                      <option value="Farmhouse">Indivisual</option>
-                      <option value="Farmhouse">Commercial</option>
+                      {/* <option value="Farmhouse">Farmhouse</option>
+                      <option value="Individual">Individual</option>
+                      <option value="Commercial">Commercial</option> */}
                     </select>
                   </div>
 
@@ -1603,6 +1843,20 @@ export default function FormsPage() {
                       onChange={(e) => setFormData({ ...formData, totalCarpetArea: e.target.value })}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                       placeholder="Enter carpet area"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">
+                      Base Amount (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.baseAmount}
+                      onChange={(e) => setFormData({ ...formData, baseAmount: e.target.value })}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      placeholder="Enter base amount"
                       required
                     />
                   </div>
@@ -2001,9 +2255,10 @@ export default function FormsPage() {
             </button>
             <button
               type="submit"
-              className="bg-accent text-dark px-8 py-3 rounded font-medium hover:bg-yellow-500 transition"
+              disabled={submitting}
+              className="bg-accent text-dark px-8 py-3 rounded font-medium hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Form
+              {submitting ? 'Creating Quotation...' : 'Create Quotation'}
             </button>
           </div>
         </form>

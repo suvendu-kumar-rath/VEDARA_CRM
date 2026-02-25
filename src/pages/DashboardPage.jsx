@@ -6,7 +6,6 @@ import RecentActivity from "../components/RecentActivity";
 import QuickStats from "../components/QuickStats";
 import { useNavigate } from "react-router-dom";
 import AddLeadModal from "../components/AddLeadModal";
-import CreateQuotationModal from "../components/CreateQuotationModal";
 
 export default function DashboardPage() {
   const navigate = useNavigate();

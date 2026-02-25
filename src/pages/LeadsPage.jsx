@@ -210,15 +210,46 @@ export default function LeadsPage() {
       console.log('Convert Lead Response:', response);
 
       if (response.success || response.status === 200 || response.status === 201) {
-        alert('Lead successfully converted to client!');
-        // Refresh leads list to remove converted lead
-        await fetchLeads();
+        // Show success message and navigate to clients page
+        const goToClients = window.confirm('Lead successfully converted to client! Would you like to view it in the Clients page?');
+        
+        if (goToClients) {
+          navigate('/clients');
+        } else {
+          // Refresh leads list to remove converted lead
+          await fetchLeads();
+        }
       } else {
         alert(`Failed to convert lead: ${response.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Convert lead error:', error);
       alert(`Error converting lead: ${error.message}`);
+    }
+  };
+
+  const handleDeleteLead = async (e, lead) => {
+    e.stopPropagation();
+    
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete lead "${lead.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await apiService.deleteLead(lead.id);
+      console.log('Delete Lead Response:', response);
+
+      if (response.success || response.status === 200 || response.status === 204) {
+        alert('Lead deleted successfully!');
+        // Refresh leads list
+        await fetchLeads();
+      } else {
+        alert(`Failed to delete lead: ${response.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Delete lead error:', error);
+      alert(`Error deleting lead: ${error.message}`);
     }
   };
 
@@ -383,23 +414,32 @@ export default function LeadsPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <select
-                      value={lead.stage?.toLowerCase() || 'new'}
-                      onChange={(e) => handleStatusChange(e, lead)}
-                      onClick={(e) => e.stopPropagation()}
-                      disabled={lead.stage?.toLowerCase() === 'converted'}
-                      className={`bg-dark border border-gray-border text-white px-3 py-2 rounded text-sm focus:outline-none transition ${
-                        lead.stage?.toLowerCase() === 'converted' 
-                          ? 'opacity-50 cursor-not-allowed' 
-                          : 'cursor-pointer hover:border-accent focus:border-accent'
-                      }`}
-                    >
-                      <option value="">Change Status...</option>
-                      <option value="new">New</option>
-                      <option value="contacted">Contacted</option>
-                      <option value="converted">Converted</option>
-                      <option value="lost">Discard</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={lead.stage?.toLowerCase() || 'new'}
+                        onChange={(e) => handleStatusChange(e, lead)}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={lead.stage?.toLowerCase() === 'converted'}
+                        className={`bg-dark border border-gray-border text-white px-3 py-2 rounded text-sm focus:outline-none transition ${
+                          lead.stage?.toLowerCase() === 'converted' 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : 'cursor-pointer hover:border-accent focus:border-accent'
+                        }`}
+                      >
+                        <option value="">Change Status...</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="converted">Converted</option>
+                        <option value="lost">Discard</option>
+                      </select>
+                      <button
+                        onClick={(e) => handleDeleteLead(e, lead)}
+                        className="px-3 py-2 bg-red-900/20 border border-red-500/30 rounded text-red-400 hover:bg-red-900/40 transition text-sm font-medium"
+                        title="Delete lead"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -447,27 +487,36 @@ export default function LeadsPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-3 border-t border-gray-border">
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-border">
               <span className={`border ${stageBorderColors[lead.stageColor]} text-${lead.stageColor === 'yellow' ? 'accent' : lead.stageColor === 'green' ? 'green-400' : lead.stageColor === 'blue' ? 'blue-400' : 'red-400'} px-3 py-1 rounded text-xs font-medium`}>
                 {lead.stage}
               </span>
-              <select
-                value={lead.stage?.toLowerCase() || 'new'}
-                onChange={(e) => handleStatusChange(e, lead)}
-                onClick={(e) => e.stopPropagation()}
-                disabled={lead.stage?.toLowerCase() === 'converted'}
-                className={`bg-dark border border-gray-border text-white px-3 py-1.5 rounded text-sm focus:outline-none transition ${
-                  lead.stage?.toLowerCase() === 'converted'
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'focus:border-accent'
-                }`}
-              >
-                <option value="">Change Status...</option>
-                <option value="new">New</option>
-                <option value="contacted">Contacted</option>
-                <option value="converted">Converted</option>
-                <option value="lost">Discard</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={lead.stage?.toLowerCase() || 'new'}
+                  onChange={(e) => handleStatusChange(e, lead)}
+                  onClick={(e) => e.stopPropagation()}
+                  disabled={lead.stage?.toLowerCase() === 'converted'}
+                  className={`bg-dark border border-gray-border text-white px-3 py-1.5 rounded text-sm focus:outline-none transition ${
+                    lead.stage?.toLowerCase() === 'converted'
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'focus:border-accent'
+                  }`}
+                >
+                  <option value="">Change Status...</option>
+                  <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="converted">Converted</option>
+                  <option value="lost">Discard</option>
+                </select>
+                <button
+                  onClick={(e) => handleDeleteLead(e, lead)}
+                  className="px-3 py-1.5 bg-red-900/20 border border-red-500/30 rounded text-red-400 hover:bg-red-900/40 transition text-sm"
+                  title="Delete lead"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         ))}

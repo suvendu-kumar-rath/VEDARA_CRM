@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
+import apiService from "../services/api";
 
 const sources = ["instagram", "facebook", "website", "google_ads", "referral", "walk-in", "email_campaign", "linkedin"];
 const budgetRanges = ["₹10L–₹15L", "₹15L–₹20L", "₹20L–₹25L", "₹25L–₹35L", "₹35L–₹45L", "₹45L–₹60L", "₹50L–₹75L", "₹60L–₹80L", "₹80L–₹1Cr", "₹1Cr–₹1.5Cr", "₹1.5Cr+"];
-const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Villa", "Penthouse", "Duplex", "Studio", "Commercial"];
-const statuses = ["new", "contacted", "qualified", "proposal", "negotiation", "converted", "lost"];
+const propertyTypes = ["1BHK", "2BHK", "3BHK", "4BHK", "Villa", "Penthouse", "Duplex", "Studio", ];
+const statuses = ["contacted", "converted"];
 
 export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
   const [formData, setFormData] = useState({
@@ -15,13 +16,57 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
     budget_range: "",
     property_type: "",
     city: "",
-    status: "new",
+    status: "contacted",
     assigned_to: "",
     notes: ""
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+
+  // Fetch employees when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchEmployees();
+    }
+  }, [isOpen]);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoadingEmployees(true);
+      const response = await apiService.getEmployees();
+      
+      let employeeData = [];
+      
+      // Handle different response structures
+      if (Array.isArray(response)) {
+        employeeData = response;
+      } else if (response?.data) {
+        if (Array.isArray(response.data)) {
+          employeeData = response.data;
+        } else if (response.data?.items) {
+          employeeData = response.data.items;
+        } else if (response.data?.users) {
+          employeeData = response.data.users;
+        } else if (response.data?.employees) {
+          employeeData = response.data.employees;
+        }
+      } else if (response?.users) {
+        employeeData = response.users;
+      } else if (response?.employees) {
+        employeeData = response.employees;
+      }
+      
+      setEmployees(employeeData);
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+      setEmployees([]);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,7 +91,7 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
     if (!formData.budget_range) newErrors.budget_range = "Budget is required";
     if (!formData.property_type) newErrors.property_type = "Property type is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.assigned_to) newErrors.assigned_to = "Assignment is required";
+    if (!formData.assigned_to) newErrors.assigned_to = "Please assign to an employee";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -242,16 +287,24 @@ export default function AddLeadModal({ isOpen, onClose, onAddLead }) {
           {/* Assigned To */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
-              Assigned To (Employee ID)
+              Assign To
             </label>
-            <input
-              type="number"
+            <select
               name="assigned_to"
               value={formData.assigned_to}
               onChange={handleChange}
-              placeholder="Enter employee ID"
-              className={`w-full bg-dark border ${errors.assigned_to ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition`}
-            />
+              className={`w-full bg-dark border ${errors.assigned_to ? 'border-red-500' : 'border-gray-border'} rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition appearance-none cursor-pointer ${!formData.assigned_to ? 'text-gray-text' : ''}`}
+              disabled={loadingEmployees}
+            >
+              <option value="">
+                {loadingEmployees ? 'Loading employees...' : 'Select employee'}
+              </option>
+              {employees.map(employee => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.user || employee.username || employee.name || employee.email} - {employee.role?.charAt(0).toUpperCase() + employee.role?.slice(1)}
+                </option>
+              ))}
+            </select>
             {errors.assigned_to && <p className="text-red-500 text-xs mt-1">{errors.assigned_to}</p>}
           </div>
         </div>

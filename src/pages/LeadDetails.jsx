@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Breadcrumb from "../components/Breadcrumb";
 import LeadSummaryCard from "../components/LeadSummaryCard";
 import ActivityTimeline from "../components/ActivityTimeline";
+import apiService from "../services/api";
 
 export default function LeadDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // Default lead structure - should be fetched from API using the id
-  const lead = {
+  const [lead, setLead] = useState({
     id: id,
     name: "",
     phone: "",
@@ -22,14 +22,58 @@ export default function LeadDetails() {
     createdOn: "",
     email: "",
     address: ""
-  };
+  });
 
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     stage: lead.stage,
     followUp: lead.followUp,
     notes: ""
   });
+
+  useEffect(() => {
+    fetchLeadDetails();
+  }, [id]);
+
+  const fetchLeadDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getLeads();
+      
+      if (response.success && response.data) {
+        const leadsData = response.data.items || response.data || [];
+        const currentLead = leadsData.find(l => l.id.toString() === id.toString());
+        
+        if (currentLead) {
+          setLead({
+            id: currentLead.id,
+            name: currentLead.name,
+            phone: currentLead.phone,
+            email: currentLead.email,
+            source: currentLead.source?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || currentLead.source,
+            budget: currentLead.budgetRange,
+            property: currentLead.propertyType,
+            city: currentLead.city,
+            stage: currentLead.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'New',
+            notes: currentLead.notes,
+            createdOn: currentLead.createdAt,
+            address: currentLead.address
+          });
+          
+          setFormData({
+            stage: currentLead.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'New',
+            followUp: currentLead.followUp || "",
+            notes: currentLead.notes || ""
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch lead details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/" },
@@ -43,9 +87,42 @@ export default function LeadDetails() {
     console.log("Saving lead data:", formData);
   };
 
-  const handleConvert = () => {
-    // Handle lead conversion
-    alert("Converting lead to client...");
+  const handleConvert = async () => {
+    // Confirm conversion
+    if (!window.confirm(`Convert "${lead.name}" to a client?`)) {
+      return;
+    }
+
+    try {
+      // Prepare client data from lead
+      const clientData = {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city,
+        source: lead.source,
+        notes: lead.notes || formData.notes
+      };
+
+      const response = await apiService.convertLeadToClient(lead.id, clientData);
+      console.log('Convert Lead Response:', response);
+
+      if (response.success || response.status === 200 || response.status === 201) {
+        // Show success message and navigate to clients page
+        const goToClients = window.confirm('Lead successfully converted to client! Would you like to view it in the Clients page?');
+        
+        if (goToClients) {
+          navigate('/clients');
+        } else {
+          navigate('/leads');
+        }
+      } else {
+        alert(`Failed to convert lead: ${response.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Convert lead error:', error);
+      alert(`Error converting lead: ${error.message}`);
+    }
   };
 
   const handleScheduleFollowup = () => {

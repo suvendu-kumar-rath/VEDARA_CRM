@@ -115,8 +115,6 @@ export const AuthProvider = ({ children }) => {
       case '/dashboard':
       case '/leads':
       case '/clients':
-      case '/quotations':
-      case '/projects':
         return ['admin', 'lead'].includes(role);
       default:
         return ['admin', 'lead'].includes(role);

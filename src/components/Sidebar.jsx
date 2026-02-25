@@ -6,10 +6,8 @@ const navItems = [
   { label: "Dashboard", icon: "📊", path: "/", roles: ["admin", "lead"] },
   { label: "Leads", icon: "👥", path: "/leads", roles: ["admin", "lead"] },
   { label: "Clients", icon: "👤", path: "/clients", roles: ["admin", "lead"] },
-  // { label: "Projects", icon: "📁", path: "/projects", roles: ["admin", "lead"] },
   { label: "Designs", icon: "🎨", path: "/designs", roles: ["admin", "lead", "designer"] },
-  { label: "Quotations", icon: "📄", path: "/quotations", roles: ["admin", "lead"] },
-  { label: "Forms", icon: "📋", path: "/forms", roles: ["admin", "lead"] },
+  { label: "Quotation", icon: "📋", path: "/forms", roles: ["admin", "lead"] },
   { label: "Employee", icon: "👥", path: "/users", roles: ["admin"] },
   { label: "Settings", icon: "⚙️", path: "/settings", roles: ["admin", "lead"] },
 ];
@@ -84,9 +82,12 @@ export default function Sidebar() {
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div>
-          <div className="mb-10">
-            <h2 className="text-accent text-2xl font-bold tracking-wide">VEDARA</h2>
-            <div className="text-gray-text text-xs mt-1">Interior Design Studio</div>
+          <div className="mb-8">
+            <img 
+              src="/vedara-logo.jpg" 
+              alt="Vedara Home Design Studio" 
+              className="w-full h-auto"
+            />
           </div>
           <nav className="flex flex-col gap-1">
             {accessibleNavItems.map((item) => (

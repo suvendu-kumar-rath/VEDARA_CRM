@@ -35,8 +35,10 @@ export default function ClientsPage() {
       console.log('Get Converted Clients Response:', response);
       
       if (response.success && response.data) {
-        // Get converted clients from the response
-        const clientsData = response.data.convertedClients || [];
+        // Get converted clients from the response - handle both structures
+        const clientsData = response.data.items || response.data.convertedClients || response.data || [];
+        
+        console.log('Clients Data:', clientsData);
         
         // Transform API data to match UI format
         const transformedClients = clientsData.map(client => ({
@@ -44,15 +46,16 @@ export default function ClientsPage() {
           name: client.name,
           email: client.email,
           phone: client.phone,
-          type: client.type || "Residential",
+          type: client.propertyType || client.type || "Residential",
           projects: client.projects || 0,
-          city: client.address || client.city || "N/A",
-          totalValue: client.totalValue || "₹0 L",
-          manager: client.manager || "Unassigned",
+          city: client.city || client.address || "N/A",
+          totalValue: client.totalValue || client.budgetRange || "₹0 L",
+          manager: client.assigned_to || client.manager || "Unassigned",
           status: client.status || "Active",
           statusColor: getStatusColor(client.status),
           createdAt: client.createdAt,
-          address: client.address
+          address: client.address || client.city,
+          source: client.source
         }));
         setClients(transformedClients);
       }
@@ -93,6 +96,29 @@ export default function ClientsPage() {
     } catch (error) {
       console.error('Create client error:', error);
       return { success: false, error: error.message };
+    }
+  };
+
+  const handleDeleteClient = async (clientId, clientName) => {
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete client "${clientName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await apiService.deleteClient(clientId);
+      console.log('Delete Client Response:', response);
+
+      if (response.success || response.status === 200 || response.status === 204) {
+        alert('Client deleted successfully!');
+        // Refresh clients list
+        await fetchClients();
+      } else {
+        alert(`Failed to delete client: ${response.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Delete client error:', error);
+      alert(`Error deleting client: ${error.message}`);
     }
   };
 
@@ -150,12 +176,7 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-bold text-white">Clients</h1>
           <p className="text-gray-text mt-1">Manage your customer relationships</p>
         </div>
-        <button 
-          onClick={() => setIsAddClientModalOpen(true)}
-          className="bg-dark border border-gray-border text-white px-4 py-2 rounded flex items-center gap-2 hover:border-accent hover:text-accent transition text-sm font-medium w-fit"
-        >
-          <span className="text-lg">+</span> Add Client
-        </button>
+        
       </div>
 
       {/* Summary Cards */}
@@ -330,15 +351,27 @@ export default function ClientsPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUploadClick(client.id);
-                      }}
-                      className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
-                    >
-                      <span>📁</span> Upload Project
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUploadClick(client.id);
+                        }}
+                        className="bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center gap-1"
+                      >
+                        <span>📁</span> Upload Project
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClient(client.id, client.name);
+                        }}
+                        className="px-3 py-1.5 bg-red-900/20 border border-red-500/30 rounded text-red-400 hover:bg-red-900/40 transition text-sm font-medium"
+                        title="Delete client"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -386,14 +419,37 @@ export default function ClientsPage() {
                 <div className="text-accent text-sm font-semibold">{client.totalValue}</div>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-3 border-t border-gray-border">
-              <div>
-                <div className="text-gray-text text-xs mb-0.5">Manager</div>
-                <div className="text-white text-sm">{client.manager}</div>
+            <div className="pt-3 mt-3 border-t border-gray-border space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-gray-text text-xs mb-0.5">Manager</div>
+                  <div className="text-white text-sm">{client.manager}</div>
+                </div>
+                <span className={`border ${statusColors[client.statusColor]} px-3 py-1 rounded text-xs font-medium`}>
+                  {client.status}
+                </span>
               </div>
-              <span className={`border ${statusColors[client.statusColor]} px-3 py-1 rounded text-xs font-medium`}>
-                {client.status}
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUploadClick(client.id);
+                  }}
+                  className="flex-1 bg-accent text-dark px-4 py-2 rounded text-sm font-medium hover:bg-yellow-500 transition flex items-center justify-center gap-1"
+                >
+                  <span>📁</span> Upload Project
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClient(client.id, client.name);
+                  }}
+                  className="px-4 py-2 bg-red-900/20 border border-red-500/30 rounded text-red-400 hover:bg-red-900/40 transition text-sm"
+                  title="Delete client"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         ))}

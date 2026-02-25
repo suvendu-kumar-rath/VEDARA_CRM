@@ -27,7 +27,11 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">VEDARA</h1>
+          <img 
+            src="/vedara-logo.jpg" 
+            alt="Vedara Home Design Studio" 
+            className="mx-auto w-64 h-auto mb-4"
+          />
           <p className="text-gray-text">Interior Design CRM</p>
         </div>
 

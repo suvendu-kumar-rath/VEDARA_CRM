@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export default function Modal({ isOpen, onClose, children, title }) {
+export default function Modal({ isOpen, onClose, children, title, icon, size = "medium" }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -14,6 +14,13 @@ export default function Modal({ isOpen, onClose, children, title }) {
 
   if (!isOpen) return null;
 
+  const sizeClasses = {
+    small: "max-w-md",
+    medium: "max-w-2xl",
+    large: "max-w-6xl",
+    fullscreen: "max-w-[95vw]"
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -23,10 +30,13 @@ export default function Modal({ isOpen, onClose, children, title }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative bg-dark-light border border-gray-border rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className={`relative bg-dark-light border border-gray-border rounded-lg shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-border sticky top-0 bg-dark-light z-10">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            {icon && <span>{icon}</span>}
+            <span>{title}</span>
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-text hover:text-white transition p-1"

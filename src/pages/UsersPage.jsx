@@ -134,7 +134,7 @@ export default function UsersPage() {
     (emp.username?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     (emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     (emp.role?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-  );
+  ).sort((a, b) => a.id - b.id); // Sort by ID in ascending order
 
   const handleEditUser = (user) => {
     setEditingUser(user);
@@ -247,7 +247,8 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="bg-dark border-b border-gray-700">
               <tr>
-                <th className="text-left p-4 text-gray-300 font-medium">Employee</th>
+                <th className="text-left p-4 text-gray-300 font-medium">Employee ID</th>
+                <th className="text-left p-4 text-gray-300 font-medium">Employee Name</th>
                 <th className="text-left p-4 text-gray-300 font-medium">Mobile</th>
                 <th className="text-left p-4 text-gray-300 font-medium">Role</th>
                 <th className="text-left p-4 text-gray-300 font-medium">Actions</th>
@@ -256,12 +257,15 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="p-8 text-center text-gray-400">
+                  <td colSpan="5" className="p-8 text-center text-gray-400">
                     Loading employees...
                   </td>
                 </tr>
               ) : filteredEmployees.map((emp) => (
                 <tr key={emp.id} className="hover:bg-dark/50">
+                  <td className="p-4">
+                    <div className="font-medium text-white">#{emp.id}</div>
+                  </td>
                   <td className="p-4">
                     <div>
                       <div className="font-medium text-white">{emp.user || emp.username}</div>
