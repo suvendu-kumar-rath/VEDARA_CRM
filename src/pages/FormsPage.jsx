@@ -29,34 +29,6 @@ export default function FormsPage() {
       lintelHeight: "",
       type: "",
     },
-    globalScope: {
-      fullHomeRenovation: false,
-      interiorFitOut: false,
-      civilInteriorTurnkey: false,
-      onlineDesignOnly: false,
-      materialSelection: false,
-      projectManagement: false,
-      furnitureStyling: false,
-      vastuConsultation: false,
-    },
-    // Project Deliverables
-    deliverables: {
-      layouts2D: false,
-      furnitureLayout: false,
-      electricalLayout: false,
-      plumbingLayout: false,
-      ceilingLayout: false,
-      tileLayout: false,
-      workingDrawings: false,
-      renders3D: false,
-      materialBoards: false,
-      BOQ: false,
-      siteVisits: false,
-      vendorCoordination: false,
-      procurementSupport: false,
-      finalStyling: false,
-      photoshoot: false,
-    },
     // Rooms
     rooms: {},
   });
@@ -83,6 +55,14 @@ export default function FormsPage() {
   // State for dynamic Balcony instances
   const [balconyInstances, setBalconyInstances] = useState([]);
   const [expandedBalconies, setExpandedBalconies] = useState({});
+
+  // State for dynamic Global Scope instances
+  const [globalScopeInstances, setGlobalScopeInstances] = useState([]);
+  const [expandedGlobalScopes, setExpandedGlobalScopes] = useState({});
+
+  // State for dynamic Deliverables instances
+  const [deliverablesInstances, setDeliverablesInstances] = useState([]);
+  const [expandedDeliverables, setExpandedDeliverables] = useState({});
 
   // State for form submission
   const [submitting, setSubmitting] = useState(false);
@@ -1547,6 +1527,84 @@ export default function FormsPage() {
     });
   };
 
+  // Add new Global Scope instance
+  const addGlobalScopeInstance = () => {
+    const newId = globalScopeInstances.length > 0 
+      ? Math.max(...globalScopeInstances.map(i => i.id)) + 1 
+      : 1;
+    const newInstance = {
+      id: newId,
+      scopeType: "",
+      amount: "",
+    };
+    setGlobalScopeInstances([...globalScopeInstances, newInstance]);
+    setExpandedGlobalScopes({ ...expandedGlobalScopes, [newId]: true });
+  };
+
+  // Remove Global Scope instance
+  const removeGlobalScopeInstance = (id) => {
+    if (window.confirm("Are you sure you want to remove this global scope item?")) {
+      setGlobalScopeInstances(globalScopeInstances.filter(instance => instance.id !== id));
+      const newExpanded = { ...expandedGlobalScopes };
+      delete newExpanded[id];
+      setExpandedGlobalScopes(newExpanded);
+    }
+  };
+
+  // Toggle Global Scope expansion
+  const toggleGlobalScope = (id) => {
+    setExpandedGlobalScopes({
+      ...expandedGlobalScopes,
+      [id]: !expandedGlobalScopes[id],
+    });
+  };
+
+  // Handle Global Scope change
+  const handleGlobalScopeChange = (id, field, value) => {
+    setGlobalScopeInstances(globalScopeInstances.map(instance => 
+      instance.id === id ? { ...instance, [field]: value } : instance
+    ));
+  };
+
+  // Add new Deliverable instance
+  const addDeliverableInstance = () => {
+    const newId = deliverablesInstances.length > 0 
+      ? Math.max(...deliverablesInstances.map(i => i.id)) + 1 
+      : 1;
+    const newInstance = {
+      id: newId,
+      deliverableType: "",
+      amount: "",
+    };
+    setDeliverablesInstances([...deliverablesInstances, newInstance]);
+    setExpandedDeliverables({ ...expandedDeliverables, [newId]: true });
+  };
+
+  // Remove Deliverable instance
+  const removeDeliverableInstance = (id) => {
+    if (window.confirm("Are you sure you want to remove this deliverable item?")) {
+      setDeliverablesInstances(deliverablesInstances.filter(instance => instance.id !== id));
+      const newExpanded = { ...expandedDeliverables };
+      delete newExpanded[id];
+      setExpandedDeliverables(newExpanded);
+    }
+  };
+
+  // Toggle Deliverable expansion
+  const toggleDeliverable = (id) => {
+    setExpandedDeliverables({
+      ...expandedDeliverables,
+      [id]: !expandedDeliverables[id],
+    });
+  };
+
+  // Handle Deliverable change
+  const handleDeliverableChange = (id, field, value) => {
+    setDeliverablesInstances(deliverablesInstances.map(instance => 
+      instance.id === id ? { ...instance, [field]: value } : instance
+    ));
+  };
+
   // Handle Bedroom + Washroom data change
   const handleBedroomWashroomChange = (id, path, value) => {
     setBedroomWashroomInstances(instances =>
@@ -2292,23 +2350,101 @@ export default function FormsPage() {
 
             {expandedSections.globalScope && (
               <div className="p-6 border-t border-gray-border">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.keys(formData.globalScope).map((key) => (
-                    <label key={key} className="flex items-center gap-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={formData.globalScope[key]}
-                        onChange={() => handleCheckboxChange("globalScope", key)}
-                        className="w-5 h-5 rounded border-gray-border bg-dark text-accent focus:ring-2 focus:ring-accent focus:ring-offset-0 cursor-pointer"
-                      />
-                      <span className="text-white group-hover:text-accent transition">
-                        {key
-                          .replace(/([A-Z])/g, " $1")
-                          .replace(/^./, (str) => str.toUpperCase())}
-                      </span>
-                    </label>
-                  ))}
+                {/* Add Global Scope Button */}
+                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-6">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">🌐 Global Project Scope</h3>
+                    <p className="text-gray-text text-sm mt-1">
+                      Add project scope items with their total amounts.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addGlobalScopeInstance}
+                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span className="text-lg">➕</span> Add Scope
+                  </button>
                 </div>
+
+                {/* Display Global Scope Instances */}
+                {globalScopeInstances.length === 0 ? (
+                  <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                    No scope items added yet. Click "Add Scope" to create one.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {globalScopeInstances.map((instance, index) => (
+                      <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+                        {/* Instance Header */}
+                        <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
+                          <div className="flex items-center gap-3">
+                            <span className="text-accent font-semibold">Scope #{index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleGlobalScope(instance.id)}
+                              className="text-gray-text hover:text-accent transition text-sm"
+                            >
+                              {expandedGlobalScopes[instance.id] ? "▲ Collapse" : "▼ Expand"}
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeGlobalScopeInstance(instance.id)}
+                            className="text-red-500 hover:text-red-400 text-sm font-medium transition"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        {/* Instance Content */}
+                        {expandedGlobalScopes[instance.id] && (
+                          <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Scope Type Dropdown */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-text mb-2">
+                                  Scope Type *
+                                </label>
+                                <select
+                                  value={instance.scopeType}
+                                  onChange={(e) => handleGlobalScopeChange(instance.id, "scopeType", e.target.value)}
+                                  className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                                  required
+                                >
+                                  <option value="">Select scope type</option>
+                                  <option value="Full Home Renovation">Full Home Renovation</option>
+                                  <option value="Interior Fit-Out">Interior Fit-Out</option>
+                                  <option value="Civil + Interior Turnkey">Civil + Interior Turnkey</option>
+                                  <option value="Online Design Only">Online Design Only</option>
+                                  <option value="Material Selection Support">Material Selection Support</option>
+                                  <option value="Project Management">Project Management</option>
+                                  <option value="Furniture + Styling">Furniture + Styling</option>
+                                  <option value="Vastu Consultation">Vastu Consultation</option>
+                                </select>
+                              </div>
+
+                              {/* Total Amount */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-text mb-2">
+                                  Total (₹) *
+                                </label>
+                                <input
+                                  type="number"
+                                  value={instance.amount}
+                                  onChange={(e) => handleGlobalScopeChange(instance.id, "amount", e.target.value)}
+                                  placeholder="Enter total amount"
+                                  className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2330,25 +2466,108 @@ export default function FormsPage() {
 
             {expandedSections.deliverables && (
               <div className="p-6 border-t border-gray-border">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.keys(formData.deliverables).map((key) => (
-                    <label key={key} className="flex items-center gap-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={formData.deliverables[key]}
-                        onChange={() => handleCheckboxChange("deliverables", key)}
-                        className="w-5 h-5 rounded border-gray-border bg-dark text-accent focus:ring-2 focus:ring-accent focus:ring-offset-0 cursor-pointer"
-                      />
-                      <span className="text-white group-hover:text-accent transition">
-                        {key
-                          .replace(/([A-Z])/g, " $1")
-                          .replace(/^./, (str) => str.toUpperCase())
-                          .replace("2 D", "2D")
-                          .replace("3 D", "3D")}
-                      </span>
-                    </label>
-                  ))}
+                {/* Add Deliverable Button */}
+                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-6">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">📦 Project Deliverables</h3>
+                    <p className="text-gray-text text-sm mt-1">
+                      Add project deliverable items with their total amounts.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addDeliverableInstance}
+                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span className="text-lg">➕</span> Add Deliverable
+                  </button>
                 </div>
+
+                {/* Display Deliverable Instances */}
+                {deliverablesInstances.length === 0 ? (
+                  <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                    No deliverables added yet. Click "Add Deliverable" to create one.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {deliverablesInstances.map((instance, index) => (
+                      <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+                        {/* Instance Header */}
+                        <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
+                          <div className="flex items-center gap-3">
+                            <span className="text-accent font-semibold">Deliverable #{index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleDeliverable(instance.id)}
+                              className="text-gray-text hover:text-accent transition text-sm"
+                            >
+                              {expandedDeliverables[instance.id] ? "▲ Collapse" : "▼ Expand"}
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeDeliverableInstance(instance.id)}
+                            className="text-red-500 hover:text-red-400 text-sm font-medium transition"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        {/* Instance Content */}
+                        {expandedDeliverables[instance.id] && (
+                          <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Deliverable Type Dropdown */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-text mb-2">
+                                  Deliverable Type *
+                                </label>
+                                <select
+                                  value={instance.deliverableType}
+                                  onChange={(e) => handleDeliverableChange(instance.id, "deliverableType", e.target.value)}
+                                  className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                                  required
+                                >
+                                  <option value="">Select deliverable type</option>
+                                  <option value="2D Layouts">2D Layouts</option>
+                                  <option value="Furniture Layout">Furniture Layout</option>
+                                  <option value="Electrical Layout">Electrical Layout</option>
+                                  <option value="Plumbing Layout">Plumbing Layout</option>
+                                  <option value="Ceiling Layout">Ceiling Layout</option>
+                                  <option value="Tile Layout">Tile Layout</option>
+                                  <option value="Working Drawings">Working Drawings</option>
+                                  <option value="3D Renders">3D Renders</option>
+                                  <option value="Material Boards">Material Boards</option>
+                                  <option value="BOQ">BOQ</option>
+                                  <option value="Site Visits">Site Visits</option>
+                                  <option value="Vendor Coordination">Vendor Coordination</option>
+                                  <option value="Procurement Support">Procurement Support</option>
+                                  <option value="Final Styling">Final Styling</option>
+                                  <option value="Photoshoot">Photoshoot</option>
+                                </select>
+                              </div>
+
+                              {/* Total Amount */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-text mb-2">
+                                  Total (₹) *
+                                </label>
+                                <input
+                                  type="number"
+                                  value={instance.amount}
+                                  onChange={(e) => handleDeliverableChange(instance.id, "amount", e.target.value)}
+                                  placeholder="Enter total amount"
+                                  className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

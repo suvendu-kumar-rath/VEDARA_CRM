@@ -41,22 +41,38 @@ export default function ClientsPage() {
         console.log('Clients Data:', clientsData);
         
         // Transform API data to match UI format
-        const transformedClients = clientsData.map(client => ({
-          id: client.id,
-          name: client.name,
-          email: client.email,
-          phone: client.phone,
-          type: client.propertyType || client.type || "Residential",
-          projects: client.projects || 0,
-          city: client.city || client.address || "N/A",
-          totalValue: client.totalValue || client.budgetRange || "₹0 L",
-          manager: client.assigned_to || client.manager || "Unassigned",
-          status: client.status || "Active",
-          statusColor: getStatusColor(client.status),
-          createdAt: client.createdAt,
-          address: client.address || client.city,
-          source: client.source
-        }));
+        const transformedClients = clientsData.map(client => {
+          // Log first client to see all available fields
+          if (clientsData.indexOf(client) === 0) {
+            console.log('First client structure:', client);
+            console.log('Available ID fields:', {
+              id: client.id,
+              clientId: client.clientId,
+              client_id: client.client_id,
+              convertedClientId: client.convertedClientId,
+              converted_client_id: client.converted_client_id
+            });
+          }
+          
+          return {
+            // Use clientId or client_id if available, otherwise fall back to id
+            id: client.clientId || client.client_id || client.convertedClientId || client.converted_client_id || client.id,
+            leadId: client.id, // Keep original lead ID for reference
+            name: client.name,
+            email: client.email,
+            phone: client.phone,
+            type: client.propertyType || client.type || "Residential",
+            projects: client.projects || 0,
+            city: client.city || client.address || "N/A",
+            totalValue: client.totalValue || client.budgetRange || "₹0 L",
+            manager: client.assigned_to || client.manager || "Unassigned",
+            status: client.status || "Active",
+            statusColor: getStatusColor(client.status),
+            createdAt: client.createdAt,
+            address: client.address || client.city,
+            source: client.source
+          };
+        });
         setClients(transformedClients);
       }
     } catch (error) {
