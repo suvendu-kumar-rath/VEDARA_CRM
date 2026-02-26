@@ -64,6 +64,14 @@ export default function FormsPage() {
   const [deliverablesInstances, setDeliverablesInstances] = useState([]);
   const [expandedDeliverables, setExpandedDeliverables] = useState({});
 
+  // State for dynamic Main Entrance item instances within rooms
+  const [mainEntranceInstances, setMainEntranceInstances] = useState({});
+  const [expandedMainEntranceItems, setExpandedMainEntranceItems] = useState({});
+
+  // State for dynamic Foyer item instances within rooms
+  const [foyerInstances, setFoyerInstances] = useState({});
+  const [expandedFoyerItems, setExpandedFoyerItems] = useState({});
+
   // State for form submission
   const [submitting, setSubmitting] = useState(false);
 
@@ -1605,6 +1613,130 @@ export default function FormsPage() {
     ));
   };
 
+  // Main Entrance Item Management Functions
+  const getMainEntranceKey = (sectionId, roomName) => `${sectionId}-${roomName}`;
+
+  const addMainEntranceItem = (sectionId, roomName) => {
+    const roomKey = getMainEntranceKey(sectionId, roomName);
+    const currentInstances = mainEntranceInstances[roomKey] || [];
+    const newId = currentInstances.length > 0 
+      ? Math.max(...currentInstances.map(i => i.id)) + 1 
+      : 1;
+    const newInstance = {
+      id: newId,
+      itemType: "",
+      amount: "",
+      length: "",
+      height: "",
+      width: "",
+    };
+    setMainEntranceInstances({
+      ...mainEntranceInstances,
+      [roomKey]: [...currentInstances, newInstance]
+    });
+    setExpandedMainEntranceItems({
+      ...expandedMainEntranceItems,
+      [`${roomKey}-${newId}`]: true
+    });
+  };
+
+  const removeMainEntranceItem = (sectionId, roomName, id) => {
+    if (window.confirm("Are you sure you want to remove this main entrance item?")) {
+      const roomKey = getMainEntranceKey(sectionId, roomName);
+      const currentInstances = mainEntranceInstances[roomKey] || [];
+      setMainEntranceInstances({
+        ...mainEntranceInstances,
+        [roomKey]: currentInstances.filter(instance => instance.id !== id)
+      });
+      const expandKey = `${roomKey}-${id}`;
+      const newExpanded = { ...expandedMainEntranceItems };
+      delete newExpanded[expandKey];
+      setExpandedMainEntranceItems(newExpanded);
+    }
+  };
+
+  const toggleMainEntranceItem = (sectionId, roomName, id) => {
+    const roomKey = getMainEntranceKey(sectionId, roomName);
+    const expandKey = `${roomKey}-${id}`;
+    setExpandedMainEntranceItems({
+      ...expandedMainEntranceItems,
+      [expandKey]: !expandedMainEntranceItems[expandKey]
+    });
+  };
+
+  const handleMainEntranceItemChange = (sectionId, roomName, id, field, value) => {
+    const roomKey = getMainEntranceKey(sectionId, roomName);
+    const currentInstances = mainEntranceInstances[roomKey] || [];
+    setMainEntranceInstances({
+      ...mainEntranceInstances,
+      [roomKey]: currentInstances.map(instance => 
+        instance.id === id ? { ...instance, [field]: value } : instance
+      )
+    });
+  };
+
+  // Foyer Item Management Functions
+  const getFoyerKey = (sectionId, roomName) => `${sectionId}-${roomName}`;
+
+  const addFoyerItem = (sectionId, roomName, defaultItemType = "") => {
+    const roomKey = getFoyerKey(sectionId, roomName);
+    const currentInstances = foyerInstances[roomKey] || [];
+    const newId = currentInstances.length > 0 
+      ? Math.max(...currentInstances.map(i => i.id)) + 1 
+      : 1;
+    const newInstance = {
+      id: newId,
+      itemType: defaultItemType,
+      amount: "",
+      length: "",
+      height: "",
+      width: "",
+    };
+    setFoyerInstances({
+      ...foyerInstances,
+      [roomKey]: [newInstance, ...currentInstances]
+    });
+    setExpandedFoyerItems({
+      ...expandedFoyerItems,
+      [`${roomKey}-${newId}`]: true
+    });
+  };
+
+  const removeFoyerItem = (sectionId, roomName, id) => {
+    if (window.confirm("Are you sure you want to remove this foyer item?")) {
+      const roomKey = getFoyerKey(sectionId, roomName);
+      const currentInstances = foyerInstances[roomKey] || [];
+      setFoyerInstances({
+        ...foyerInstances,
+        [roomKey]: currentInstances.filter(instance => instance.id !== id)
+      });
+      const expandKey = `${roomKey}-${id}`;
+      const newExpanded = { ...expandedFoyerItems };
+      delete newExpanded[expandKey];
+      setExpandedFoyerItems(newExpanded);
+    }
+  };
+
+  const toggleFoyerItem = (sectionId, roomName, id) => {
+    const roomKey = getFoyerKey(sectionId, roomName);
+    const expandKey = `${roomKey}-${id}`;
+    setExpandedFoyerItems({
+      ...expandedFoyerItems,
+      [expandKey]: !expandedFoyerItems[expandKey]
+    });
+  };
+
+  const handleFoyerItemChange = (sectionId, roomName, id, field, value) => {
+    const roomKey = getFoyerKey(sectionId, roomName);
+    const currentInstances = foyerInstances[roomKey] || [];
+    setFoyerInstances({
+      ...foyerInstances,
+      [roomKey]: currentInstances.map(instance => 
+        instance.id === id ? { ...instance, [field]: value } : instance
+      )
+    });
+  };
+
   // Handle Bedroom + Washroom data change
   const handleBedroomWashroomChange = (id, path, value) => {
     setBedroomWashroomInstances(instances =>
@@ -2669,12 +2801,25 @@ export default function FormsPage() {
                           .map((roomName) => (
                           <RoomSection
                             key={`${instance.id}-${roomName}`}
+                            sectionId={instance.id}
                             roomName={roomName}
                             roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
                             isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
                             onToggle={() => toggleRoomInSection(instance.id, roomName)}
                             onChange={(roomName, field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
                             onRemove={() => removeRoomInSection(instance.id, roomName)}
+                            mainEntranceItems={mainEntranceInstances[getMainEntranceKey(instance.id, roomName)] || []}
+                            expandedMainEntranceItems={expandedMainEntranceItems}
+                            onAddMainEntrance={() => addMainEntranceItem(instance.id, roomName)}
+                            onRemoveMainEntrance={(id) => removeMainEntranceItem(instance.id, roomName, id)}
+                            onToggleMainEntrance={(id) => toggleMainEntranceItem(instance.id, roomName, id)}
+                            onMainEntranceChange={(id, field, value) => handleMainEntranceItemChange(instance.id, roomName, id, field, value)}
+                            foyerItems={foyerInstances[getFoyerKey(instance.id, roomName)] || []}
+                            expandedFoyerItems={expandedFoyerItems}
+                            onAddFoyer={(defaultItemType) => addFoyerItem(instance.id, roomName, defaultItemType)}
+                            onRemoveFoyer={(id) => removeFoyerItem(instance.id, roomName, id)}
+                            onToggleFoyer={(id) => toggleFoyerItem(instance.id, roomName, id)}
+                            onFoyerChange={(id, field, value) => handleFoyerItemChange(instance.id, roomName, id, field, value)}
                           />
                         ))}
 
@@ -2722,12 +2867,25 @@ export default function FormsPage() {
                           .map((roomName) => (
                           <RoomSection
                             key={`${instance.id}-${roomName}`}
+                            sectionId={instance.id}
                             roomName={roomName}
                             roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
                             isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
                             onToggle={() => toggleRoomInSection(instance.id, roomName)}
                             onChange={(roomName, field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
                             onRemove={() => removeRoomInSection(instance.id, roomName)}
+                            mainEntranceItems={mainEntranceInstances[getMainEntranceKey(instance.id, roomName)] || []}
+                            expandedMainEntranceItems={expandedMainEntranceItems}
+                            onAddMainEntrance={() => addMainEntranceItem(instance.id, roomName)}
+                            onRemoveMainEntrance={(id) => removeMainEntranceItem(instance.id, roomName, id)}
+                            onToggleMainEntrance={(id) => toggleMainEntranceItem(instance.id, roomName, id)}
+                            onMainEntranceChange={(id, field, value) => handleMainEntranceItemChange(instance.id, roomName, id, field, value)}
+                            foyerItems={foyerInstances[getFoyerKey(instance.id, roomName)] || []}
+                            expandedFoyerItems={expandedFoyerItems}
+                            onAddFoyer={(defaultItemType) => addFoyerItem(instance.id, roomName, defaultItemType)}
+                            onRemoveFoyer={(id) => removeFoyerItem(instance.id, roomName, id)}
+                            onToggleFoyer={(id) => toggleFoyerItem(instance.id, roomName, id)}
+                            onFoyerChange={(id, field, value) => handleFoyerItemChange(instance.id, roomName, id, field, value)}
                           />
                         ))}
 
@@ -2804,7 +2962,27 @@ export default function FormsPage() {
 }
 
 // Room Section Component
-function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange, onRemove }) {
+function RoomSection({ 
+  sectionId,
+  roomName, 
+  roomData, 
+  isExpanded, 
+  onToggle, 
+  onChange, 
+  onRemove,
+  mainEntranceItems,
+  expandedMainEntranceItems,
+  onAddMainEntrance,
+  onRemoveMainEntrance,
+  onToggleMainEntrance,
+  onMainEntranceChange,
+  foyerItems,
+  expandedFoyerItems,
+  onAddFoyer,
+  onRemoveFoyer,
+  onToggleFoyer,
+  onFoyerChange
+}) {
   const isKitchen = roomName === "Kitchen";
   const isWashroom = roomName.includes("Washroom");
   const isBalcony = roomName.includes("Balcony");
@@ -2839,14 +3017,394 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange, onRem
       {isExpanded && (
         <div className="p-5 space-y-6 border-t border-gray-border">
           {/* MAIN ENTRANCE CUSTOM SECTIONS */}
-          {isMainEntrance && roomData.mainEntrance ? (
+          {isMainEntrance ? (
             <>
-              {/* 1. BASIC INFORMATION */}
+              {/* Dynamic Main Entrance Items */}
+              <div>
+                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-4">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">🚪 Main Entrance Items</h3>
+                    <p className="text-gray-text text-sm mt-1">
+                      Add entrance item types with their amounts.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onAddMainEntrance}
+                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span className="text-lg">➕</span> Add Item
+                  </button>
+                </div>
+
+                {mainEntranceItems.length === 0 ? (
+                  <div className="text-center py-8 bg-dark border border-gray-border rounded-lg text-gray-text">
+                    No entrance items added yet. Click "Add Item" to create one.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {mainEntranceItems.map((instance, index) => {
+                      const expandKey = `${sectionId}-${roomName}-${instance.id}`;
+                      return (
+                        <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+                          {/* Instance Header */}
+                          <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
+                            <div className="flex items-center gap-3">
+                              <span className="text-accent font-semibold">Item #{index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => onToggleMainEntrance(instance.id)}
+                                className="text-gray-text hover:text-accent transition text-sm"
+                              >
+                                {expandedMainEntranceItems[expandKey] ? "▲ Collapse" : "▼ Expand"}
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveMainEntrance(instance.id)}
+                              className="text-red-500 hover:text-red-400 text-sm font-medium transition"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          {/* Instance Content */}
+                          {expandedMainEntranceItems[expandKey] && (
+                            <div className="p-4 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Item Type Dropdown */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">
+                                    Item Type *
+                                  </label>
+                                  <select
+                                    value={instance.itemType}
+                                    onChange={(e) => onMainEntranceChange(instance.id, "itemType", e.target.value)}
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                                    required
+                                  >
+                                    <option value="">Select item type</option>
+                                    <option value="Safety Door">Safety Door</option>
+                                    <option value="Main Wooden Door">Main Wooden Door</option>
+                                    <option value="Two Way Door">Two Way Door</option>
+                                    <option value="Shoe Rack">Shoe Rack</option>
+                                    <option value="Wall Panel - POP Design, Laminate, Veneer, Pu, Fabric, Glass, Duco, Acrylic, Stone">Wall Panel - POP Design, Laminate, Veneer, Pu, Fabric, Glass, Duco, Acrylic, Stone</option>
+                                    <option value="Wall Decor">Wall Decor</option>
+                                    <option value="Mirror">Mirror</option>
+                                    <option value="Seating">Seating</option>
+                                    <option value="Wall Light">Wall Light</option>
+                                    <option value="Ceiling Lights">Ceiling Lights</option>
+                                    <option value="Bell Wiring">Bell Wiring</option>
+                                    <option value="Staircase Light">Staircase Light</option>
+                                    <option value="Planters">Planters</option>
+                                    <option value="Artwork">Artwork</option>
+                                    <option value="Rugs & Mats">Rugs & Mats</option>
+                                    <option value="Entrance Flooring">Entrance Flooring</option>
+                                  </select>
+                                </div>
+
+                                {/* Total Amount */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">
+                                    Total (₹) *
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={instance.amount}
+                                    onChange={(e) => onMainEntranceChange(instance.id, "amount", e.target.value)}
+                                    placeholder="Enter total amount"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Dimensions Section */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Length */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">
+                                    Length (ft)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={instance.length || ""}
+                                    onChange={(e) => onMainEntranceChange(instance.id, "length", e.target.value)}
+                                    placeholder="Enter length"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  />
+                                </div>
+
+                                {/* Height */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">
+                                    Height (ft)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={instance.height || ""}
+                                    onChange={(e) => onMainEntranceChange(instance.id, "height", e.target.value)}
+                                    placeholder="Enter height"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  />
+                                </div>
+
+                                {/* Width */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">
+                                    Width (ft)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={instance.width || ""}
+                                    onChange={(e) => onMainEntranceChange(instance.id, "width", e.target.value)}
+                                    placeholder="Enter width"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : isFoyer ? (
+            <>
+              {/* Dynamic Foyer Items organized by category */}
+              
+              {/* 1️⃣ CIVIL WORK */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  1️⃣ Civil Work
+                </h4>
+                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-4">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">🔨 Civil Work Items</h3>
+                    <p className="text-gray-text text-sm mt-1">
+                      Add civil work items with their amounts.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onAddFoyer('Civil Work - Demolition of Flooring')}
+                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span className="text-lg">➕</span> Add Item
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {foyerItems.filter(item => item.itemType?.startsWith('Civil Work')).map((instance, index) => {
+                    const expandKey = `${sectionId}-${roomName}-${instance.id}`;
+                    return (
+                      <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+                          <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
+                            <div className="flex items-center gap-3">
+                              <span className="text-accent font-semibold">Item #{index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => onToggleFoyer(instance.id)}
+                                className="text-gray-text hover:text-accent transition text-sm"
+                              >
+                                {expandedFoyerItems[expandKey] ? "▲ Collapse" : "▼ Expand"}
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveFoyer(instance.id)}
+                              className="text-red-500 hover:text-red-400 text-sm font-medium transition"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          {expandedFoyerItems[expandKey] && (
+                            <div className="p-4 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Item Type *</label>
+                                  <select
+                                    value={instance.itemType}
+                                    onChange={(e) => onFoyerChange(instance.id, "itemType", e.target.value)}
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                                    required
+                                  >
+                                    <option value="">Select civil work item</option>
+                                    <option value="Civil Work - Demolition of Flooring">Demolition of Flooring</option>
+                                    <option value="Civil Work - Demolition of Walls">Demolition of Walls</option>
+                                    <option value="Civil Work - New Partitions / Wall Shifting">New Partitions / Wall Shifting</option>
+                                    <option value="Civil Work - Floor Leveling / Screeding">Floor Leveling / Screeding</option>
+                                    <option value="Civil Work - New Flooring Installation">New Flooring Installation</option>
+                                    <option value="Civil Work - Skirting Installation">Skirting Installation</option>
+                                    <option value="Civil Work - Beam/Column Covering">Beam/Column Covering</option>
+                                    <option value="Civil Work - Window Enlargement / Reduction">Window Enlargement / Reduction</option>
+                                    <option value="Civil Work - Door Shifting / Enlargement / Add Extra Door">Door Shifting / Enlargement / Add Extra Door</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                                  <input
+                                    type="number"
+                                    value={instance.amount}
+                                    onChange={(e) => onFoyerChange(instance.id, "amount", e.target.value)}
+                                    placeholder="Enter total amount"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              {/* Length, Height, and Width fields removed for Civil Work section */}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+            </>
+          ) : isLivingRoom && roomData.livingRoom ? (
+            <>
+              {/* LIVING / DRAWING ROOM CUSTOM SECTIONS */}
+              {/* 1️⃣ BASIC INFORMATION */}
+                {/* Carpentry section removed. Only Civil Work remains. */}
+              {/* All other sections moved to Foyer. */}
+              {/* 8️⃣ DECOR & OTHERS */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  8️⃣ Decor & Others
+                </h4>
+                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-4">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">🎁 Decor & Other Items</h3>
+                    <p className="text-gray-text text-sm mt-1">
+                      Add decor and other items with their amounts.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onAddFoyer('')}
+                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span className="text-lg">➕</span> Add Item
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {foyerItems.filter(item => !item.itemType?.includes(' - ')).map((instance, index) => {
+                    const expandKey = `${sectionId}-${roomName}-${instance.id}`;
+                    return (
+                      <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
+                          <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
+                            <div className="flex items-center gap-3">
+                              <span className="text-accent font-semibold">Item #{index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => onToggleFoyer(instance.id)}
+                                className="text-gray-text hover:text-accent transition text-sm"
+                              >
+                                {expandedFoyerItems[expandKey] ? "▲ Collapse" : "▼ Expand"}
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveFoyer(instance.id)}
+                              className="text-red-500 hover:text-red-400 text-sm font-medium transition"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          {expandedFoyerItems[expandKey] && (
+                            <div className="p-4 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Item Type *</label>
+                                  <select
+                                    value={instance.itemType}
+                                    onChange={(e) => onFoyerChange(instance.id, "itemType", e.target.value)}
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                                    required
+                                  >
+                                    <option value="">Select decor item</option>
+                                    <option value="Wall Decor">Wall Decor</option>
+                                    <option value="Planters">Planters</option>
+                                    <option value="Artwork">Artwork</option>
+                                    <option value="Rugs & Mats">Rugs & Mats</option>
+                                    <option value="Seating">Seating</option>
+                                    <option value="Flooring">Flooring</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                                  <input
+                                    type="number"
+                                    value={instance.amount}
+                                    onChange={(e) => onFoyerChange(instance.id, "amount", e.target.value)}
+                                    placeholder="Enter total amount"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Length (ft)</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={instance.length || ""}
+                                    onChange={(e) => onFoyerChange(instance.id, "length", e.target.value)}
+                                    placeholder="Enter length"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Height (ft)</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={instance.height || ""}
+                                    onChange={(e) => onFoyerChange(instance.id, "height", e.target.value)}
+                                    placeholder="Enter height"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-text mb-2">Width (ft)</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={instance.width || ""}
+                                    onChange={(e) => onFoyerChange(instance.id, "width", e.target.value)}
+                                    placeholder="Enter width"
+                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+            </>
+          ) : isLivingRoom && roomData.livingRoom ? (
+            <>
+              {/* LIVING / DRAWING ROOM CUSTOM SECTIONS */}
+              {/* 1️⃣ BASIC INFORMATION */}
               <div>
                 <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
                   1️⃣ Basic Information
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
                     <input
@@ -2856,317 +3414,6 @@ function RoomSection({ roomName, roomData, isExpanded, onToggle, onChange, onRem
                       onChange={(e) => onChange(roomName, "length", e.target.value)}
                       className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={roomData.width}
-                      onChange={(e) => onChange(roomName, "width", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Ceiling Height (ft)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={roomData.ceilingHeight}
-                      onChange={(e) => onChange(roomName, "ceilingHeight", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="block text-xs text-gray-text mb-1">Notes</label>
-                  <textarea
-                    value={roomData.mainEntrance.notes}
-                    onChange={(e) => onChange(roomName, "mainEntrance.notes", e.target.value)}
-                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    rows="2"
-                    placeholder="Add any notes..."
-                  />
-                </div>
-              </div>
-
-              {/* 2. DOOR SYSTEM & SIZE */}
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-                  2️⃣ Door System & Size
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Door Type</label>
-                    <select
-                      value={roomData.mainEntrance.doorType}
-                      onChange={(e) => onChange(roomName, "mainEntrance.doorType", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Safety Door">Safety Door</option>
-                      <option value="Main Wooden Door">Main Wooden Door</option>
-                      <option value="Two-Door System">Two-Door System</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={roomData.mainEntrance.doorWidth}
-                      onChange={(e) => onChange(roomName, "mainEntrance.doorWidth", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                      placeholder="0.0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Height (ft)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={roomData.mainEntrance.doorHeight}
-                      onChange={(e) => onChange(roomName, "mainEntrance.doorHeight", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                      placeholder="0.0"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="block text-xs text-gray-text mb-1">Door Notes</label>
-                  <textarea
-                    value={roomData.mainEntrance.doorNotes}
-                    onChange={(e) => onChange(roomName, "mainEntrance.doorNotes", e.target.value)}
-                    className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    rows="2"
-                    placeholder="Add notes about door..."
-                  />
-                </div>
-              </div>
-
-              {/* 3. CARPENTRY ELEMENTS */}
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-                  3️⃣ Carpentry Elements
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Shoe Rack</label>
-                    <select
-                      value={roomData.mainEntrance.shoeRack}
-                      onChange={(e) => onChange(roomName, "mainEntrance.shoeRack", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Wall Panel</label>
-                    <select
-                      value={roomData.mainEntrance.wallPanel}
-                      onChange={(e) => onChange(roomName, "mainEntrance.wallPanel", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  {roomData.mainEntrance.wallPanel === "Yes" && (
-                    <div>
-                      <label className="block text-xs text-gray-text mb-1">Wall Panel Finish</label>
-                      <select
-                        value={roomData.mainEntrance.wallPanelFinish}
-                        onChange={(e) => onChange(roomName, "mainEntrance.wallPanelFinish", e.target.value)}
-                        className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                      >
-                        <option value="">Select</option>
-                        <option value="POP Design">POP Design</option>
-                        <option value="Laminate">Laminate</option>
-                        <option value="Veneer">Veneer</option>
-                        <option value="PU">PU</option>
-                        <option value="Fabric">Fabric</option>
-                        <option value="Glass">Glass</option>
-                        <option value="Duco">Duco</option>
-                        <option value="Acrylic">Acrylic</option>
-                        <option value="Stone">Stone</option>
-                      </select>
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Mirror</label>
-                    <select
-                      value={roomData.mainEntrance.mirror}
-                      onChange={(e) => onChange(roomName, "mainEntrance.mirror", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Seating Near Shoe Rack</label>
-                    <select
-                      value={roomData.mainEntrance.seatingNearShoeRack}
-                      onChange={(e) => onChange(roomName, "mainEntrance.seatingNearShoeRack", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. ELECTRICAL */}
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-                  4️⃣ Electrical
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Wall Light</label>
-                    <select
-                      value={roomData.mainEntrance.wallLight}
-                      onChange={(e) => onChange(roomName, "mainEntrance.wallLight", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Ceiling Lights</label>
-                    <select
-                      value={roomData.mainEntrance.ceilingLights}
-                      onChange={(e) => onChange(roomName, "mainEntrance.ceilingLights", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  {roomData.mainEntrance.ceilingLights === "Yes" && (
-                    <div>
-                      <label className="block text-xs text-gray-text mb-1">Ceiling Lights Quantity</label>
-                      <input
-                        type="number"
-                        value={roomData.mainEntrance.ceilingLightsQty}
-                        onChange={(e) => onChange(roomName, "mainEntrance.ceilingLightsQty", e.target.value)}
-                        className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                        placeholder="0"
-                        min="0"
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Bell Wiring</label>
-                    <select
-                      value={roomData.mainEntrance.bellWiring}
-                      onChange={(e) => onChange(roomName, "mainEntrance.bellWiring", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Staircase Light</label>
-                    <select
-                      value={roomData.mainEntrance.staircaseLight}
-                      onChange={(e) => onChange(roomName, "mainEntrance.staircaseLight", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* 5. DECOR ELEMENTS */}
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-                  5️⃣ Decor Elements
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Planters</label>
-                    <select
-                      value={roomData.mainEntrance.planters}
-                      onChange={(e) => onChange(roomName, "mainEntrance.planters", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Wall Decor</label>
-                    <select
-                      value={roomData.mainEntrance.wallDecor}
-                      onChange={(e) => onChange(roomName, "mainEntrance.wallDecor", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Rugs / Mats</label>
-                    <select
-                      value={roomData.mainEntrance.rugsMats}
-                      onChange={(e) => onChange(roomName, "mainEntrance.rugsMats", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-text mb-1">Entrance Flooring</label>
-                    <select
-                      value={roomData.mainEntrance.entranceFlooring}
-                      onChange={(e) => onChange(roomName, "mainEntrance.entranceFlooring", e.target.value)}
-                      className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                    >
-                      <option value="">Select</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : isFoyer && roomData.foyer ? (
-            <>
-          {/* FOYER CUSTOM SECTIONS */}
-          {/* 1️⃣ BASIC INFORMATION */}
-          <div>
-            <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-              1️⃣ Basic Information
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-gray-text mb-1">Length (ft)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={roomData.length}
-                  onChange={(e) => onChange(roomName, "length", e.target.value)}
-                  className="w-full bg-dark-light border border-gray-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
-                />
               </div>
               <div>
                 <label className="block text-xs text-gray-text mb-1">Width (ft)</label>
