@@ -9,8 +9,8 @@ export default function FormsPage() {
     unitType: "",
     totalCarpetArea: "",
     baseAmount: "",
-    ceilingHeights: {
-      general: "",
+   ceilingHeights: {
+      /*general: "",
       floorToFloor: "",
       foyer: "",
       living: "",
@@ -21,7 +21,7 @@ export default function FormsPage() {
       bedroom2CeilingHeight: "",
       bedroom3CeilingHeight: "",
       bedroom4CeilingHeight: "",
-      storeroomCeilingHeight: "",
+      storeroomCeilingHeight: "",*/
     },
     windowInfo: {
       count: "",
@@ -113,12 +113,45 @@ export default function FormsPage() {
     "Window": 8000,
   };
 
+  // Predefined prices per sqft for ceiling heights
+  const ceilingHeightPrices = {
+    "General Ceiling Height": 50,
+    "Floor-to-Floor Height": 45,
+    "Foyer Ceiling Height": 55,
+    "Living Ceiling Height": 52,
+    "Dining Ceiling Height": 50,
+    "Kitchen Ceiling Height": 48,
+    "Bedroom 1 Ceiling Height": 50,
+    "Bedroom 2 Ceiling Height": 50,
+    "Bedroom 3 Ceiling Height": 50,
+    "Bedroom 4 Ceiling Height": 50,
+    "Bedroom 5 Ceiling Height": 50,
+    "Store Room Ceiling Height": 45,
+    "Help Room Ceiling Height": 45,
+  };
+
+  // Predefined prices per sqft for window information
+  const windowInfoPrices = {
+    //"Window Count (per room)": 5000, // per window
+    "Sill Height": 40,
+    "Lintel Height": 40,
+    //"Window Type - Sliding": 8000, // per window
+    //"Window Type - Openable": 9000, // per window
+    //"Window Type - Fixed": 6000, // per window
+  };
+
   // State for interior items in different sections
   const [globalScopeItems, setGlobalScopeItems] = useState([]);
   const [deliverablesItems, setDeliverablesItems] = useState([]);
   const [roomWiseItems, setRoomWiseItems] = useState({});
   const [bedroomWashroomItems, setBedroomWashroomItems] = useState({});
-  const [balconyItems, setBalconyItems] = useState({});
+  const [balconyItems, setBalconyItems] = useState([]);
+
+  // State for ceiling height items
+  const [ceilingHeightItems, setCeilingHeightItems] = useState([]);
+
+  // State for window information items
+  const [windowInfoItems, setWindowInfoItems] = useState([]);
 
   // State for multiple Room-Wise Details sections
   const [roomWiseInstances, setRoomWiseInstances] = useState([{ id: 1, name: "Room Set 1" }]);
@@ -258,6 +291,92 @@ export default function FormsPage() {
         [sectionId]: updateItemInArray(balconyItems[sectionId] || []),
       });
     }
+  };
+
+  // Ceiling Height Items Management Functions
+  const addCeilingHeightItem = () => {
+    const newItem = {
+      id: Date.now(),
+      itemName: "",
+      area: "",
+      pricePerSqft: 0,
+      totalAmount: 0,
+    };
+    setCeilingHeightItems([...ceilingHeightItems, newItem]);
+  };
+
+  const removeCeilingHeightItem = (itemId) => {
+    setCeilingHeightItems(ceilingHeightItems.filter(item => item.id !== itemId));
+  };
+
+  const updateCeilingHeightItem = (itemId, field, value) => {
+    setCeilingHeightItems(ceilingHeightItems.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item, [field]: value };
+        
+        // If item name changed, update price per sqft
+        if (field === "itemName") {
+          updatedItem.pricePerSqft = ceilingHeightPrices[value] || 0;
+          updatedItem.totalAmount = updatedItem.area * updatedItem.pricePerSqft;
+        }
+        
+        // If area changed, recalculate total
+        if (field === "area") {
+          updatedItem.totalAmount = value * item.pricePerSqft;
+        }
+        
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
+  // Calculate total for ceiling height items
+  const calculateCeilingHeightTotal = () => {
+    return ceilingHeightItems.reduce((sum, item) => sum + (parseFloat(item.totalAmount) || 0), 0);
+  };
+
+  // Window Information Items Management Functions
+  const addWindowInfoItem = () => {
+    const newItem = {
+      id: Date.now(),
+      itemName: "",
+      area: "",
+      pricePerSqft: 0,
+      totalAmount: 0,
+    };
+    setWindowInfoItems([...windowInfoItems, newItem]);
+  };
+
+  const removeWindowInfoItem = (itemId) => {
+    setWindowInfoItems(windowInfoItems.filter(item => item.id !== itemId));
+  };
+
+  const updateWindowInfoItem = (itemId, field, value) => {
+    setWindowInfoItems(windowInfoItems.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item, [field]: value };
+        
+        // If item name changed, update price per sqft
+        if (field === "itemName") {
+          updatedItem.pricePerSqft = windowInfoPrices[value] || 0;
+          updatedItem.totalAmount = updatedItem.area * updatedItem.pricePerSqft;
+        }
+        
+        // If area changed, recalculate total
+        if (field === "area") {
+          updatedItem.totalAmount = value * item.pricePerSqft;
+        }
+        
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
+  // Calculate total for window information items
+  const calculateWindowInfoTotal = () => {
+    return windowInfoItems.reduce((sum, item) => sum + (parseFloat(item.totalAmount) || 0), 0);
   };
 
   // Initialize room data structure
@@ -1863,7 +1982,7 @@ export default function FormsPage() {
                 </div>
 
                 {/* Ceiling Heights */}
-                <div>
+                {/* <div>
                   <h3 className="text-lg font-semibold text-white mb-4">Ceiling Heights (feet)</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {Object.keys(formData.ceilingHeights).map((key) => (
@@ -1886,6 +2005,101 @@ export default function FormsPage() {
                       </div>
                     ))}
                   </div>
+                </div> */}
+
+                {/* Ceiling & Height Information with Pricing */}
+                <div className="border border-gray-border rounded-lg p-6 bg-dark">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Ceiling & Height Information</h3>
+                    <button
+                      type="button"
+                      onClick={addCeilingHeightItem}
+                      className="px-4 py-2 bg-accent text-dark font-medium rounded hover:bg-yellow-500 transition text-sm"
+                    >
+                      + Add Ceiling Item
+                    </button>
+                  </div>
+
+                  {ceilingHeightItems.length === 0 ? (
+                    <p className="text-gray-text text-sm text-center py-4">No ceiling items added. Click "Add Ceiling Item" to start.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {ceilingHeightItems.map((item, index) => (
+                        <div key={item.id} className="border border-gray-border rounded-lg p-4 bg-dark-light">
+                          <div className="flex items-start justify-between mb-3">
+                            <span className="text-white font-medium text-sm">Item #{index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeCeilingHeightItem(item.id)}
+                              className="text-red-400 hover:text-red-300 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Item Selection */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">Select Ceiling Type *</label>
+                              <select
+                                value={item.itemName}
+                                onChange={(e) => updateCeilingHeightItem(item.id, "itemName", e.target.value)}
+                                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white focus:outline-none focus:border-accent transition text-sm"
+                              >
+                                <option value="">Select item...</option>
+                                {Object.keys(ceilingHeightPrices).map(itemName => (
+                                  <option key={itemName} value={itemName}>{itemName}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Area Input */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">Area (sq ft) *</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={item.area}
+                                onChange={(e) => updateCeilingHeightItem(item.id, "area", e.target.value)}
+                                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm"
+                                placeholder="0.00"
+                              />
+                            </div>
+
+                            {/* Price Per Sqft (Read-only) */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">Price/sq ft (₹)</label>
+                              <input
+                                type="text"
+                                value={item.pricePerSqft ? `₹${item.pricePerSqft}` : "₹0"}
+                                readOnly
+                                className="w-full bg-gray-border/30 border border-gray-border rounded px-3 py-2 text-gray-text text-sm cursor-not-allowed"
+                              />
+                            </div>
+
+                            {/* Total Amount (Auto-calculated) */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">Total Amount (₹)</label>
+                              <input
+                                type="text"
+                                value={item.totalAmount ? `₹${item.totalAmount.toFixed(2)}` : "₹0.00"}
+                                readOnly
+                                className="w-full bg-accent/10 border border-accent/30 rounded px-3 py-2 text-accent font-semibold text-sm cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Grand Total */}
+                      <div className="border-t-2 border-accent pt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-bold text-lg">Grand Total (Ceiling & Height):</span>
+                          <span className="text-accent font-bold text-2xl">₹{calculateCeilingHeightTotal().toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Window Information */}
@@ -1905,7 +2119,7 @@ export default function FormsPage() {
                       />
                     </div>
 
-                    <div>
+                    {/* <div>
                       <label className="block text-sm font-medium text-gray-text mb-2">
                         Sill Height (feet)
                       </label>
@@ -1935,7 +2149,7 @@ export default function FormsPage() {
                         className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                         placeholder="0.0"
                       />
-                    </div>
+                    </div> */}
 
                     <div>
                       <label className="block text-sm font-medium text-gray-text mb-2">
@@ -1953,6 +2167,109 @@ export default function FormsPage() {
                       </select>
                     </div>
                   </div>
+                </div>
+
+                {/* Window Information with Pricing */}
+                <div className="border border-gray-border rounded-lg p-6 bg-dark">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white"></h3>
+                    <button
+                      type="button"
+                      onClick={addWindowInfoItem}
+                      className="px-4 py-2 bg-accent text-dark font-medium rounded hover:bg-yellow-500 transition text-sm"
+                    >
+                      + Add Window Item
+                    </button>
+                  </div>
+
+                  {windowInfoItems.length === 0 ? (
+                    <p className="text-gray-text text-sm text-center py-4">No window items added. Click "Add Window Item" to start.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {windowInfoItems.map((item, index) => (
+                        <div key={item.id} className="border border-gray-border rounded-lg p-4 bg-dark-light">
+                          <div className="flex items-start justify-between mb-3">
+                            <span className="text-white font-medium text-sm">Item #{index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeWindowInfoItem(item.id)}
+                              className="text-red-400 hover:text-red-300 text-sm"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Item Selection */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">Select Window Item *</label>
+                              <select
+                                value={item.itemName}
+                                onChange={(e) => updateWindowInfoItem(item.id, "itemName", e.target.value)}
+                                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white focus:outline-none focus:border-accent transition text-sm"
+                              >
+                                <option value="">Select item...</option>
+                                {Object.keys(windowInfoPrices).map(itemName => (
+                                  <option key={itemName} value={itemName}>{itemName}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Area/Count Input */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">
+                                {item.itemName?.includes("Window Count") || item.itemName?.includes("Window Type") 
+                                  ? "Quantity" 
+                                  : "Area (sq ft)"} *
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={item.area}
+                                onChange={(e) => updateWindowInfoItem(item.id, "area", e.target.value)}
+                                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm"
+                                placeholder="0.00"
+                              />
+                            </div>
+
+                            {/* Price Per Unit (Read-only) */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">
+                                {item.itemName?.includes("Window Count") || item.itemName?.includes("Window Type") 
+                                  ? "Price/unit (₹)" 
+                                  : "Price/sq ft (₹)"}
+                              </label>
+                              <input
+                                type="text"
+                                value={item.pricePerSqft ? `₹${item.pricePerSqft}` : "₹0"}
+                                readOnly
+                                className="w-full bg-gray-border/30 border border-gray-border rounded px-3 py-2 text-gray-text text-sm cursor-not-allowed"
+                              />
+                            </div>
+
+                            {/* Total Amount (Auto-calculated) */}
+                            <div>
+                              <label className="block text-xs text-gray-text mb-2">Total Amount (₹)</label>
+                              <input
+                                type="text"
+                                value={item.totalAmount ? `₹${item.totalAmount.toFixed(2)}` : "₹0.00"}
+                                readOnly
+                                className="w-full bg-accent/10 border border-accent/30 rounded px-3 py-2 text-accent font-semibold text-sm cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Grand Total */}
+                      <div className="border-t-2 border-accent pt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-bold text-lg">Grand Total (Window Information):</span>
+                          <span className="text-accent font-bold text-2xl">₹{calculateWindowInfoTotal().toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
