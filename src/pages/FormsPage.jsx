@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
+import { generateQuotationPDF } from "../utils/generateQuotationPDF";
 
 export default function FormsPage() {
   const [formData, setFormData] = useState({
@@ -441,6 +442,14 @@ export default function FormsPage() {
           },
           budgetRange: "",
           notes: "",
+          amounts: {
+            wardrobe: "",
+            lighting: "",
+            electrical: "",
+            paint: "",
+            ventilation: "",
+            total: "",
+          },
         },
       };
     }
@@ -578,10 +587,10 @@ export default function FormsPage() {
           marble: false,
           granite: false,
         },
-        constructionType: "",
-        carcassMaterial: "",
-        shutterFinish: "",
-        hardwareLevel: "",
+        constructionType: [],
+        carcassMaterial: [],
+        shutterFinish: [],
+        hardwareLevel: [],
         fittings: {
           cornerUnit: false,
           cornerUnitQuantity: "",
@@ -598,11 +607,11 @@ export default function FormsPage() {
           glassTrayPlateTray: false,
         },
         counterBacksplash: {
-          counterMaterial: "",
+          counterMaterial: [],
           backsplashMaterial: "",
         },
         electrical: {
-          switchType: "",
+          switchType: [],
           lightingCategories: {
             cob: false,
             panelLights: false,
@@ -621,8 +630,8 @@ export default function FormsPage() {
             exhaust: false,
             aquaguardRO: false,
           },
-          wiringBrand: "",
-          wireSafety: "",
+          wiringBrand: [],
+          wireSafety: [],
           otherElectrical: {
             fans: false,
             fansQuantity: "",
@@ -643,6 +652,17 @@ export default function FormsPage() {
           geyserRequired: "",
           roLocation: "",
           plumbingMaterialBrand: "",
+        },
+        amounts: {
+          basicInfo: "",
+          civilWork: "",
+          falseCeiling: "",
+          floorCovering: "",
+          modularKitchen: "",
+          electrical: "",
+          paint: "",
+          plumbing: "",
+          total: "",
         },
         notes: "",
       };
@@ -666,6 +686,16 @@ export default function FormsPage() {
         showerType: "",
         fittingBrand: "",
         plumbingMaterial: "",
+        amounts: {
+          civilWork: "",
+          wallCovering: "",
+          floorCovering: "",
+          sanitary: "",
+          plumbing: "",
+          electrical: "",
+          falseCeiling: "",
+          total: "",
+        },
       };
     }
 
@@ -759,6 +789,10 @@ export default function FormsPage() {
           windowModification: false,
           doorModification: false,
           notes: "",
+          falseCeilingRequired: false,
+          falseCeilingTypes: [],
+          coveLightingOptions: [],
+          ceilingDesignOptions: [],
         },
         carpentry: {
           consoleTable: false,
@@ -963,6 +997,18 @@ export default function FormsPage() {
           wallPaint: "",
           ceilingPaint: "",
         },
+        amounts: {
+          basicInfo: "",
+          civilWork: "",
+          falseCeiling: "",
+          floorCovering: "",
+          softFurnishings: "",
+          wallPaneling: "",
+          carpentry: "",
+          electrical: "",
+          paint: "",
+          total: "",
+        },
         notes: "",
       };
     }
@@ -1091,6 +1137,18 @@ export default function FormsPage() {
           wallPaint: "",
           ceilingPaint: "",
         },
+        amounts: {
+          basicInfo: "",
+          civilWork: "",
+          falseCeiling: "",
+          floorCovering: "",
+          softFurnishings: "",
+          wallPaneling: "",
+          carpentry: "",
+          electrical: "",
+          paint: "",
+          total: "",
+        },
         notes: "",
       };
     }
@@ -1147,6 +1205,15 @@ export default function FormsPage() {
           switches: "",
           geyser: "",
           paint: "",
+        },
+        amounts: {
+          wardrobe: "",
+          electrical: "",
+          paint: "",
+          bathroom: "",
+          flooring: "",
+          civilWork: "",
+          total: "",
         },
         notes: "",
       };
@@ -1305,16 +1372,39 @@ export default function FormsPage() {
 
   // Handle room change in a specific section
   const handleRoomChangeInSection = (sectionId, roomName, field, value) => {
-    setRoomWiseRooms((prev) => ({
-      ...prev,
-      [sectionId]: {
-        ...(prev[sectionId] || {}),
-        [roomName]: {
-          ...(prev[sectionId] || {})[roomName],
-          [field]: value,
+    setRoomWiseRooms((prev) => {
+      const prevRoom = ((prev[sectionId] || {})[roomName]) || {};
+      let updatedRoom = { ...prevRoom };
+      // Support nested updates for Foyer windowInfo, civilWork, falseCeiling
+      if (roomName === "Foyer") {
+        if (field === "windowInfo" || field === "civilWork" || field === "falseCeiling") {
+          updatedRoom = {
+            ...prevRoom,
+            [field]: {
+              ...prevRoom[field],
+              ...value
+            }
+          };
+        } else {
+          updatedRoom = {
+            ...prevRoom,
+            [field]: value
+          };
+        }
+      } else {
+        updatedRoom = {
+          ...prevRoom,
+          [field]: value
+        };
+      }
+      return {
+        ...prev,
+        [sectionId]: {
+          ...(prev[sectionId] || {}),
+          [roomName]: updatedRoom,
         },
-      },
-    }));
+      };
+    });
   };
 
   // Remove room in a specific section
@@ -1504,6 +1594,19 @@ export default function FormsPage() {
       paint: {
         ceilingPaint: "",
       },
+    },
+    amounts: {
+      bedroomCivil: "",
+      falseCeiling: "",
+      floorCovering: "",
+      wallPaneling: "",
+      wardrobe: "",
+      carpentry: "",
+      electrical: "",
+      paint: "",
+      washroomWork: "",
+      washroomElectrical: "",
+      total: "",
     },
   });
 
@@ -1858,6 +1961,16 @@ export default function FormsPage() {
       checkRailingHeightCompliance: false,
     },
     notes: "",
+    amounts: {
+      civil: "",
+      flooring: "",
+      wallCovering: "",
+      ceiling: "",
+      carpentry: "",
+      electrical: "",
+      plumbing: "",
+      total: "",
+    },
   });
 
   // Add new Balcony instance
@@ -2806,7 +2919,7 @@ export default function FormsPage() {
                             roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
                             isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
                             onToggle={() => toggleRoomInSection(instance.id, roomName)}
-                            onChange={(roomName, field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
+                            onChange={(field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
                             onRemove={() => removeRoomInSection(instance.id, roomName)}
                             mainEntranceItems={mainEntranceInstances[getMainEntranceKey(instance.id, roomName)] || []}
                             expandedMainEntranceItems={expandedMainEntranceItems}
@@ -2872,7 +2985,7 @@ export default function FormsPage() {
                             roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
                             isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
                             onToggle={() => toggleRoomInSection(instance.id, roomName)}
-                            onChange={(roomName, field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
+                            onChange={(field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
                             onRemove={() => removeRoomInSection(instance.id, roomName)}
                             mainEntranceItems={mainEntranceInstances[getMainEntranceKey(instance.id, roomName)] || []}
                             expandedMainEntranceItems={expandedMainEntranceItems}
@@ -2948,6 +3061,13 @@ export default function FormsPage() {
               Reset Form
             </button>
             <button
+              type="button"
+              onClick={() => generateQuotationPDF(formData, bedroomWashroomInstances, balconyInstances)}
+              className="bg-dark-light border border-accent text-accent px-6 py-3 rounded font-medium hover:bg-accent hover:text-dark transition"
+            >
+              ⬇ Download PDF
+            </button>
+            <button
               type="submit"
               disabled={submitting}
               className="bg-accent text-dark px-8 py-3 rounded font-medium hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2981,7 +3101,9 @@ function RoomSection({
   onAddFoyer,
   onRemoveFoyer,
   onToggleFoyer,
-  onFoyerChange
+  onFoyerChange,
+  onFoyerWindowInfoChange,
+  onFoyerWindowInfoTypeChange
 }) {
   const isKitchen = roomName === "Kitchen";
   const isWashroom = roomName.includes("Washroom");
@@ -2992,6 +3114,56 @@ function RoomSection({
   const isDiningArea = roomName === "Dining Area" || roomName === "Dining Room";
   const isDomesticHelpRoom = roomName === "Domestic Help Room";
   const isStoreRoom = roomName === "Store Room";
+
+  // Handler for window info field changes in Foyer
+  const handleFoyerWindowInfoChange = (field, value) => {
+    if (!roomData.foyer) return;
+    // Map field to correct nested object
+    const windowInfoFields = [
+      "length", "width", "ceilingHeight", "windowCount", "sillHeight", "lintelHeight", "windowType", "amount"
+    ];
+    const civilWorkFields = ["civilWorkItem", "civilWorkAmount"];
+    const falseCeilingFields = ["falseCeilingType", "coveLightingOption", "ceilingDesignOption", "falseCeilingAmount"];
+    if (windowInfoFields.includes(field)) {
+      const updatedWindowInfo = {
+        ...roomData.foyer.windowInfo,
+        [field]: value
+      };
+      onChange("foyer", "windowInfo", updatedWindowInfo);
+    } else if (civilWorkFields.includes(field)) {
+      const updatedCivilWork = {
+        ...roomData.foyer.civilWork,
+        [field]: value
+      };
+      onChange("foyer", "civilWork", updatedCivilWork);
+    } else if (falseCeilingFields.includes(field)) {
+      const updatedFalseCeiling = {
+        ...roomData.foyer.falseCeiling,
+        [field]: value
+      };
+      onChange("foyer", "falseCeiling", updatedFalseCeiling);
+    } else {
+      onChange("foyer", field, value);
+    }
+  };
+
+  // Handler for window type checkbox changes in Foyer
+  const handleFoyerWindowInfoTypeChange = (type, checked) => {
+    if (!roomData.foyer) return;
+    let types = Array.isArray(roomData.foyer.windowInfo?.windowType)
+      ? [...roomData.foyer.windowInfo.windowType]
+      : [];
+    if (checked) {
+      if (!types.includes(type)) types.push(type);
+    } else {
+      types = types.filter(t => t !== type);
+    }
+    const updatedWindowInfo = {
+      ...roomData.foyer.windowInfo,
+      windowType: types
+    };
+    onChange("foyer", "windowInfo", updatedWindowInfo);
+  };
 
   return (
     <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
@@ -3177,229 +3349,593 @@ function RoomSection({
             </>
           ) : isFoyer ? (
             <>
-              {/* Dynamic Foyer Items organized by category */}
-              
-              {/* 1️⃣ CIVIL WORK */}
+              {/* WINDOW INFO SECTION FOR FOYER */}
               <div className="mb-6">
                 <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-                  1️⃣ Civil Work
+                  Window Info
                 </h4>
-                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <h3 className="text-white font-semibold text-lg">🔨 Civil Work Items</h3>
-                    <p className="text-gray-text text-sm mt-1">
-                      Add civil work items with their amounts.
-                    </p>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Length (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.foyer?.windowInfo?.length || ""}
+                      onChange={e => handleFoyerWindowInfoChange("length", e.target.value)}
+                      placeholder="Enter length"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onAddFoyer('Civil Work - Demolition of Flooring')}
-                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <span className="text-lg">➕</span> Add Item
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {foyerItems.filter(item => item.itemType?.startsWith('Civil Work')).map((instance, index) => {
-                    const expandKey = `${sectionId}-${roomName}-${instance.id}`;
-                    return (
-                      <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
-                          <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
-                            <div className="flex items-center gap-3">
-                              <span className="text-accent font-semibold">Item #{index + 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => onToggleFoyer(instance.id)}
-                                className="text-gray-text hover:text-accent transition text-sm"
-                              >
-                                {expandedFoyerItems[expandKey] ? "▲ Collapse" : "▼ Expand"}
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => onRemoveFoyer(instance.id)}
-                              className="text-red-500 hover:text-red-400 text-sm font-medium transition"
-                            >
-                              Remove
-                            </button>
-                          </div>
-
-                          {expandedFoyerItems[expandKey] && (
-                            <div className="p-4 space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Item Type *</label>
-                                  <select
-                                    value={instance.itemType}
-                                    onChange={(e) => onFoyerChange(instance.id, "itemType", e.target.value)}
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                                    required
-                                  >
-                                    <option value="">Select civil work item</option>
-                                    <option value="Civil Work - Demolition of Flooring">Demolition of Flooring</option>
-                                    <option value="Civil Work - Demolition of Walls">Demolition of Walls</option>
-                                    <option value="Civil Work - New Partitions / Wall Shifting">New Partitions / Wall Shifting</option>
-                                    <option value="Civil Work - Floor Leveling / Screeding">Floor Leveling / Screeding</option>
-                                    <option value="Civil Work - New Flooring Installation">New Flooring Installation</option>
-                                    <option value="Civil Work - Skirting Installation">Skirting Installation</option>
-                                    <option value="Civil Work - Beam/Column Covering">Beam/Column Covering</option>
-                                    <option value="Civil Work - Window Enlargement / Reduction">Window Enlargement / Reduction</option>
-                                    <option value="Civil Work - Door Shifting / Enlargement / Add Extra Door">Door Shifting / Enlargement / Add Extra Door</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
-                                  <input
-                                    type="number"
-                                    value={instance.amount}
-                                    onChange={(e) => onFoyerChange(instance.id, "amount", e.target.value)}
-                                    placeholder="Enter total amount"
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                              {/* Length, Height, and Width fields removed for Civil Work section */}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Width (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.foyer?.windowInfo?.width || ""}
+                      onChange={e => handleFoyerWindowInfoChange("width", e.target.value)}
+                      placeholder="Enter width"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Ceiling Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.foyer?.windowInfo?.ceilingHeight || ""}
+                      onChange={e => handleFoyerWindowInfoChange("ceilingHeight", e.target.value)}
+                      placeholder="Enter ceiling height"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Window Count (per room)</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.windowInfo?.windowCount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("windowCount", e.target.value)}
+                      placeholder="Enter window count"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Sill Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.foyer?.windowInfo?.sillHeight || ""}
+                      onChange={e => handleFoyerWindowInfoChange("sillHeight", e.target.value)}
+                      placeholder="Enter sill height"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Lintel Height (ft)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={roomData.foyer?.windowInfo?.lintelHeight || ""}
+                      onChange={e => handleFoyerWindowInfoChange("lintelHeight", e.target.value)}
+                      placeholder="Enter lintel height"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Window Type</label>
+                    <select
+                      value={roomData.foyer?.windowInfo?.windowType || ""}
+                      onChange={e => handleFoyerWindowInfoChange("windowType", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select window type</option>
+                      <option value="Sliding">Sliding</option>
+                      <option value="Openable">Openable</option>
+                      <option value="Fixed">Fixed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.windowInfo?.amount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("amount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
                   </div>
                 </div>
-            </>
-          ) : isLivingRoom && roomData.livingRoom ? (
-            <>
-              {/* LIVING / DRAWING ROOM CUSTOM SECTIONS */}
-              {/* 1️⃣ BASIC INFORMATION */}
-                {/* Carpentry section removed. Only Civil Work remains. */}
-              {/* All other sections moved to Foyer. */}
-              {/* 8️⃣ DECOR & OTHERS */}
+              </div>
+              {/* CIVIL WORK SECTION FOR FOYER */}
               <div className="mb-6">
                 <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
-                  8️⃣ Decor & Others
+                  Civil Work
                 </h4>
-                <div className="flex items-center justify-between bg-dark border border-accent rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <h3 className="text-white font-semibold text-lg">🎁 Decor & Other Items</h3>
-                    <p className="text-gray-text text-sm mt-1">
-                      Add decor and other items with their amounts.
-                    </p>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Civil Work Item</label>
+                    <select
+                      value={roomData.foyer?.civilWork?.civilWorkItem || ""}
+                      onChange={e => handleFoyerWindowInfoChange("civilWorkItem", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select civil work item</option>
+                      <option value="Demolition of flooring">Demolition of flooring</option>
+                      <option value="Demolition of walls">Demolition of walls</option>
+                      <option value="New partitions / wall shifting">New partitions / wall shifting</option>
+                      <option value="Floorleveling / screeding">Floorleveling / screeding</option>
+                      <option value="New flooring installation">New flooring installation</option>
+                      <option value="Skirting installation">Skirting installation</option>
+                      <option value="Beam/column covering">Beam/column covering</option>
+                      <option value="Window enlargement/reduction">Window enlargement/reduction</option>
+                      <option value="Door shifting / Door Enlargement/ Add Extra Door">Door shifting / Door Enlargement/ Add Extra Door</option>
+                    </select>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onAddFoyer('')}
-                    className="bg-accent hover:bg-yellow-500 text-dark px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <span className="text-lg">➕</span> Add Item
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {foyerItems.filter(item => !item.itemType?.includes(' - ')).map((instance, index) => {
-                    const expandKey = `${sectionId}-${roomName}-${instance.id}`;
-                    return (
-                      <div key={instance.id} className="bg-dark border border-gray-border rounded-lg overflow-hidden">
-                          <div className="bg-dark-light px-4 py-3 flex items-center justify-between border-b border-gray-border">
-                            <div className="flex items-center gap-3">
-                              <span className="text-accent font-semibold">Item #{index + 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => onToggleFoyer(instance.id)}
-                                className="text-gray-text hover:text-accent transition text-sm"
-                              >
-                                {expandedFoyerItems[expandKey] ? "▲ Collapse" : "▼ Expand"}
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => onRemoveFoyer(instance.id)}
-                              className="text-red-500 hover:text-red-400 text-sm font-medium transition"
-                            >
-                              Remove
-                            </button>
-                          </div>
-
-                          {expandedFoyerItems[expandKey] && (
-                            <div className="p-4 space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Item Type *</label>
-                                  <select
-                                    value={instance.itemType}
-                                    onChange={(e) => onFoyerChange(instance.id, "itemType", e.target.value)}
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                                    required
-                                  >
-                                    <option value="">Select decor item</option>
-                                    <option value="Wall Decor">Wall Decor</option>
-                                    <option value="Planters">Planters</option>
-                                    <option value="Artwork">Artwork</option>
-                                    <option value="Rugs & Mats">Rugs & Mats</option>
-                                    <option value="Seating">Seating</option>
-                                    <option value="Flooring">Flooring</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
-                                  <input
-                                    type="number"
-                                    value={instance.amount}
-                                    onChange={(e) => onFoyerChange(instance.id, "amount", e.target.value)}
-                                    placeholder="Enter total amount"
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Length (ft)</label>
-                                  <input
-                                    type="number"
-                                    step="0.1"
-                                    value={instance.length || ""}
-                                    onChange={(e) => onFoyerChange(instance.id, "length", e.target.value)}
-                                    placeholder="Enter length"
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Height (ft)</label>
-                                  <input
-                                    type="number"
-                                    step="0.1"
-                                    value={instance.height || ""}
-                                    onChange={(e) => onFoyerChange(instance.id, "height", e.target.value)}
-                                    placeholder="Enter height"
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-text mb-2">Width (ft)</label>
-                                  <input
-                                    type="number"
-                                    step="0.1"
-                                    value={instance.width || ""}
-                                    onChange={(e) => onFoyerChange(instance.id, "width", e.target.value)}
-                                    placeholder="Enter width"
-                                    className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.civilWork?.civilWorkAmount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("civilWorkAmount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
                   </div>
                 </div>
+              </div>
+              {/* FALSE CEILING SECTION FOR FOYER */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  False Ceiling
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* False Ceiling Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">False Ceiling Type</label>
+                    <select
+                      value={roomData.foyer?.falseCeiling?.falseCeilingType || ""}
+                      onChange={e => handleFoyerWindowInfoChange("falseCeilingType", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select type</option>
+                      <option value="POP">POP</option>
+                      <option value="Wooden">Wooden</option>
+                      <option value="Stretch">Stretch</option>
+                      <option value="Grid">Grid</option>
+                    </select>
+                  </div>
+                  {/* Cove Lighting Options */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Cove Lighting Options</label>
+                    <select
+                      value={roomData.foyer?.falseCeiling?.coveLightingOption || ""}
+                      onChange={e => handleFoyerWindowInfoChange("coveLightingOption", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select option</option>
+                      <option value="Outside Cove Only">Outside Cove Only</option>
+                      <option value="Inside Cove Only">Inside Cove Only</option>
+                      <option value="Inside + Outside Cove">Inside + Outside Cove</option>
+                    </select>
+                  </div>
+                  {/* Ceiling Design Options */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Ceiling Design Options</label>
+                    <select
+                      value={roomData.foyer?.falseCeiling?.ceilingDesignOption || ""}
+                      onChange={e => handleFoyerWindowInfoChange("ceilingDesignOption", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select design</option>
+                      <option value="Grooves">Grooves</option>
+                      <option value="Mouldings">Mouldings</option>
+                      <option value="Beam Covering">Beam Covering</option>
+                      <option value="No Design">No Design</option>
+                    </select>
+                  </div>
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.falseCeiling?.falseCeilingAmount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("falseCeilingAmount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* CARPENTRY SECTION FOR FOYER */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  Carpentry
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Console / Storage */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Console / Storage</label>
+                    <select
+                      value={roomData.foyer?.carpentry?.consoleStorage || ""}
+                      onChange={e => handleFoyerWindowInfoChange("consoleStorage", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select option</option>
+                      <option value="Console Table">Console Table</option>
+                      <option value="Shoe Storage">Shoe Storage</option>
+                      <option value="Coat Hanger">Coat Hanger</option>
+                      <option value="Mirror Unit">Mirror Unit</option>
+                    </select>
+                  </div>
+                  {/* Hardware Levels */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Hardware Levels</label>
+                    <select
+                      value={roomData.foyer?.carpentry?.hardwareLevel || ""}
+                      onChange={e => handleFoyerWindowInfoChange("hardwareLevel", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select level</option>
+                      <option value="Basic (Local Indian Brands)">Basic (Local Indian Brands)</option>
+                      <option value="Mid (Hettich India / Ozone / Inox)">Mid (Hettich India / Ozone / Inox)</option>
+                      <option value="Premium (Hafele / Hettich Germany)">Premium (Hafele / Hettich Germany)</option>
+                      <option value="Ultra Premium (Blum Soft-Close)">Ultra Premium (Blum Soft-Close)</option>
+                    </select>
+                  </div>
+                  {/* Wall Panelling Options */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Wall Panelling Options</label>
+                    <select
+                      value={roomData.foyer?.carpentry?.wallPanelling || ""}
+                      onChange={e => handleFoyerWindowInfoChange("wallPanelling", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select option</option>
+                      <option value="POP Design">POP Design</option>
+                      <option value="Laminate">Laminate</option>
+                      <option value="Veneer">Veneer</option>
+                      <option value="PU Coated">PU Coated</option>
+                      <option value="Fabric Wrapped">Fabric Wrapped</option>
+                      <option value="Glass">Glass</option>
+                      <option value="Acrylic">Acrylic</option>
+                      <option value="Stone Cladding">Stone Cladding</option>
+                    </select>
+                  </div>
+                  {/* Carpentry Material */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Carpentry Material</label>
+                    <select
+                      value={roomData.foyer?.carpentry?.carpentryMaterial || ""}
+                      onChange={e => handleFoyerWindowInfoChange("carpentryMaterial", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select material</option>
+                      <option value="Ply">Ply</option>
+                      <option value="Hdhmr">Hdhmr</option>
+                      <option value="MDF">MDF</option>
+                    </select>
+                  </div>
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.carpentry?.amount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("carpentryAmount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* ELECTRICAL SECTION FOR FOYER */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  Electrical
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Wiring Brand */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Wiring Brand</label>
+                    <select
+                      value={roomData.foyer?.electrical?.wiringBrand || ""}
+                      onChange={e => handleFoyerWindowInfoChange("wiringBrand", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select brand</option>
+                      <option value="Havells">Havells</option>
+                      <option value="Polycab">Polycab</option>
+                      <option value="Finolex">Finolex</option>
+                      <option value="Local">Local</option>
+                    </select>
+                  </div>
+                  {/* Wire Safety Rating */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Wire Safety Rating</label>
+                    <select
+                      value={roomData.foyer?.electrical?.wireSafety || ""}
+                      onChange={e => handleFoyerWindowInfoChange("wireSafety", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select rating</option>
+                      <option value="FR">FR</option>
+                      <option value="FRLS">FRLS</option>
+                      <option value="Non-FR">Non-FR</option>
+                    </select>
+                  </div>
+                  {/* Switches */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Switches</label>
+                    <select
+                      value={roomData.foyer?.electrical?.switchType || ""}
+                      onChange={e => handleFoyerWindowInfoChange("switchType", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select switch</option>
+                      <option value="Anchor Roma">Anchor Roma</option>
+                      <option value="GM">GM</option>
+                      <option value="Legrand Myrius">Legrand Myrius</option>
+                      <option value="Schneider Norysis">Schneider Norysis</option>
+                      <option value="Premium Smart Switches">Premium Smart Switches</option>
+                    </select>
+                  </div>
+                  {/* Lighting */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Lighting</label>
+                    <select
+                      value={roomData.foyer?.electrical?.lighting || ""}
+                      onChange={e => handleFoyerWindowInfoChange("lighting", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select lighting</option>
+                      <option value="COB">COB</option>
+                      <option value="Downlights">Downlights</option>
+                      <option value="Panel Lights">Panel Lights</option>
+                      <option value="Profile Lights">Profile Lights</option>
+                      <option value="Cove Lights">Cove Lights</option>
+                    </select>
+                  </div>
+                  {/* Additional Electrical */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Wall Lights (Qty)</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.electrical?.wallLightsQty || ""}
+                      onChange={e => handleFoyerWindowInfoChange("wallLightsQty", e.target.value)}
+                      placeholder="Enter quantity"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div className="md:col-span-2 flex flex-wrap gap-6 items-center">
+                    <label className="inline-flex items-center">
+                      <input type="checkbox" checked={roomData.foyer?.electrical?.consoleLedStrip || false} onChange={e => handleFoyerWindowInfoChange("consoleLedStrip", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                      <span className="ml-2 text-white">Console LED Strip</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input type="checkbox" checked={roomData.foyer?.electrical?.acWiring || false} onChange={e => handleFoyerWindowInfoChange("acWiring", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                      <span className="ml-2 text-white">AC Wiring</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input type="checkbox" checked={roomData.foyer?.electrical?.speakers || false} onChange={e => handleFoyerWindowInfoChange("speakers", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                      <span className="ml-2 text-white">Speakers Required</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input type="checkbox" checked={roomData.foyer?.electrical?.automation || false} onChange={e => handleFoyerWindowInfoChange("automation", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                      <span className="ml-2 text-white">Automation Required</span>
+                    </label>
+                  </div>
+                  {/* Automation Items */}
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Automation Items</label>
+                    <div className="flex gap-6 flex-wrap">
+                      <label className="inline-flex items-center">
+                        <input type="checkbox" checked={roomData.foyer?.electrical?.automationLights || false} onChange={e => handleFoyerWindowInfoChange("automationLights", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                        <span className="ml-2 text-white">Lights</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input type="checkbox" checked={roomData.foyer?.electrical?.automationAC || false} onChange={e => handleFoyerWindowInfoChange("automationAC", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                        <span className="ml-2 text-white">AC</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input type="checkbox" checked={roomData.foyer?.electrical?.automationTV || false} onChange={e => handleFoyerWindowInfoChange("automationTV", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                        <span className="ml-2 text-white">TV</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input type="checkbox" checked={roomData.foyer?.electrical?.automationSpeakers || false} onChange={e => handleFoyerWindowInfoChange("automationSpeakers", e.target.checked)} className="form-checkbox h-5 w-5 text-accent" />
+                        <span className="ml-2 text-white">Speakers</span>
+                      </label>
+                    </div>
+                  </div>
+                  {/* Entrance Bell */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Entrance Bell</label>
+                    <select
+                      value={roomData.foyer?.electrical?.entranceBell || ""}
+                      onChange={e => handleFoyerWindowInfoChange("entranceBell", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select bell</option>
+                      <option value="Normal Bell">Normal Bell</option>
+                      <option value="Smart Bell (WiFi)">Smart Bell (WiFi)</option>
+                      <option value="Bell With Video Screen / Digital Door Camera">Bell With Video Screen / Digital Door Camera</option>
+                    </select>
+                  </div>
+                  {/* Aircondition Types */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Aircondition Type</label>
+                    <select
+                      value={roomData.foyer?.electrical?.acType || ""}
+                      onChange={e => handleFoyerWindowInfoChange("acType", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                    >
+                      <option value="">Select type</option>
+                      <option value="Split">Split</option>
+                      <option value="Cassette">Cassette</option>
+                      <option value="Ductable">Ductable</option>
+                    </select>
+                  </div>
+                  {/* Approx. Wiring Length */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Approx. Wiring Length</label>
+                    <input
+                      type="text"
+                      value={roomData.foyer?.electrical?.wiringLength || ""}
+                      onChange={e => handleFoyerWindowInfoChange("wiringLength", e.target.value)}
+                      placeholder="Enter length"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.electrical?.amount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("electricalAmount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* PAINT SECTION FOR FOYER */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  Paint
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Wall Paint Options */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Wall Paint Options</label>
+                    <select
+                      value={roomData.foyer?.paint?.wallPaint || ""}
+                      onChange={e => handleFoyerWindowInfoChange("wallPaint", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select wall paint</option>
+                      <option value="Royale Shine">Royale Shine</option>
+                      <option value="PU">PU</option>
+                      <option value="Texture">Texture</option>
+                      <option value="Royale Matt">Royale Matt</option>
+                      <option value="Satin">Satin</option>
+                      <option value="Plastic Premium">Plastic Premium</option>
+                    </select>
+                  </div>
+                  {/* Ceiling Paint Options */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Ceiling Paint Options</label>
+                    <select
+                      value={roomData.foyer?.paint?.ceilingPaint || ""}
+                      onChange={e => handleFoyerWindowInfoChange("ceilingPaint", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select ceiling paint</option>
+                      <option value="Royale Shine">Royale Shine</option>
+                      <option value="PU">PU</option>
+                      <option value="Texture">Texture</option>
+                      <option value="Royale Matt">Royale Matt</option>
+                      <option value="Satin">Satin</option>
+                      <option value="Plastic Premium">Plastic Premium</option>
+                    </select>
+                  </div>
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.paint?.amount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("paintAmount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
+                  </div>
+                </div>
+              {/* SOFT FURNISHING SECTION FOR FOYER */}
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
+                  Soft Furnishing
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Curtains */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Curtains</label>
+                    <select
+                      value={roomData.foyer?.softFurnishing?.curtains || ""}
+                      onChange={e => handleFoyerWindowInfoChange("curtains", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select curtain type</option>
+                      <option value="Sheer Only">Sheer Only</option>
+                      <option value="Blackout Only">Blackout Only</option>
+                      <option value="Sheer + Blackout">Sheer + Blackout</option>
+                    </select>
+                  </div>
+                  {/* Window Covering */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Window Covering</label>
+                    <select
+                      value={roomData.foyer?.softFurnishing?.windowCovering || ""}
+                      onChange={e => handleFoyerWindowInfoChange("windowCovering", e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
+                      required
+                    >
+                      <option value="">Select window covering</option>
+                      <option value="Blinds">Blinds</option>
+                      <option value="Curtains">Curtains</option>
+                    </select>
+                  </div>
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <input
+                      type="number"
+                      value={roomData.foyer?.softFurnishing?.amount || ""}
+                      onChange={e => handleFoyerWindowInfoChange("softFurnishingAmount", e.target.value)}
+                      placeholder="Enter total amount"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                      required
+                    />
+                  </div>
+                  {/* Notes */}
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Notes</label>
+                    <input
+                      type="text"
+                      value={roomData.foyer?.softFurnishing?.notes || ""}
+                      onChange={e => handleFoyerWindowInfoChange("softFurnishingNotes", e.target.value)}
+                      placeholder="Enter notes"
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+              </div>
             </>
-          ) : isLivingRoom && roomData.livingRoom ? (
+          ) : false ? (
             <>
-              {/* LIVING / DRAWING ROOM CUSTOM SECTIONS */}
-              {/* 1️⃣ BASIC INFORMATION */}
+              {/* DEAD CODE SECTION - REMOVED */}
+              {/* 1️⃣ BASIC INFORMATION (DEAD) */}
               <div>
                 <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">
                   1️⃣ Basic Information
@@ -3472,6 +4008,99 @@ function RoomSection({
                 </div>
               </div>
               <div className="mt-3">
+                            {/* FALSE CEILING SECTION */}
+                            <div className="mt-6 border-t border-gray-border pt-4">
+                              <h5 className="text-accent font-semibold mb-2 text-sm uppercase tracking-wide">False Ceiling</h5>
+                              <div className="flex items-center gap-3 mb-2">
+                                <input
+                                  type="checkbox"
+                                  checked={roomData.foyer.civilWork.falseCeilingRequired}
+                                  onChange={e => onChange(roomName, "foyer.civilWork.falseCeilingRequired", e.target.checked)}
+                                  className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                                  id={`falseCeilingRequired-${roomName}`}
+                                />
+                                <label htmlFor={`falseCeilingRequired-${roomName}`} className="text-white text-sm">False Ceiling Required</label>
+                              </div>
+                              {roomData.foyer.civilWork.falseCeilingRequired && (
+                                <div className="space-y-4">
+                                  <div>
+                                    <label className="block text-xs text-gray-text mb-1">False Ceiling Type</label>
+                                    <div className="flex flex-wrap gap-4">
+                                      {['POP','Wooden','Stretch','Grid'].map(type => (
+                                        <label key={type} className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={roomData.foyer.civilWork.falseCeilingTypes?.includes(type)}
+                                            onChange={e => {
+                                              const checked = e.target.checked;
+                                              let types = roomData.foyer.civilWork.falseCeilingTypes || [];
+                                              if (checked) {
+                                                types = [...types, type];
+                                              } else {
+                                                types = types.filter(t => t !== type);
+                                              }
+                                              onChange(roomName, "foyer.civilWork.falseCeilingTypes", types);
+                                            }}
+                                            className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                                          />
+                                          <span className="text-white text-sm">{type}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-gray-text mb-1">Cove Lighting Options</label>
+                                    <div className="flex flex-wrap gap-4">
+                                      {['Outside Cove Only','Inside Cove Only','Inside + Outside Cove'].map(option => (
+                                        <label key={option} className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={roomData.foyer.civilWork.coveLightingOptions?.includes(option)}
+                                            onChange={e => {
+                                              const checked = e.target.checked;
+                                              let opts = roomData.foyer.civilWork.coveLightingOptions || [];
+                                              if (checked) {
+                                                opts = [...opts, option];
+                                              } else {
+                                                opts = opts.filter(o => o !== option);
+                                              }
+                                              onChange(roomName, "foyer.civilWork.coveLightingOptions", opts);
+                                            }}
+                                            className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                                          />
+                                          <span className="text-white text-sm">{option}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-gray-text mb-1">Ceiling Design Options</label>
+                                    <div className="flex flex-wrap gap-4">
+                                      {['Grooves','Mouldings','Beam Covering','No Design'].map(design => (
+                                        <label key={design} className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={roomData.foyer.civilWork.ceilingDesignOptions?.includes(design)}
+                                            onChange={e => {
+                                              const checked = e.target.checked;
+                                              let designs = roomData.foyer.civilWork.ceilingDesignOptions || [];
+                                              if (checked) {
+                                                designs = [...designs, design];
+                                              } else {
+                                                designs = designs.filter(d => d !== design);
+                                              }
+                                              onChange(roomName, "foyer.civilWork.ceilingDesignOptions", designs);
+                                            }}
+                                            className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                                          />
+                                          <span className="text-white text-sm">{design}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                 <label className="block text-xs text-gray-text mb-1">Window Type</label>
                 <select
                   value={roomData.foyer.windowInfo.type}
@@ -4243,7 +4872,9 @@ function RoomSection({
           </div>
             </>
           ) : isLivingRoom && roomData.livingRoom ? (
-            <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* LEFT COLUMN – Detailed Sections */}
+              <div className="lg:col-span-2 space-y-6">
           {/* LIVING / DRAWING ROOM CUSTOM SECTIONS */}
           {/* 1️⃣ BASIC INFORMATION */}
           <div>
@@ -5719,9 +6350,60 @@ function RoomSection({
               placeholder="Add any additional notes for the living/drawing room..."
             />
           </div>
-            </>
+              </div>
+              {/* RIGHT COLUMN – Manual Amount Entry */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-4 bg-dark-light border border-accent/30 rounded-xl p-4 space-y-3">
+                  <h4 className="text-accent font-bold text-sm uppercase tracking-wide border-b border-gray-border pb-2 mb-3">
+                    💰 Amount Entry
+                  </h4>
+                  {[
+                    { key: "basicInfo", label: "Basic Info / Structure" },
+                    { key: "civilWork", label: "Civil & False Ceiling" },
+                    { key: "floorCovering", label: "Floor Covering" },
+                    { key: "softFurnishings", label: "Soft Furnishings" },
+                    { key: "wallPaneling", label: "Wall Paneling" },
+                    { key: "carpentry", label: "Carpentry" },
+                    { key: "electrical", label: "Electrical" },
+                    { key: "paint", label: "Paint" },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-text mb-1">{label}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm">₹</span>
+                        <input
+                          type="number"
+                          value={roomData.livingRoom.amounts?.[key] || ""}
+                          onChange={(e) => onChange(roomName, `livingRoom.amounts.${key}`, e.target.value)}
+                          className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-accent/30 pt-3 mt-3">
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={roomData.livingRoom.amounts?.total || ""}
+                        onChange={(e) => onChange(roomName, "livingRoom.amounts.total", e.target.value)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : isDiningArea && roomData.diningArea ? (
-            <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* LEFT COLUMN – Detailed Sections */}
+              <div className="lg:col-span-2 space-y-6">
           {/* DINING AREA CUSTOM SECTIONS */}
           {/* 1️⃣ BASIC INFORMATION */}
           <div>
@@ -7154,9 +7836,61 @@ function RoomSection({
               placeholder="Add any additional notes for the dining area..."
             />
           </div>
-            </>
+              </div>
+              {/* RIGHT COLUMN – Manual Amount Entry */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-4 bg-dark-light border border-accent/30 rounded-xl p-4 space-y-3">
+                  <h4 className="text-accent font-bold text-sm uppercase tracking-wide border-b border-gray-border pb-2 mb-3">
+                    💰 Amount Entry
+                  </h4>
+                  {[
+                    { key: "basicInfo", label: "Basic Info / Structure" },
+                    { key: "civilWork", label: "Civil Work" },
+                    { key: "falseCeiling", label: "False Ceiling" },
+                    { key: "floorCovering", label: "Floor Covering" },
+                    { key: "softFurnishings", label: "Soft Furnishings" },
+                    { key: "wallPaneling", label: "Wall Paneling" },
+                    { key: "carpentry", label: "Carpentry" },
+                    { key: "electrical", label: "Electrical" },
+                    { key: "paint", label: "Paint" },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-text mb-1">{label}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm">₹</span>
+                        <input
+                          type="number"
+                          value={roomData.diningArea.amounts?.[key] || ""}
+                          onChange={(e) => onChange(roomName, `diningArea.amounts.${key}`, e.target.value)}
+                          className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-accent/30 pt-3 mt-3">
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={roomData.diningArea.amounts?.total || ""}
+                        onChange={(e) => onChange(roomName, "diningArea.amounts.total", e.target.value)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : isKitchen && roomData.kitchen ? (
-            <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* LEFT COLUMN – Detailed Sections */}
+              <div className="lg:col-span-2 space-y-6">
           {/* KITCHEN CUSTOM SECTIONS */}
           {/* Section H – Kitchen */}
           
@@ -7647,16 +8381,17 @@ function RoomSection({
             </h5>
             <div className="space-y-2">
               {["On-Site Carpenter", "Carcass On-Site + Factory-Made Shutters", "Full Modular Factory-Made Kitchen"].map((type) => (
-                <label key={type} className="flex items-center gap-2 cursor-pointer">
+                <label key={type} className="flex items-center gap-2 cursor-pointer group">
                   <input
-                    type="radio"
-                    name={`${roomName}-constructionType`}
-                    value={type}
-                    checked={roomData.kitchen.constructionType === type}
-                    onChange={(e) => onChange(roomName, "kitchen.constructionType", e.target.value)}
-                    className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    type="checkbox"
+                    checked={(roomData.kitchen.constructionType || []).includes(type)}
+                    onChange={(e) => {
+                      const arr = roomData.kitchen.constructionType || [];
+                      onChange(roomName, "kitchen.constructionType", e.target.checked ? [...arr, type] : arr.filter(t => t !== type));
+                    }}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                   />
-                  <span className="text-white text-sm">{type}</span>
+                  <span className="text-white text-sm group-hover:text-accent transition">{type}</span>
                 </label>
               ))}
             </div>
@@ -7669,16 +8404,17 @@ function RoomSection({
             </h5>
             <div className="space-y-2">
               {["HDHMR", "BWP Below Sink Only", "BWP Entire Kitchen", "Plywood (BWR/BWP)"].map((material) => (
-                <label key={material} className="flex items-center gap-2 cursor-pointer">
+                <label key={material} className="flex items-center gap-2 cursor-pointer group">
                   <input
-                    type="radio"
-                    name={`${roomName}-carcassMaterial`}
-                    value={material}
-                    checked={roomData.kitchen.carcassMaterial === material}
-                    onChange={(e) => onChange(roomName, "kitchen.carcassMaterial", e.target.value)}
-                    className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    type="checkbox"
+                    checked={(roomData.kitchen.carcassMaterial || []).includes(material)}
+                    onChange={(e) => {
+                      const arr = roomData.kitchen.carcassMaterial || [];
+                      onChange(roomName, "kitchen.carcassMaterial", e.target.checked ? [...arr, material] : arr.filter(m => m !== material));
+                    }}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                   />
-                  <span className="text-white text-sm">{material}</span>
+                  <span className="text-white text-sm group-hover:text-accent transition">{material}</span>
                 </label>
               ))}
             </div>
@@ -7691,16 +8427,17 @@ function RoomSection({
             </h5>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {["Laminate", "Acrylic", "PU", "Veneer", "Glass"].map((finish) => (
-                <label key={finish} className="flex items-center gap-2 cursor-pointer">
+                <label key={finish} className="flex items-center gap-2 cursor-pointer group">
                   <input
-                    type="radio"
-                    name={`${roomName}-shutterFinish`}
-                    value={finish}
-                    checked={roomData.kitchen.shutterFinish === finish}
-                    onChange={(e) => onChange(roomName, "kitchen.shutterFinish", e.target.value)}
-                    className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                    type="checkbox"
+                    checked={(roomData.kitchen.shutterFinish || []).includes(finish)}
+                    onChange={(e) => {
+                      const arr = roomData.kitchen.shutterFinish || [];
+                      onChange(roomName, "kitchen.shutterFinish", e.target.checked ? [...arr, finish] : arr.filter(f => f !== finish));
+                    }}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                   />
-                  <span className="text-white text-sm">{finish}</span>
+                  <span className="text-white text-sm group-hover:text-accent transition">{finish}</span>
                 </label>
               ))}
             </div>
@@ -7712,50 +8449,20 @@ function RoomSection({
               8️⃣ Hardware Level
             </h5>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`${roomName}-hardwareLevel`}
-                  value="Basic (Local)"
-                  checked={roomData.kitchen.hardwareLevel === "Basic (Local)"}
-                  onChange={(e) => onChange(roomName, "kitchen.hardwareLevel", e.target.value)}
-                  className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
-                />
-                <span className="text-white text-sm">Basic (Local)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`${roomName}-hardwareLevel`}
-                  value="Mid (Hettich India / Ozone / Inox)"
-                  checked={roomData.kitchen.hardwareLevel === "Mid (Hettich India / Ozone / Inox)"}
-                  onChange={(e) => onChange(roomName, "kitchen.hardwareLevel", e.target.value)}
-                  className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
-                />
-                <span className="text-white text-sm">Mid (Hettich India / Ozone / Inox)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`${roomName}-hardwareLevel`}
-                  value="Premium (Hafele / Hettich Germany)"
-                  checked={roomData.kitchen.hardwareLevel === "Premium (Hafele / Hettich Germany)"}
-                  onChange={(e) => onChange(roomName, "kitchen.hardwareLevel", e.target.value)}
-                  className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
-                />
-                <span className="text-white text-sm">Premium (Hafele / Hettich Germany)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`${roomName}-hardwareLevel`}
-                  value="Ultra Premium (Blum)"
-                  checked={roomData.kitchen.hardwareLevel === "Ultra Premium (Blum)"}
-                  onChange={(e) => onChange(roomName, "kitchen.hardwareLevel", e.target.value)}
-                  className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
-                />
-                <span className="text-white text-sm">Ultra Premium (Blum)</span>
-              </label>
+              {["Basic (Local)", "Mid (Hettich India / Ozone / Inox)", "Premium (Hafele / Hettich Germany)", "Ultra Premium (Blum)"].map((level) => (
+                <label key={level} className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={(roomData.kitchen.hardwareLevel || []).includes(level)}
+                    onChange={(e) => {
+                      const arr = roomData.kitchen.hardwareLevel || [];
+                      onChange(roomName, "kitchen.hardwareLevel", e.target.checked ? [...arr, level] : arr.filter(l => l !== level));
+                    }}
+                    className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                  />
+                  <span className="text-white text-sm group-hover:text-accent transition">{level}</span>
+                </label>
+              ))}
             </div>
           </div>
 
@@ -7906,16 +8613,17 @@ function RoomSection({
                 <label className="block text-xs text-gray-text mb-2">Counter Material</label>
                 <div className="grid grid-cols-3 gap-3">
                   {["Granite", "Quartz", "Marble"].map((material) => (
-                    <label key={material} className="flex items-center gap-2 cursor-pointer">
+                    <label key={material} className="flex items-center gap-2 cursor-pointer group">
                       <input
-                        type="radio"
-                        name={`${roomName}-counterMaterial`}
-                        value={material}
-                        checked={roomData.kitchen.counterBacksplash.counterMaterial === material}
-                        onChange={(e) => onChange(roomName, "kitchen.counterBacksplash.counterMaterial", e.target.value)}
-                        className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                        type="checkbox"
+                        checked={(roomData.kitchen.counterBacksplash.counterMaterial || []).includes(material)}
+                        onChange={(e) => {
+                          const arr = roomData.kitchen.counterBacksplash.counterMaterial || [];
+                          onChange(roomName, "kitchen.counterBacksplash.counterMaterial", e.target.checked ? [...arr, material] : arr.filter(m => m !== material));
+                        }}
+                        className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                       />
-                      <span className="text-white text-sm">{material}</span>
+                      <span className="text-white text-sm group-hover:text-accent transition">{material}</span>
                     </label>
                   ))}
                 </div>
@@ -7944,16 +8652,17 @@ function RoomSection({
               <label className="block text-xs text-gray-text mb-2">Switch Type</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {["Anchor", "GM", "Legrand", "Schneider", "Smart"].map((type) => (
-                  <label key={type} className="flex items-center gap-2 cursor-pointer">
+                  <label key={type} className="flex items-center gap-2 cursor-pointer group">
                     <input
-                      type="radio"
-                      name={`${roomName}-switchType`}
-                      value={type}
-                      checked={roomData.kitchen.electrical.switchType === type}
-                      onChange={(e) => onChange(roomName, "kitchen.electrical.switchType", e.target.value)}
-                      className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      type="checkbox"
+                      checked={(roomData.kitchen.electrical.switchType || []).includes(type)}
+                      onChange={(e) => {
+                        const arr = roomData.kitchen.electrical.switchType || [];
+                        onChange(roomName, "kitchen.electrical.switchType", e.target.checked ? [...arr, type] : arr.filter(t => t !== type));
+                      }}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                     />
-                    <span className="text-white text-sm">{type}</span>
+                    <span className="text-white text-sm group-hover:text-accent transition">{type}</span>
                   </label>
                 ))}
               </div>
@@ -8104,16 +8813,17 @@ function RoomSection({
               <label className="block text-xs text-gray-text mb-2">Wiring Brand</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {["Havells", "Polycab", "Finolex", "Local"].map((brand) => (
-                  <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                  <label key={brand} className="flex items-center gap-2 cursor-pointer group">
                     <input
-                      type="radio"
-                      name={`${roomName}-wiringBrand`}
-                      value={brand}
-                      checked={roomData.kitchen.electrical.wiringBrand === brand}
-                      onChange={(e) => onChange(roomName, "kitchen.electrical.wiringBrand", e.target.value)}
-                      className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      type="checkbox"
+                      checked={(roomData.kitchen.electrical.wiringBrand || []).includes(brand)}
+                      onChange={(e) => {
+                        const arr = roomData.kitchen.electrical.wiringBrand || [];
+                        onChange(roomName, "kitchen.electrical.wiringBrand", e.target.checked ? [...arr, brand] : arr.filter(b => b !== brand));
+                      }}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                     />
-                    <span className="text-white text-sm">{brand}</span>
+                    <span className="text-white text-sm group-hover:text-accent transition">{brand}</span>
                   </label>
                 ))}
               </div>
@@ -8124,16 +8834,17 @@ function RoomSection({
               <label className="block text-xs text-gray-text mb-2">Wire Safety</label>
               <div className="grid grid-cols-3 gap-3">
                 {["FR", "FRLS", "Non-FR"].map((safety) => (
-                  <label key={safety} className="flex items-center gap-2 cursor-pointer">
+                  <label key={safety} className="flex items-center gap-2 cursor-pointer group">
                     <input
-                      type="radio"
-                      name={`${roomName}-wireSafety`}
-                      value={safety}
-                      checked={roomData.kitchen.electrical.wireSafety === safety}
-                      onChange={(e) => onChange(roomName, "kitchen.electrical.wireSafety", e.target.value)}
-                      className="w-4 h-4 border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
+                      type="checkbox"
+                      checked={(roomData.kitchen.electrical.wireSafety || []).includes(safety)}
+                      onChange={(e) => {
+                        const arr = roomData.kitchen.electrical.wireSafety || [];
+                        onChange(roomName, "kitchen.electrical.wireSafety", e.target.checked ? [...arr, safety] : arr.filter(s => s !== safety));
+                      }}
+                      className="w-4 h-4 rounded border-gray-border bg-dark text-accent focus:ring-1 focus:ring-accent cursor-pointer"
                     />
-                    <span className="text-white text-sm">{safety}</span>
+                    <span className="text-white text-sm group-hover:text-accent transition">{safety}</span>
                   </label>
                 ))}
               </div>
@@ -8392,7 +9103,56 @@ function RoomSection({
               placeholder="Add any additional notes for the kitchen..."
             />
           </div>
-            </>
+              </div>
+              {/* RIGHT COLUMN – Manual Amount Entry */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-4 bg-dark-light border border-accent/30 rounded-xl p-4 space-y-3">
+                  <h4 className="text-accent font-bold text-sm uppercase tracking-wide border-b border-gray-border pb-2 mb-3">
+                    💰 Amount Entry
+                  </h4>
+                  {[
+                    { key: "basicInfo", label: "Basic Info / Structure" },
+                    { key: "civilWork", label: "Civil Work" },
+                    { key: "falseCeiling", label: "False Ceiling" },
+                    { key: "floorCovering", label: "Floor Covering" },
+                    { key: "modularKitchen", label: "Modular Kitchen" },
+                    { key: "electrical", label: "Electrical" },
+                    { key: "paint", label: "Paint" },
+                    { key: "plumbing", label: "Plumbing" },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-text mb-1">{label}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm">₹</span>
+                        <input
+                          type="number"
+                          value={roomData.kitchen.amounts?.[key] || ""}
+                          onChange={(e) => onChange(roomName, `kitchen.amounts.${key}`, e.target.value)}
+                          className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-accent/30 pt-3 mt-3">
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={roomData.kitchen.amounts?.total || ""}
+                        onChange={(e) => onChange(roomName, "kitchen.amounts.total", e.target.value)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : !isDomesticHelpRoom && !isStoreRoom ? (
             <>
           {/* A. BASIC INFORMATION */}
@@ -8925,7 +9685,8 @@ function RoomSection({
 
           {/* DOMESTIC HELP ROOM SECTIONS */}
           {isDomesticHelpRoom && roomData.domesticHelpRoom && (
-            <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-0">
               {/* 🏠 1️⃣ BASIC INFO */}
               <div className="mb-6">
                 <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
@@ -9759,12 +10520,59 @@ function RoomSection({
                   placeholder="Add any additional notes for the domestic help room..."
                 />
               </div>
-            </>
+              </div> {/* end left col */}
+
+              {/* RIGHT COLUMN – Amount Entry */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-4 bg-dark-light border border-accent/20 rounded-lg p-4">
+                  <h4 className="text-accent font-semibold text-sm mb-4 uppercase tracking-wide">💰 Amount Entry</h4>
+                  {[
+                    { key: "civilWork", label: "Civil Work" },
+                    { key: "wardrobe", label: "Wardrobe" },
+                    { key: "flooring", label: "Flooring" },
+                    { key: "electrical", label: "Electrical" },
+                    { key: "paint", label: "Paint" },
+                    { key: "bathroom", label: "Help Bathroom" },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="mb-3">
+                      <label className="block text-xs text-gray-text mb-1">{label}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm font-bold">₹</span>
+                        <input
+                          type="number"
+                          value={roomData.domesticHelpRoom.amounts?.[key] || ""}
+                          onChange={(e) => onChange(roomName, `domesticHelpRoom.amounts.${key}`, e.target.value)}
+                          className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-accent/30 pt-3 mt-3">
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={roomData.domesticHelpRoom.amounts?.total || ""}
+                        onChange={(e) => onChange(roomName, "domesticHelpRoom.amounts.total", e.target.value)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* STORE ROOM SECTIONS */}
           {isStoreRoom && roomData.storeRoom && (
-            <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-0">
               {/* 🏠 1️⃣ BASIC INFORMATION */}
               <div className="mb-6">
                 <h5 className="text-accent font-medium mb-3 text-sm flex items-center gap-2">
@@ -10151,7 +10959,52 @@ function RoomSection({
                   placeholder="Add any additional notes or special requirements for the store room..."
                 />
               </div>
-            </>
+              </div> {/* end left col */}
+
+              {/* RIGHT COLUMN – Amount Entry */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-4 bg-dark-light border border-accent/20 rounded-lg p-4">
+                  <h4 className="text-accent font-semibold text-sm mb-4 uppercase tracking-wide">💰 Amount Entry</h4>
+                  {[
+                    { key: "wardrobe", label: "Wardrobe / Storage" },
+                    { key: "lighting", label: "Lighting" },
+                    { key: "electrical", label: "Electrical" },
+                    { key: "paint", label: "Paint" },
+                    { key: "ventilation", label: "Ventilation" },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="mb-3">
+                      <label className="block text-xs text-gray-text mb-1">{label}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm font-bold">₹</span>
+                        <input
+                          type="number"
+                          value={roomData.storeRoom.amounts?.[key] || ""}
+                          onChange={(e) => onChange(roomName, `storeRoom.amounts.${key}`, e.target.value)}
+                          className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-accent/30 pt-3 mt-3">
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={roomData.storeRoom.amounts?.total || ""}
+                        onChange={(e) => onChange(roomName, "storeRoom.amounts.total", e.target.value)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* WASHROOM-SPECIFIC SECTIONS */}
@@ -10159,6 +11012,7 @@ function RoomSection({
             <WashroomSection
               roomName={roomName}
               washroomData={roomData.washroom}
+              amounts={roomData.washroom.amounts}
               onChange={onChange}
             />
           )}
@@ -10178,12 +11032,14 @@ function RoomSection({
 }
 
 // Washroom-specific component
-function WashroomSection({ roomName, washroomData, onChange }) {
+function WashroomSection({ roomName, washroomData, amounts, onChange }) {
   return (
-    <div className="space-y-4 border-t border-gray-border pt-4">
-      <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
+    <div className="border-t border-gray-border pt-4">
+      <h4 className="text-white font-semibold text-sm uppercase tracking-wide mb-4">
         Washroom-Specific Details
       </h4>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
 
       {/* Wall Covering */}
       <div>
@@ -10297,6 +11153,54 @@ function WashroomSection({ roomName, washroomData, onChange }) {
           </select>
         </div>
       </div>
+        </div> {/* end left col */}
+
+        {/* RIGHT COLUMN – Amount Entry */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-4 bg-dark-light border border-accent/20 rounded-lg p-4">
+            <h4 className="text-accent font-semibold text-sm mb-4 uppercase tracking-wide">💰 Amount Entry</h4>
+            {[
+              { key: "civilWork", label: "Civil Work" },
+              { key: "wallCovering", label: "Wall Covering" },
+              { key: "floorCovering", label: "Floor Covering" },
+              { key: "sanitary", label: "Sanitary Fittings" },
+              { key: "plumbing", label: "Plumbing" },
+              { key: "electrical", label: "Electrical" },
+              { key: "falseCeiling", label: "False Ceiling" },
+            ].map(({ key, label }) => (
+              <div key={key} className="mb-3">
+                <label className="block text-xs text-gray-text mb-1">{label}</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm font-bold">₹</span>
+                  <input
+                    type="number"
+                    value={amounts?.[key] || ""}
+                    onChange={(e) => onChange(roomName, `washroom.amounts.${key}`, e.target.value)}
+                    className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+            ))}
+            <div className="border-t border-accent/30 pt-3 mt-3">
+              <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                <input
+                  type="number"
+                  value={amounts?.total || ""}
+                  onChange={(e) => onChange(roomName, "washroom.amounts.total", e.target.value)}
+                  className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+              <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+            </div>
+          </div>
+        </div>
+      </div> {/* end grid */}
     </div>
   );
 }
@@ -10448,7 +11352,7 @@ function RoomBalconySection({ roomName, balconyData, onChange }) {
 
 // Bedroom + Washroom Dynamic Section Component
 function BedroomWithWashroomSection({ instance, isExpanded, onToggle, onChange, onRemove }) {
-  const { id, name, bedroom, washroom } = instance;
+  const { id, name, bedroom, washroom, amounts } = instance;
 
   return (
     <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
@@ -10473,7 +11377,9 @@ function BedroomWithWashroomSection({ instance, isExpanded, onToggle, onChange, 
 
       {/* Content */}
       {isExpanded && (
-        <div className="p-5 space-y-8 border-t border-gray-border">
+        <div className="p-5 border-t border-gray-border">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-8">
           
           {/* ==================== PART 1: BEDROOM DETAILS ==================== */}
           <div className="space-y-6">
@@ -11632,6 +12538,57 @@ function BedroomWithWashroomSection({ instance, isExpanded, onToggle, onChange, 
               </div>
             </div>
           </div>
+            </div> {/* end left col */}
+
+            {/* RIGHT COLUMN – Amount Entry */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-4 bg-dark-light border border-accent/20 rounded-lg p-4">
+                <h4 className="text-accent font-semibold text-sm mb-4 uppercase tracking-wide">💰 Amount Entry</h4>
+                {[
+                  { key: "bedroomCivil", label: "Bedroom Civil Work" },
+                  { key: "falseCeiling", label: "False Ceiling" },
+                  { key: "floorCovering", label: "Floor Covering" },
+                  { key: "wallPaneling", label: "Wall Paneling" },
+                  { key: "wardrobe", label: "Wardrobe" },
+                  { key: "carpentry", label: "Other Carpentry" },
+                  { key: "electrical", label: "Electrical" },
+                  { key: "paint", label: "Paint" },
+                  { key: "washroomWork", label: "Washroom Work" },
+                  { key: "washroomElectrical", label: "Washroom Electrical" },
+                ].map(({ key, label }) => (
+                  <div key={key} className="mb-3">
+                    <label className="block text-xs text-gray-text mb-1">{label}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={amounts?.[key] || ""}
+                        onChange={(e) => onChange(id, `amounts.${key}`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <div className="border-t border-accent/30 pt-3 mt-3">
+                  <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                    <input
+                      type="number"
+                      value={amounts?.total || ""}
+                      onChange={(e) => onChange(id, "amounts.total", e.target.value)}
+                      className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                </div>
+              </div>
+            </div>
+          </div> {/* end grid */}
         </div>
       )}
     </div>
@@ -11640,7 +12597,7 @@ function BedroomWithWashroomSection({ instance, isExpanded, onToggle, onChange, 
 
 // BalconySection Component
 function BalconySection({ instance, isExpanded, onToggle, onChange, onRemove }) {
-  const { id, name, basic, civil, floorCoverings, wallCoverings, ceiling, carpentryBuiltIn, looseFurniture, electrical, waterPlumbing, greeneryPlanters, safety, notes } = instance;
+  const { id, name, basic, civil, floorCoverings, wallCoverings, ceiling, carpentryBuiltIn, looseFurniture, electrical, waterPlumbing, greeneryPlanters, safety, notes, amounts } = instance;
 
   return (
     <div className="bg-dark border border-gray-border rounded-lg overflow-hidden">
@@ -11665,7 +12622,9 @@ function BalconySection({ instance, isExpanded, onToggle, onChange, onRemove }) 
 
       {/* Content */}
       {isExpanded && (
-        <div className="p-5 space-y-6">
+        <div className="p-5 border-t border-gray-border">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
           
           {/* 🏠 1️⃣ BASIC */}
           <div>
@@ -12361,6 +13320,54 @@ function BalconySection({ instance, isExpanded, onToggle, onChange, onRemove }) 
             />
           </div>
 
+            </div> {/* end left col */}
+
+            {/* RIGHT COLUMN – Amount Entry */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-4 bg-dark-light border border-accent/20 rounded-lg p-4">
+                <h4 className="text-accent font-semibold text-sm mb-4 uppercase tracking-wide">💰 Amount Entry</h4>
+                {[
+                  { key: "civil", label: "Civil Work" },
+                  { key: "flooring", label: "Floor Covering" },
+                  { key: "wallCovering", label: "Wall Covering" },
+                  { key: "ceiling", label: "Ceiling" },
+                  { key: "carpentry", label: "Carpentry" },
+                  { key: "electrical", label: "Electrical" },
+                  { key: "plumbing", label: "Water / Plumbing" },
+                ].map(({ key, label }) => (
+                  <div key={key} className="mb-3">
+                    <label className="block text-xs text-gray-text mb-1">{label}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-text text-sm font-bold">₹</span>
+                      <input
+                        type="number"
+                        value={amounts?.[key] || ""}
+                        onChange={(e) => onChange(id, `amounts.${key}`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded pl-7 pr-3 py-2 text-white text-sm focus:outline-none focus:border-accent transition"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <div className="border-t border-accent/30 pt-3 mt-3">
+                  <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
+                    <input
+                      type="number"
+                      value={amounts?.total || ""}
+                      onChange={(e) => onChange(id, "amounts.total", e.target.value)}
+                      className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                </div>
+              </div>
+            </div>
+          </div> {/* end grid */}
         </div>
       )}
     </div>
