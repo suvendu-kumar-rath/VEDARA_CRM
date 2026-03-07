@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
 import { generateQuotationPDF } from "../utils/generateQuotationPDF";
 
@@ -9,7 +9,6 @@ export default function FormsPage() {
     propertyType: "",
     unitType: "",
     totalCarpetArea: "",
-    baseAmount: "",
    ceilingHeights: {
       /*general: "",
       floorToFloor: "",
@@ -243,15 +242,18 @@ export default function FormsPage() {
         if (item.id === itemId) {
           const updatedItem = { ...item, [field]: value };
           
-          // If item name changed, update price per sqft
+          // If item name changed, prefill price per sqft (still editable)
           if (field === "itemName") {
-            updatedItem.pricePerSqft = interiorItemsPrices[value] || 0;
+            updatedItem.pricePerSqft = interiorItemsPrices[value] || item.pricePerSqft || 0;
             updatedItem.totalAmount = updatedItem.area * updatedItem.pricePerSqft;
           }
           
-          // If area changed, recalculate total
+          // If area or price changed, recalculate total
           if (field === "area") {
             updatedItem.totalAmount = value * item.pricePerSqft;
+          }
+          if (field === "pricePerSqft") {
+            updatedItem.totalAmount = item.area * value;
           }
           
           return updatedItem;
@@ -303,15 +305,18 @@ export default function FormsPage() {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
         
-        // If item name changed, update price per sqft
+        // If item name changed, prefill price per sqft (still editable)
         if (field === "itemName") {
-          updatedItem.pricePerSqft = ceilingHeightPrices[value] || 0;
+          updatedItem.pricePerSqft = ceilingHeightPrices[value] || item.pricePerSqft || 0;
           updatedItem.totalAmount = updatedItem.area * updatedItem.pricePerSqft;
         }
         
-        // If area changed, recalculate total
+        // If area or price changed, recalculate total
         if (field === "area") {
           updatedItem.totalAmount = value * item.pricePerSqft;
+        }
+        if (field === "pricePerSqft") {
+          updatedItem.totalAmount = item.area * value;
         }
         
         return updatedItem;
@@ -346,15 +351,18 @@ export default function FormsPage() {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
         
-        // If item name changed, update price per sqft
+        // If item name changed, prefill price per sqft (still editable)
         if (field === "itemName") {
-          updatedItem.pricePerSqft = windowInfoPrices[value] || 0;
+          updatedItem.pricePerSqft = windowInfoPrices[value] || item.pricePerSqft || 0;
           updatedItem.totalAmount = updatedItem.area * updatedItem.pricePerSqft;
         }
         
-        // If area changed, recalculate total
+        // If area or price changed, recalculate total
         if (field === "area") {
           updatedItem.totalAmount = value * item.pricePerSqft;
+        }
+        if (field === "pricePerSqft") {
+          updatedItem.totalAmount = item.area * value;
         }
         
         return updatedItem;
@@ -862,7 +870,7 @@ export default function FormsPage() {
           wallPaint: "",
           ceilingPaint: "",
         },
-        softFurnishings: {
+        softFurnishing: {
           curtains: "",
           windowCovering: "",
           notes: "",
@@ -1371,37 +1379,43 @@ export default function FormsPage() {
   };
 
   // Handle room change in a specific section
-  const handleRoomChangeInSection = (sectionId, roomName, field, value) => {
+  const handleRoomChangeInSection = (sectionId, roomName, arg1, arg2, arg3) => {
     setRoomWiseRooms((prev) => {
-      const prevRoom = ((prev[sectionId] || {})[roomName]) || {};
-      let updatedRoom = { ...prevRoom };
-      // Support nested updates for Foyer windowInfo, civilWork, falseCeiling
-      if (roomName === "Foyer") {
-        if (field === "windowInfo" || field === "civilWork" || field === "falseCeiling") {
-          updatedRoom = {
-            ...prevRoom,
-            [field]: {
-              ...prevRoom[field],
-              ...value
-            }
-          };
-        } else {
-          updatedRoom = {
-            ...prevRoom,
-            [field]: value
-          };
-        }
+      const prevRoom = ((prev[sectionId] || {})[roomName]) || initializeRoom(roomName);
+      const newRoom = JSON.parse(JSON.stringify(prevRoom));
+
+      // Room sections call onChange with 3 args: (sectionKey|displayName, subPath, value)
+      // or 2 args: (dotPath, value).
+      // If arg1 is a known data-section key ("foyer", "livingRoom", etc.) the full path
+      // is "arg1.arg2". Otherwise arg2 is already the full dot-path from the room root.
+      const DATA_KEYS = ["foyer", "livingRoom", "diningArea", "kitchen",
+                         "domesticHelpRoom", "storeRoom", "washroom"];
+
+      let path, value;
+      if (arg3 !== undefined) {
+        path  = DATA_KEYS.includes(arg1) ? `${arg1}.${arg2}` : arg2;
+        value = arg3;
       } else {
-        updatedRoom = {
-          ...prevRoom,
-          [field]: value
-        };
+        path  = arg1;
+        value = arg2;
       }
+
+      // Deep-set the value at the dot-separated path
+      const parts = path.split(".");
+      let target = newRoom;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (target[parts[i]] === undefined || target[parts[i]] === null) {
+          target[parts[i]] = {};
+        }
+        target = target[parts[i]];
+      }
+      target[parts[parts.length - 1]] = value;
+
       return {
         ...prev,
         [sectionId]: {
           ...(prev[sectionId] || {}),
-          [roomName]: updatedRoom,
+          [roomName]: newRoom,
         },
       };
     });
@@ -2021,41 +2035,136 @@ export default function FormsPage() {
     );
   };
 
+  // Build the API-compatible payload from current form state
+  const buildApiPayload = () => {
+    const mapItems = (arr) => (arr || []).map(item => ({
+      type: item.itemName,
+      areaSqFt: item.area,
+      pricePerSqFt: item.pricePerSqft,
+      amount: item.totalAmount,
+    }));
+
+    const ROOM_KEY = {
+      "Main Entrance": "mainEntrance",
+      "Foyer": "foyer",
+      "Living Room": "livingRoom",
+      "Dining Area": "diningArea",
+      "Kitchen": "kitchen",
+      "Domestic Help Room": "domesticHelpRoom",
+      "Store Room": "storeRoom",
+    };
+
+    const projectInfo = {
+      clientName: formData.clientName,
+      projectAddress: formData.projectAddress,
+      propertyType: formData.propertyType,
+      unitType: formData.unitType,
+      totalCarpetAreaSqFt: formData.totalCarpetArea,
+      ceilingHeights: formData.ceilingHeights,
+      windowInfo: {
+        windowCountPerRoom: formData.windowInfo.count,
+        sillHeightFeet: formData.windowInfo.sillHeight,
+        lintelHeightFeet: formData.windowInfo.lintelHeight,
+        windowType: formData.windowInfo.type,
+      },
+    };
+
+    const globalScope = { items: mapItems(globalScopeItems) };
+    const deliverables = { items: mapItems(deliverablesItems) };
+
+    const roomWiseDetails = {};
+
+    roomWiseInstances.forEach(inst => {
+      const rooms = roomWiseRooms[inst.id] || {};
+      const instItems = roomWiseItems[inst.id] || [];
+      Object.entries(rooms).forEach(([roomName, roomData]) => {
+        const key = ROOM_KEY[roomName] || roomName;
+        roomWiseDetails[key] = {
+          ...roomData,
+          basicInfo: {
+            lengthFt: roomData.length,
+            widthFt: roomData.width,
+            ceilingHeightFt: roomData.ceilingHeight,
+          },
+          items: mapItems(instItems),
+        };
+      });
+    });
+
+    roomWiseDetails.bedrooms = bedroomWashroomInstances.map(inst => ({
+      bedroom: {
+        ...inst.bedroom,
+        basicInfo: {
+          lengthFt: inst.bedroom.basicInfo?.length,
+          widthFt: inst.bedroom.basicInfo?.width,
+          ceilingHeightFt: inst.bedroom.basicInfo?.ceilingHeight,
+        },
+        items: mapItems(bedroomWashroomItems[inst.id] || []),
+      },
+      washroom: inst.washroom,
+    }));
+
+    roomWiseDetails.balconies = balconyInstances.map(inst => ({
+      ...inst,
+      basic: {
+        ...inst.basic,
+        lengthFt: inst.basic?.length,
+        widthFt: inst.basic?.width,
+        ceilingHeightFt: inst.basic?.ceilingHeight,
+      },
+      items: mapItems(balconyItems[inst.id] || []),
+    }));
+
+    const sumAmt = (items) => (items || []).reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
+    const gTotal = sumAmt(globalScope.items);
+    const dTotal = sumAmt(deliverables.items);
+    let rTotal = 0;
+    Object.values(roomWiseDetails).forEach(v => {
+      if (Array.isArray(v)) {
+        v.forEach(r => { rTotal += sumAmt(r.bedroom?.items) + sumAmt(r.items); });
+      } else if (v?.items) {
+        rTotal += sumAmt(v.items);
+      }
+    });
+
+    return {
+      projectInfo,
+      globalScope,
+      deliverables,
+      roomWiseDetails,
+      discountPercent: 0,
+      finalAmount: gTotal + dTotal + rTotal,
+      validUntil: "",
+      notes: "",
+    };
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const completeFormData = {
-      ...formData,
-      roomWiseInstances: roomWiseInstances.map(instance => ({
-        ...instance,
-        rooms: roomWiseRooms[instance.id] || {},
-        removedRooms: roomWiseRemovedRooms[instance.id] || [],
-        interiorItems: roomWiseItems[instance.id] || [],
-      })),
-      bedroomWashroomInstances: bedroomWashroomInstances.map(instance => ({
-        ...instance,
-        interiorItems: bedroomWashroomItems[instance.id] || [],
-      })),
-      balconyInstances: balconyInstances.map(instance => ({
-        ...instance,
-        interiorItems: balconyItems[instance.id] || [],
-      })),
-      globalScopeInteriorItems: globalScopeItems,
-      deliverablesInteriorItems: deliverablesItems,
-    };
-    
-    console.log("Form Data:", completeFormData);
-    
     try {
       setSubmitting(true);
-      const response = await apiService.createQuotation(completeFormData);
+      const response = await apiService.createQuotation(buildApiPayload());
       console.log('Quotation Response:', response);
-      
-      if (response.success || response.status === 200 || response.status === 201) {
-        alert('Quotation created successfully!');
-        // Optionally reset form or redirect
-        if (window.confirm('Would you like to create another quotation?')) {
+      if (response.success || response.data) {
+        const raw = response.data || response;
+        // Normalize snake_case DB columns to camelCase for PDF generator
+        const pdfPayload = {
+          projectInfo:     raw.project_info     || raw.projectInfo     || {},
+          globalScope:     raw.global_scope     || raw.globalScope     || {},
+          deliverables:    raw.deliverables                            || {},
+          roomWiseDetails: raw.room_wise_details || raw.roomWiseDetails || {},
+          discountPercent: raw.discount_percent  || raw.discountPercent || 0,
+          validUntil:      raw.valid_until       || raw.validUntil      || "",
+          notes:           raw.notes             || "",
+        };
+        try {
+          generateQuotationPDF(pdfPayload);
+        } catch (pdfErr) {
+          console.error('PDF generation error:', pdfErr);
+          alert('Quotation created but PDF generation failed: ' + (pdfErr.message || 'Unknown error'));
+        }
+        if (window.confirm('Quotation created and PDF downloaded! Would you like to create another quotation?')) {
           window.location.reload();
         }
       } else {
@@ -2147,7 +2256,7 @@ export default function FormsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-text mb-2">
-                      Project Address *
+                      Project Address
                     </label>
                     <input
                       type="text"
@@ -2155,13 +2264,12 @@ export default function FormsPage() {
                       onChange={(e) => setFormData({ ...formData, projectAddress: e.target.value })}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                       placeholder="Enter project address"
-                      required
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-text mb-2">
-                      Client Name *
+                      Client Name
                     </label>
                     <div className="flex gap-2">
                       <div className="flex-1">
@@ -2178,7 +2286,6 @@ export default function FormsPage() {
                               }
                             }}
                             className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                            required
                             disabled={loadingClients}
                           >
                             <option value="">
@@ -2198,7 +2305,6 @@ export default function FormsPage() {
                             onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                             className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                             placeholder="Enter client name"
-                            required
                           />
                         )}
                       </div>
@@ -2220,13 +2326,12 @@ export default function FormsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-text mb-2">
-                      Property Type *
+                      Property Type
                     </label>
                     <select
                       value={formData.propertyType}
                       onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select property type</option>
                       <option value="Apartment">Apartment</option>
@@ -2239,13 +2344,12 @@ export default function FormsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-text mb-2">
-                      Unit Type *
+                      Unit Type
                     </label>
                     <select
                       value={formData.unitType}
                       onChange={(e) => setFormData({ ...formData, unitType: e.target.value })}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select unit type</option>
                       <option value="2BHK">2BHK</option>
@@ -2257,7 +2361,7 @@ export default function FormsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-text mb-2">
-                      Total Carpet Area (sq ft) *
+                      Total Carpet Area (sq ft)
                     </label>
                     <input
                       type="number"
@@ -2265,23 +2369,10 @@ export default function FormsPage() {
                       onChange={(e) => setFormData({ ...formData, totalCarpetArea: e.target.value })}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                       placeholder="Enter carpet area"
-                      required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">
-                      Base Amount (₹) *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.baseAmount}
-                      onChange={(e) => setFormData({ ...formData, baseAmount: e.target.value })}
-                      className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      placeholder="Enter base amount"
-                      required
-                    />
-                  </div>
+
                 </div>
 
                 {/* Ceiling Heights */}
@@ -2343,7 +2434,7 @@ export default function FormsPage() {
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             {/* Item Selection */}
                             <div>
-                              <label className="block text-xs text-gray-text mb-2">Select Ceiling Type *</label>
+                              <label className="block text-xs text-gray-text mb-2">Select Ceiling Type</label>
                               <select
                                 value={item.itemName}
                                 onChange={(e) => updateCeilingHeightItem(item.id, "itemName", e.target.value)}
@@ -2358,7 +2449,7 @@ export default function FormsPage() {
 
                             {/* Area Input */}
                             <div>
-                              <label className="block text-xs text-gray-text mb-2">Area (sq ft) *</label>
+                              <label className="block text-xs text-gray-text mb-2">Area (sq ft)</label>
                               <input
                                 type="number"
                                 step="0.01"
@@ -2369,14 +2460,16 @@ export default function FormsPage() {
                               />
                             </div>
 
-                            {/* Price Per Sqft (Read-only) */}
+                            {/* Price Per Sqft (Editable) */}
                             <div>
                               <label className="block text-xs text-gray-text mb-2">Price/sq ft (₹)</label>
                               <input
-                                type="text"
-                                value={item.pricePerSqft ? `₹${item.pricePerSqft}` : "₹0"}
-                                readOnly
-                                className="w-full bg-gray-border/30 border border-gray-border rounded px-3 py-2 text-gray-text text-sm cursor-not-allowed"
+                                type="number"
+                                step="0.01"
+                                value={item.pricePerSqft || ""}
+                                onChange={(e) => updateCeilingHeightItem(item.id, "pricePerSqft", e.target.value)}
+                                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm"
+                                placeholder="0.00"
                               />
                             </div>
 
@@ -2385,7 +2478,7 @@ export default function FormsPage() {
                               <label className="block text-xs text-gray-text mb-2">Total Amount (₹)</label>
                               <input
                                 type="text"
-                                value={item.totalAmount ? `₹${item.totalAmount.toFixed(2)}` : "₹0.00"}
+                                value={item.totalAmount ? `₹${parseFloat(item.totalAmount).toFixed(2)}` : "₹0.00"}
                                 readOnly
                                 className="w-full bg-accent/10 border border-accent/30 rounded px-3 py-2 text-accent font-semibold text-sm cursor-not-allowed"
                               />
@@ -2505,7 +2598,7 @@ export default function FormsPage() {
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             {/* Item Selection */}
                             <div>
-                              <label className="block text-xs text-gray-text mb-2">Select Window Item *</label>
+                              <label className="block text-xs text-gray-text mb-2">Select Window Item</label>
                               <select
                                 value={item.itemName}
                                 onChange={(e) => updateWindowInfoItem(item.id, "itemName", e.target.value)}
@@ -2523,7 +2616,7 @@ export default function FormsPage() {
                               <label className="block text-xs text-gray-text mb-2">
                                 {item.itemName?.includes("Window Count") || item.itemName?.includes("Window Type") 
                                   ? "Quantity" 
-                                  : "Area (sq ft)"} *
+                                  : "Area (sq ft)"}
                               </label>
                               <input
                                 type="number"
@@ -2535,7 +2628,7 @@ export default function FormsPage() {
                               />
                             </div>
 
-                            {/* Price Per Unit (Read-only) */}
+                            {/* Price Per Unit (Editable) */}
                             <div>
                               <label className="block text-xs text-gray-text mb-2">
                                 {item.itemName?.includes("Window Count") || item.itemName?.includes("Window Type") 
@@ -2543,10 +2636,12 @@ export default function FormsPage() {
                                   : "Price/sq ft (₹)"}
                               </label>
                               <input
-                                type="text"
-                                value={item.pricePerSqft ? `₹${item.pricePerSqft}` : "₹0"}
-                                readOnly
-                                className="w-full bg-gray-border/30 border border-gray-border rounded px-3 py-2 text-gray-text text-sm cursor-not-allowed"
+                                type="number"
+                                step="0.01"
+                                value={item.pricePerSqft || ""}
+                                onChange={(e) => updateWindowInfoItem(item.id, "pricePerSqft", e.target.value)}
+                                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm"
+                                placeholder="0.00"
                               />
                             </div>
 
@@ -2555,7 +2650,7 @@ export default function FormsPage() {
                               <label className="block text-xs text-gray-text mb-2">Total Amount (₹)</label>
                               <input
                                 type="text"
-                                value={item.totalAmount ? `₹${item.totalAmount.toFixed(2)}` : "₹0.00"}
+                                value={item.totalAmount ? `₹${parseFloat(item.totalAmount).toFixed(2)}` : "₹0.00"}
                                 readOnly
                                 className="w-full bg-accent/10 border border-accent/30 rounded px-3 py-2 text-accent font-semibold text-sm cursor-not-allowed"
                               />
@@ -2649,13 +2744,12 @@ export default function FormsPage() {
                               {/* Scope Type Dropdown */}
                               <div>
                                 <label className="block text-sm font-medium text-gray-text mb-2">
-                                  Scope Type *
+                                  Scope Type
                                 </label>
                                 <select
                                   value={instance.scopeType}
                                   onChange={(e) => handleGlobalScopeChange(instance.id, "scopeType", e.target.value)}
                                   className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                                  required
                                 >
                                   <option value="">Select scope type</option>
                                   <option value="Full Home Renovation">Full Home Renovation</option>
@@ -2672,7 +2766,7 @@ export default function FormsPage() {
                               {/* Total Amount */}
                               <div>
                                 <label className="block text-sm font-medium text-gray-text mb-2">
-                                  Total (₹) *
+                                  Total (₹)
                                 </label>
                                 <input
                                   type="number"
@@ -2680,7 +2774,6 @@ export default function FormsPage() {
                                   onChange={(e) => handleGlobalScopeChange(instance.id, "amount", e.target.value)}
                                   placeholder="Enter total amount"
                                   className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                  required
                                 />
                               </div>
                             </div>
@@ -2765,13 +2858,12 @@ export default function FormsPage() {
                               {/* Deliverable Type Dropdown */}
                               <div>
                                 <label className="block text-sm font-medium text-gray-text mb-2">
-                                  Deliverable Type *
+                                  Deliverable Type
                                 </label>
                                 <select
                                   value={instance.deliverableType}
                                   onChange={(e) => handleDeliverableChange(instance.id, "deliverableType", e.target.value)}
                                   className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                                  required
                                 >
                                   <option value="">Select deliverable type</option>
                                   <option value="2D Layouts">2D Layouts</option>
@@ -2795,7 +2887,7 @@ export default function FormsPage() {
                               {/* Total Amount */}
                               <div>
                                 <label className="block text-sm font-medium text-gray-text mb-2">
-                                  Total (₹) *
+                                  Total (₹)
                                 </label>
                                 <input
                                   type="number"
@@ -2803,7 +2895,6 @@ export default function FormsPage() {
                                   onChange={(e) => handleDeliverableChange(instance.id, "amount", e.target.value)}
                                   placeholder="Enter total amount"
                                   className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                  required
                                 />
                               </div>
                             </div>
@@ -2919,7 +3010,7 @@ export default function FormsPage() {
                             roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
                             isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
                             onToggle={() => toggleRoomInSection(instance.id, roomName)}
-                            onChange={(field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
+                            onChange={(a, b, c) => handleRoomChangeInSection(instance.id, roomName, a, b, c)}
                             onRemove={() => removeRoomInSection(instance.id, roomName)}
                             mainEntranceItems={mainEntranceInstances[getMainEntranceKey(instance.id, roomName)] || []}
                             expandedMainEntranceItems={expandedMainEntranceItems}
@@ -2985,7 +3076,7 @@ export default function FormsPage() {
                             roomData={(roomWiseRooms[instance.id] || {})[roomName] || initializeRoom(roomName)}
                             isExpanded={(roomWiseExpandedRooms[instance.id] || {})[roomName]}
                             onToggle={() => toggleRoomInSection(instance.id, roomName)}
-                            onChange={(field, value) => handleRoomChangeInSection(instance.id, roomName, field, value)}
+                            onChange={(a, b, c) => handleRoomChangeInSection(instance.id, roomName, a, b, c)}
                             onRemove={() => removeRoomInSection(instance.id, roomName)}
                             mainEntranceItems={mainEntranceInstances[getMainEntranceKey(instance.id, roomName)] || []}
                             expandedMainEntranceItems={expandedMainEntranceItems}
@@ -3062,7 +3153,14 @@ export default function FormsPage() {
             </button>
             <button
               type="button"
-              onClick={() => generateQuotationPDF(formData, bedroomWashroomInstances, balconyInstances)}
+              onClick={() => {
+                try {
+                  generateQuotationPDF(buildApiPayload());
+                } catch (err) {
+                  console.error("PDF generation error:", err);
+                  alert("Failed to generate PDF: " + (err.message || "Unknown error"));
+                }
+              }}
               className="bg-dark-light border border-accent text-accent px-6 py-3 rounded font-medium hover:bg-accent hover:text-dark transition"
             >
               ⬇ Download PDF
@@ -3115,33 +3213,69 @@ function RoomSection({
   const isDomesticHelpRoom = roomName === "Domestic Help Room";
   const isStoreRoom = roomName === "Store Room";
 
-  // Handler for window info field changes in Foyer
+  // Handler for all foyer field changes — routes each field to the correct sub-object
   const handleFoyerWindowInfoChange = (field, value) => {
     if (!roomData.foyer) return;
-    // Map field to correct nested object
-    const windowInfoFields = [
-      "length", "width", "ceilingHeight", "windowCount", "sillHeight", "lintelHeight", "windowType", "amount"
-    ];
-    const civilWorkFields = ["civilWorkItem", "civilWorkAmount"];
-    const falseCeilingFields = ["falseCeilingType", "coveLightingOption", "ceilingDesignOption", "falseCeilingAmount"];
-    if (windowInfoFields.includes(field)) {
-      const updatedWindowInfo = {
-        ...roomData.foyer.windowInfo,
-        [field]: value
-      };
-      onChange("foyer", "windowInfo", updatedWindowInfo);
-    } else if (civilWorkFields.includes(field)) {
-      const updatedCivilWork = {
-        ...roomData.foyer.civilWork,
-        [field]: value
-      };
-      onChange("foyer", "civilWork", updatedCivilWork);
-    } else if (falseCeilingFields.includes(field)) {
-      const updatedFalseCeiling = {
-        ...roomData.foyer.falseCeiling,
-        [field]: value
-      };
-      onChange("foyer", "falseCeiling", updatedFalseCeiling);
+
+    // Map from UI field name → [subObjectKey, subObjectField]
+    const fieldMap = {
+      // windowInfo
+      length:              ["windowInfo", "length"],
+      width:               ["windowInfo", "width"],
+      ceilingHeight:       ["windowInfo", "ceilingHeight"],
+      windowCount:         ["windowInfo", "windowCount"],
+      sillHeight:          ["windowInfo", "sillHeight"],
+      lintelHeight:        ["windowInfo", "lintelHeight"],
+      windowType:          ["windowInfo", "windowType"],
+      amount:              ["windowInfo", "amount"],
+      // civilWork
+      civilWorkItem:       ["civilWork", "civilWorkItem"],
+      civilWorkAmount:     ["civilWork", "civilWorkAmount"],
+      // falseCeiling
+      falseCeilingType:    ["falseCeiling", "falseCeilingType"],
+      coveLightingOption:  ["falseCeiling", "coveLightingOption"],
+      ceilingDesignOption: ["falseCeiling", "ceilingDesignOption"],
+      falseCeilingAmount:  ["falseCeiling", "falseCeilingAmount"],
+      // carpentry
+      consoleStorage:      ["carpentry", "consoleStorage"],
+      hardwareLevel:       ["carpentry", "hardwareLevel"],
+      wallPanelling:       ["carpentry", "wallPanelling"],
+      carpentryMaterial:   ["carpentry", "carpentryMaterial"],
+      carpentryAmount:     ["carpentry", "amount"],
+      // electrical
+      wiringBrand:         ["electrical", "wiringBrand"],
+      wireSafety:          ["electrical", "wireSafety"],
+      switchType:          ["electrical", "switchType"],
+      lighting:            ["electrical", "lighting"],
+      wallLightsQty:       ["electrical", "wallLightsQty"],
+      consoleLedStrip:     ["electrical", "consoleLedStrip"],
+      acWiring:            ["electrical", "acWiring"],
+      speakers:            ["electrical", "speakers"],
+      automation:          ["electrical", "automation"],
+      automationLights:    ["electrical", "automationLights"],
+      automationAC:        ["electrical", "automationAC"],
+      automationTV:        ["electrical", "automationTV"],
+      automationSpeakers:  ["electrical", "automationSpeakers"],
+      entranceBell:        ["electrical", "entranceBell"],
+      acType:              ["electrical", "acType"],
+      wiringLength:        ["electrical", "wiringLength"],
+      electricalAmount:    ["electrical", "amount"],
+      // paint
+      wallPaint:           ["paint", "wallPaint"],
+      ceilingPaint:        ["paint", "ceilingPaint"],
+      paintAmount:         ["paint", "amount"],
+      // softFurnishing
+      curtains:            ["softFurnishing", "curtains"],
+      windowCovering:      ["softFurnishing", "windowCovering"],
+      softFurnishingAmount:["softFurnishing", "amount"],
+      softFurnishingNotes: ["softFurnishing", "notes"],
+    };
+
+    const mapping = fieldMap[field];
+    if (mapping) {
+      const [subKey, subField] = mapping;
+      const updated = { ...(roomData.foyer[subKey] || {}), [subField]: value };
+      onChange("foyer", subKey, updated);
     } else {
       onChange("foyer", field, value);
     }
@@ -3247,13 +3381,12 @@ function RoomSection({
                                 {/* Item Type Dropdown */}
                                 <div>
                                   <label className="block text-sm font-medium text-gray-text mb-2">
-                                    Item Type *
+                                    Item Type
                                   </label>
                                   <select
                                     value={instance.itemType}
                                     onChange={(e) => onMainEntranceChange(instance.id, "itemType", e.target.value)}
                                     className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                                    required
                                   >
                                     <option value="">Select item type</option>
                                     <option value="Safety Door">Safety Door</option>
@@ -3278,7 +3411,7 @@ function RoomSection({
                                 {/* Total Amount */}
                                 <div>
                                   <label className="block text-sm font-medium text-gray-text mb-2">
-                                    Total (₹) *
+                                    Total (₹)
                                   </label>
                                   <input
                                     type="number"
@@ -3286,7 +3419,6 @@ function RoomSection({
                                     onChange={(e) => onMainEntranceChange(instance.id, "amount", e.target.value)}
                                     placeholder="Enter total amount"
                                     className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                                    required
                                   />
                                 </div>
                               </div>
@@ -3426,7 +3558,6 @@ function RoomSection({
                       value={roomData.foyer?.windowInfo?.windowType || ""}
                       onChange={e => handleFoyerWindowInfoChange("windowType", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select window type</option>
                       <option value="Sliding">Sliding</option>
@@ -3435,14 +3566,13 @@ function RoomSection({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.windowInfo?.amount || ""}
                       onChange={e => handleFoyerWindowInfoChange("amount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                 </div>
@@ -3459,7 +3589,6 @@ function RoomSection({
                       value={roomData.foyer?.civilWork?.civilWorkItem || ""}
                       onChange={e => handleFoyerWindowInfoChange("civilWorkItem", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select civil work item</option>
                       <option value="Demolition of flooring">Demolition of flooring</option>
@@ -3474,14 +3603,13 @@ function RoomSection({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.civilWork?.civilWorkAmount || ""}
                       onChange={e => handleFoyerWindowInfoChange("civilWorkAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                 </div>
@@ -3499,7 +3627,6 @@ function RoomSection({
                       value={roomData.foyer?.falseCeiling?.falseCeilingType || ""}
                       onChange={e => handleFoyerWindowInfoChange("falseCeilingType", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select type</option>
                       <option value="POP">POP</option>
@@ -3515,7 +3642,6 @@ function RoomSection({
                       value={roomData.foyer?.falseCeiling?.coveLightingOption || ""}
                       onChange={e => handleFoyerWindowInfoChange("coveLightingOption", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select option</option>
                       <option value="Outside Cove Only">Outside Cove Only</option>
@@ -3530,7 +3656,6 @@ function RoomSection({
                       value={roomData.foyer?.falseCeiling?.ceilingDesignOption || ""}
                       onChange={e => handleFoyerWindowInfoChange("ceilingDesignOption", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select design</option>
                       <option value="Grooves">Grooves</option>
@@ -3541,14 +3666,13 @@ function RoomSection({
                   </div>
                   {/* Amount */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.falseCeiling?.falseCeilingAmount || ""}
                       onChange={e => handleFoyerWindowInfoChange("falseCeilingAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                 </div>
@@ -3566,7 +3690,6 @@ function RoomSection({
                       value={roomData.foyer?.carpentry?.consoleStorage || ""}
                       onChange={e => handleFoyerWindowInfoChange("consoleStorage", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select option</option>
                       <option value="Console Table">Console Table</option>
@@ -3582,7 +3705,6 @@ function RoomSection({
                       value={roomData.foyer?.carpentry?.hardwareLevel || ""}
                       onChange={e => handleFoyerWindowInfoChange("hardwareLevel", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select level</option>
                       <option value="Basic (Local Indian Brands)">Basic (Local Indian Brands)</option>
@@ -3598,7 +3720,6 @@ function RoomSection({
                       value={roomData.foyer?.carpentry?.wallPanelling || ""}
                       onChange={e => handleFoyerWindowInfoChange("wallPanelling", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select option</option>
                       <option value="POP Design">POP Design</option>
@@ -3618,7 +3739,6 @@ function RoomSection({
                       value={roomData.foyer?.carpentry?.carpentryMaterial || ""}
                       onChange={e => handleFoyerWindowInfoChange("carpentryMaterial", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select material</option>
                       <option value="Ply">Ply</option>
@@ -3628,14 +3748,13 @@ function RoomSection({
                   </div>
                   {/* Amount */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.carpentry?.amount || ""}
                       onChange={e => handleFoyerWindowInfoChange("carpentryAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                 </div>
@@ -3653,7 +3772,6 @@ function RoomSection({
                       value={roomData.foyer?.electrical?.wiringBrand || ""}
                       onChange={e => handleFoyerWindowInfoChange("wiringBrand", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select brand</option>
                       <option value="Havells">Havells</option>
@@ -3669,7 +3787,6 @@ function RoomSection({
                       value={roomData.foyer?.electrical?.wireSafety || ""}
                       onChange={e => handleFoyerWindowInfoChange("wireSafety", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select rating</option>
                       <option value="FR">FR</option>
@@ -3684,7 +3801,6 @@ function RoomSection({
                       value={roomData.foyer?.electrical?.switchType || ""}
                       onChange={e => handleFoyerWindowInfoChange("switchType", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select switch</option>
                       <option value="Anchor Roma">Anchor Roma</option>
@@ -3701,7 +3817,6 @@ function RoomSection({
                       value={roomData.foyer?.electrical?.lighting || ""}
                       onChange={e => handleFoyerWindowInfoChange("lighting", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select lighting</option>
                       <option value="COB">COB</option>
@@ -3803,14 +3918,13 @@ function RoomSection({
                   </div>
                   {/* Amount */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.electrical?.amount || ""}
                       onChange={e => handleFoyerWindowInfoChange("electricalAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                 </div>
@@ -3828,7 +3942,6 @@ function RoomSection({
                       value={roomData.foyer?.paint?.wallPaint || ""}
                       onChange={e => handleFoyerWindowInfoChange("wallPaint", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select wall paint</option>
                       <option value="Royale Shine">Royale Shine</option>
@@ -3846,7 +3959,6 @@ function RoomSection({
                       value={roomData.foyer?.paint?.ceilingPaint || ""}
                       onChange={e => handleFoyerWindowInfoChange("ceilingPaint", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select ceiling paint</option>
                       <option value="Royale Shine">Royale Shine</option>
@@ -3859,14 +3971,13 @@ function RoomSection({
                   </div>
                   {/* Amount */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.paint?.amount || ""}
                       onChange={e => handleFoyerWindowInfoChange("paintAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                 </div>
@@ -3883,7 +3994,6 @@ function RoomSection({
                       value={roomData.foyer?.softFurnishing?.curtains || ""}
                       onChange={e => handleFoyerWindowInfoChange("curtains", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select curtain type</option>
                       <option value="Sheer Only">Sheer Only</option>
@@ -3898,7 +4008,6 @@ function RoomSection({
                       value={roomData.foyer?.softFurnishing?.windowCovering || ""}
                       onChange={e => handleFoyerWindowInfoChange("windowCovering", e.target.value)}
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
-                      required
                     >
                       <option value="">Select window covering</option>
                       <option value="Blinds">Blinds</option>
@@ -3907,14 +4016,13 @@ function RoomSection({
                   </div>
                   {/* Amount */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹) *</label>
+                    <label className="block text-sm font-medium text-gray-text mb-2">Total (₹)</label>
                     <input
                       type="number"
                       value={roomData.foyer?.softFurnishing?.amount || ""}
                       onChange={e => handleFoyerWindowInfoChange("softFurnishingAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                      required
                     />
                   </div>
                   {/* Notes */}
