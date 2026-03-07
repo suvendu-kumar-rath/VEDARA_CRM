@@ -17,6 +17,7 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [noteModal, setNoteModal] = useState({ open: false, lead: null, newNote: "", saving: false });
 
   useEffect(() => {
     fetchLeads();
@@ -133,7 +134,9 @@ export default function LeadsPage() {
           name: lead.name,
           email: lead.email,
           phone: lead.phone,
-          city: lead.city,
+          address: lead.city,
+          propertyType: lead.property,
+          budgetRange: lead.budget,
           source: lead.source,
           notes: lead.notes
         };
@@ -201,7 +204,9 @@ export default function LeadsPage() {
         name: lead.name,
         email: lead.email,
         phone: lead.phone,
-        city: lead.city,
+        address: lead.city,
+        propertyType: lead.property,
+        budgetRange: lead.budget,
         source: lead.source,
         notes: lead.notes
       };
@@ -228,28 +233,53 @@ export default function LeadsPage() {
     }
   };
 
-  const handleDeleteLead = async (e, lead) => {
-    e.stopPropagation();
-    
-    // Confirm deletion
-    if (!window.confirm(`Are you sure you want to delete lead "${lead.name}"? This action cannot be undone.`)) {
-      return;
+  // Parse notes stored as JSON array or fall back to legacy plain string
+  const parseNotes = (raw) => {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [{ text: raw, timestamp: null }];
+    } catch {
+      return [{ text: raw, timestamp: null }];
     }
+  };
+
+  const handleOpenNote = (e, lead) => {
+    e.stopPropagation();
+    setNoteModal({ open: true, lead, newNote: "", saving: false });
+  };
+
+  const handleSaveNote = async () => {
+    if (!noteModal.newNote.trim()) return;
+    setNoteModal(prev => ({ ...prev, saving: true }));
+
+    const existingNotes = parseNotes(noteModal.lead.notes);
+    const updatedNotes = [
+      { text: noteModal.newNote.trim(), timestamp: new Date().toISOString() },
+      ...existingNotes,
+    ];
+    const notesJson = JSON.stringify(updatedNotes);
 
     try {
-      const response = await apiService.deleteLead(lead.id);
-      console.log('Delete Lead Response:', response);
-
-      if (response.success || response.status === 200 || response.status === 204) {
-        alert('Lead deleted successfully!');
-        // Refresh leads list
-        await fetchLeads();
+      const response = await apiService.updateLead(noteModal.lead.id, { notes: notesJson });
+      if (response.success || response.status === 200) {
+        setLeads(prev => prev.map(l =>
+          l.id === noteModal.lead.id ? { ...l, notes: notesJson } : l
+        ));
+        setNoteModal(prev => ({
+          ...prev,
+          lead: { ...prev.lead, notes: notesJson },
+          newNote: "",
+          saving: false,
+        }));
       } else {
-        alert(`Failed to delete lead: ${response.message || 'Unknown error'}`);
+        alert(`Failed to save note: ${response.message || 'Unknown error'}`);
+        setNoteModal(prev => ({ ...prev, saving: false }));
       }
     } catch (error) {
-      console.error('Delete lead error:', error);
-      alert(`Error deleting lead: ${error.message}`);
+      console.error('Save note error:', error);
+      alert(`Error saving note: ${error.message}`);
+      setNoteModal(prev => ({ ...prev, saving: false }));
     }
   };
 
@@ -433,11 +463,11 @@ export default function LeadsPage() {
                         <option value="lost">Discard</option>
                       </select>
                       <button
-                        onClick={(e) => handleDeleteLead(e, lead)}
-                        className="px-3 py-2 bg-red-900/20 border border-red-500/30 rounded text-red-400 hover:bg-red-900/40 transition text-sm font-medium"
-                        title="Delete lead"
+                        onClick={(e) => handleOpenNote(e, lead)}
+                        className="px-3 py-2 bg-blue-900/20 border border-blue-500/30 rounded text-blue-400 hover:bg-blue-900/40 transition text-sm font-medium"
+                        title="Add / view notes"
                       >
-                        🗑️
+                        📝
                       </button>
                     </div>
                   </td>
@@ -510,11 +540,11 @@ export default function LeadsPage() {
                   <option value="lost">Discard</option>
                 </select>
                 <button
-                  onClick={(e) => handleDeleteLead(e, lead)}
-                  className="px-3 py-1.5 bg-red-900/20 border border-red-500/30 rounded text-red-400 hover:bg-red-900/40 transition text-sm"
-                  title="Delete lead"
+                  onClick={(e) => handleOpenNote(e, lead)}
+                  className="px-3 py-1.5 bg-blue-900/20 border border-blue-500/30 rounded text-blue-400 hover:bg-blue-900/40 transition text-sm"
+                  title="Add / view notes"
                 >
-                  🗑️
+                  📝
                 </button>
               </div>
             </div>
@@ -528,6 +558,77 @@ export default function LeadsPage() {
         onClose={() => setIsModalOpen(false)}
         onAddLead={handleAddLead}
       />
+
+      {/* Notes Popup Modal */}
+      {noteModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setNoteModal(prev => ({ ...prev, open: false }))}
+        >
+          <div
+            className="bg-dark-light border border-gray-border rounded-xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-border">
+              <div>
+                <h2 className="text-white font-bold text-lg">📝 Contact Notes</h2>
+                <p className="text-gray-text text-sm mt-0.5">{noteModal.lead?.name}</p>
+              </div>
+              <button
+                onClick={() => setNoteModal(prev => ({ ...prev, open: false }))}
+                className="text-gray-text hover:text-white text-xl leading-none transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* New note entry */}
+            <div className="px-6 pt-5 pb-4 border-b border-gray-border">
+              <label className="block text-sm font-medium text-gray-text mb-2">New Note</label>
+              <textarea
+                rows={3}
+                value={noteModal.newNote}
+                onChange={(e) => setNoteModal(prev => ({ ...prev, newNote: e.target.value }))}
+                placeholder="What did you discuss with this lead?"
+                className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm resize-none"
+              />
+              <button
+                onClick={handleSaveNote}
+                disabled={!noteModal.newNote.trim() || noteModal.saving}
+                className="mt-3 w-full bg-accent hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-dark font-semibold px-4 py-2 rounded transition text-sm"
+              >
+                {noteModal.saving ? 'Saving…' : 'Save Note'}
+              </button>
+            </div>
+
+            {/* Previous notes */}
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              <h3 className="text-gray-text text-xs font-semibold uppercase tracking-wider mb-3">History</h3>
+              {parseNotes(noteModal.lead?.notes).length === 0 ? (
+                <p className="text-gray-text text-sm text-center py-6">No notes yet. Add the first one above.</p>
+              ) : (
+                <div className="space-y-3">
+                  {parseNotes(noteModal.lead?.notes).map((entry, i) => (
+                    <div key={i} className="bg-dark border border-gray-border rounded-lg px-4 py-3">
+                      {entry.timestamp && (
+                        <p className="text-gray-text text-xs mb-1">
+                          {new Date(entry.timestamp).toLocaleString('en-IN', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </p>
+                      )}
+                      <p className="text-white text-sm whitespace-pre-wrap">{entry.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

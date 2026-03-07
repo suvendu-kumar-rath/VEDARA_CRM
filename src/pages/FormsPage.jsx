@@ -189,6 +189,7 @@ export default function FormsPage() {
       area: "",
       pricePerSqft: 0,
       totalAmount: 0,
+      description: "",
     };
 
     if (section === "globalScope") {
@@ -292,6 +293,7 @@ export default function FormsPage() {
       area: "",
       pricePerSqft: 0,
       totalAmount: 0,
+      description: "",
     };
     setCeilingHeightItems([...ceilingHeightItems, newItem]);
   };
@@ -338,6 +340,7 @@ export default function FormsPage() {
       area: "",
       pricePerSqft: 0,
       totalAmount: 0,
+      description: "",
     };
     setWindowInfoItems([...windowInfoItems, newItem]);
   };
@@ -1661,6 +1664,7 @@ export default function FormsPage() {
       id: newId,
       scopeType: "",
       amount: "",
+      description: "",
     };
     setGlobalScopeInstances([...globalScopeInstances, newInstance]);
     setExpandedGlobalScopes({ ...expandedGlobalScopes, [newId]: true });
@@ -1700,6 +1704,7 @@ export default function FormsPage() {
       id: newId,
       deliverableType: "",
       amount: "",
+      description: "",
     };
     setDeliverablesInstances([...deliverablesInstances, newInstance]);
     setExpandedDeliverables({ ...expandedDeliverables, [newId]: true });
@@ -1746,6 +1751,7 @@ export default function FormsPage() {
       length: "",
       height: "",
       width: "",
+      description: "",
     };
     setMainEntranceInstances({
       ...mainEntranceInstances,
@@ -1808,6 +1814,7 @@ export default function FormsPage() {
       length: "",
       height: "",
       width: "",
+      description: "",
     };
     setFoyerInstances({
       ...foyerInstances,
@@ -2039,6 +2046,7 @@ export default function FormsPage() {
   const buildApiPayload = () => {
     const mapItems = (arr) => (arr || []).map(item => ({
       type: item.itemName,
+      description: item.description,
       areaSqFt: item.area,
       pricePerSqFt: item.pricePerSqft,
       amount: item.totalAmount,
@@ -2069,8 +2077,8 @@ export default function FormsPage() {
       },
     };
 
-    const globalScope = { items: mapItems(globalScopeItems) };
-    const deliverables = { items: mapItems(deliverablesItems) };
+    const globalScope = { items: globalScopeInstances.map(i => ({ type: i.scopeType, description: i.description, amount: i.amount })) };
+    const deliverables = { items: deliverablesInstances.map(i => ({ type: i.deliverableType, description: i.description, amount: i.amount })) };
 
     const roomWiseDetails = {};
 
@@ -2484,13 +2492,25 @@ export default function FormsPage() {
                               />
                             </div>
                           </div>
+
+                          {/* Description */}
+                          <div className="mt-3">
+                            <label className="block text-xs text-gray-text mb-2">Description</label>
+                            <textarea
+                              rows={2}
+                              value={item.description || ""}
+                              onChange={(e) => updateCeilingHeightItem(item.id, "description", e.target.value)}
+                              placeholder="Describe this ceiling item..."
+                              className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm resize-none"
+                            />
+                          </div>
                         </div>
                       ))}
 
                       {/* Grand Total */}
                       <div className="border-t-2 border-accent pt-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-white font-bold text-lg">Grand Total (Ceiling & Height):</span>
+                          <span className="text-white font-bold text-lg">Grand Total (Ceiling &amp; Height):</span>
                           <span className="text-accent font-bold text-2xl">₹{calculateCeilingHeightTotal().toFixed(2)}</span>
                         </div>
                       </div>
@@ -2656,6 +2676,18 @@ export default function FormsPage() {
                               />
                             </div>
                           </div>
+
+                          {/* Description */}
+                          <div className="mt-3">
+                            <label className="block text-xs text-gray-text mb-2">Description</label>
+                            <textarea
+                              rows={2}
+                              value={item.description || ""}
+                              onChange={(e) => updateWindowInfoItem(item.id, "description", e.target.value)}
+                              placeholder="Describe this window item..."
+                              className="w-full bg-dark border border-gray-border rounded px-3 py-2 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm resize-none"
+                            />
+                          </div>
                         </div>
                       ))}
 
@@ -2777,6 +2809,18 @@ export default function FormsPage() {
                                 />
                               </div>
                             </div>
+
+                            {/* Description */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                              <textarea
+                                rows={2}
+                                value={instance.description || ""}
+                                onChange={(e) => handleGlobalScopeChange(instance.id, "description", e.target.value)}
+                                placeholder="Describe the scope of work..."
+                                className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm resize-none"
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -2897,6 +2941,18 @@ export default function FormsPage() {
                                   className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                                 />
                               </div>
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                              <textarea
+                                rows={2}
+                                value={instance.description || ""}
+                                onChange={(e) => handleDeliverableChange(instance.id, "description", e.target.value)}
+                                placeholder="Describe the deliverable..."
+                                className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm resize-none"
+                              />
                             </div>
                           </div>
                         )}
@@ -3469,6 +3525,18 @@ function RoomSection({
                                     className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                                   />
                                 </div>
+                              </div>
+
+                              {/* Description */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                                <textarea
+                                  rows={2}
+                                  value={instance.description || ""}
+                                  onChange={(e) => onMainEntranceChange(instance.id, "description", e.target.value)}
+                                  placeholder="Describe this entrance item..."
+                                  className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm resize-none"
+                                />
                               </div>
                             </div>
                           )}

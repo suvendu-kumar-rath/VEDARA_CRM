@@ -67,18 +67,23 @@ export function generateQuotationPDF(apiResponse) {
     day: "2-digit", month: "short", year: "numeric",
   });
 
-  //  Header Banner 
-  doc.setFillColor(...DARK);
-  doc.rect(0, 0, pageW, 42, "F");
-  doc.setFont("helvetica", "bold");   doc.setFontSize(22); doc.setTextColor(...ACCENT);
-  doc.text("VEDARA", mL, 16);
-  doc.setFont("helvetica", "normal"); doc.setFontSize(9);  doc.setTextColor(...WHITE);
-  doc.text("Interior Design & Execution", mL, 23);
-  doc.setFont("helvetica", "bold");   doc.setFontSize(16); doc.setTextColor(...WHITE);
-  doc.text("QUOTATION", pageW - mR, 16, { align: "right" });
-  doc.setFont("helvetica", "normal"); doc.setFontSize(8);  doc.setTextColor(...LIGHT_TEXT);
-  doc.text("Date: " + today, pageW - mR, 23, { align: "right" });
-  if (validUntil) doc.text("Valid Until: " + validUntil, pageW - mR, 30, { align: "right" });
+  //  Header 
+  // Centered logo
+  doc.setFont("helvetica", "bold");   doc.setFontSize(26); doc.setTextColor(...ACCENT);
+  doc.text("vedara", pageW / 2, 18, { align: "center" });
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8);  doc.setTextColor(130, 100, 40);
+  doc.text("h o m e   d e s i g n   s t u d i o", pageW / 2, 25, { align: "center" });
+  // Date top-right
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(100, 100, 100);
+  doc.text("Date: " + today, pageW - mR, 18, { align: "right" });
+  if (validUntil) doc.text("Valid Until: " + validUntil, pageW - mR, 24.5, { align: "right" });
+  // Title bar
+  const titleAddr = projectInfo.projectAddress ? ", " + projectInfo.projectAddress : "";
+  const titleText = "Interior Work Estimate For" + titleAddr;
+  doc.setFillColor(...SECTION_BG);
+  doc.rect(mL, 29, cW, 9, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...WHITE);
+  doc.text(titleText, pageW / 2, 35, { align: "center" });
 
   //  Row definitions 
   // section | room-header | subsection | info | field | check | dimension | item | subtotal | grandtotal | empty
@@ -87,9 +92,9 @@ export function generateQuotationPDF(apiResponse) {
   let   grandTotal = 0;
 
   //  Small helpers 
-  function pushSection(lbl)        { rowDefs.push({ type: "section",    label: lbl }); }
-  function pushRoomHdr(lbl)        { rowDefs.push({ type: "room-header",label: lbl }); }
-  function pushSubsec(lbl)         { rowDefs.push({ type: "subsection", label: lbl }); }
+  function pushSection(lbl)        { rowDefs.push({ type: "section",     label: lbl }); }
+  function pushRoomHdr(lbl)        { rowDefs.push({ type: "room-header", label: lbl }); }
+  function pushSubsec(lbl)         { rowDefs.push({ type: "subsection",  label: lbl }); }
   function pushField(lbl, val)     { if (val !== "" && val != null) rowDefs.push({ type: "field", label: lbl, detail: String(val) }); }
   function pushCheck(lbl)          { rowDefs.push({ type: "check", label: lbl }); }
 
@@ -136,11 +141,11 @@ export function generateQuotationPDF(apiResponse) {
       const amt  = itemAmt(it);
       const area = fmtNum(it.areaSqFt != null ? it.areaSqFt : it.area);
       const ppsf = fmtNum(it.pricePerSqFt != null ? it.pricePerSqFt : it.pricePerSqft);
-      const note = [
-        area > 0 ? area + " sq.ft"                                                      : "",
-        ppsf > 0 ? "@ \u20B9" + ppsf.toLocaleString("en-IN") + "/sq.ft"                : "",
-        it.quantity ? "Qty: " + it.quantity                                              : "",
+      const dimNote = [
+        area > 0 ? area + " sq.ft" : "",
+        it.quantity ? "Qty: " + it.quantity : "",
       ].filter(Boolean).join("  ");
+      const note = it.description || dimNote;
       rowDefs.push({ type: "item", sno: sno++, label: itemLabel(it), note, amount: amt });
       tot += amt;
     });
@@ -166,7 +171,7 @@ export function generateQuotationPDF(apiResponse) {
       if (secData && typeof secData === "object" && !Array.isArray(secData) && secData.amount) {
         const amt = parseFloat(secData.amount) || 0;
         if (amt > 0) {
-          rowDefs.push({ type: "item", sno: sno++, label: camelToTitle(sec), note: "", amount: amt });
+          rowDefs.push({ type: "item", sno: sno++, label: camelToTitle(sec), note: secData.description || "", amount: amt });
           tot += amt;
         }
       }
@@ -214,7 +219,7 @@ export function generateQuotationPDF(apiResponse) {
     let tot = 0;
     scopeItems.forEach(it => {
       const amt = itemAmt(it);
-      rowDefs.push({ type: "item", sno: sno++, label: it.type || it.item || "\u2014", note: "", amount: amt });
+      rowDefs.push({ type: "item", sno: sno++, label: it.type || it.item || "\u2014", note: it.description || "", amount: amt });
       tot += amt;
     });
     if (tot > 0) { rowDefs.push({ type: "subtotal", label: "Global Scope Total", amount: tot }); grandTotal += tot; }
@@ -228,7 +233,7 @@ export function generateQuotationPDF(apiResponse) {
     let tot = 0;
     delItems.forEach(it => {
       const amt = itemAmt(it);
-      rowDefs.push({ type: "item", sno: sno++, label: it.type || it.item || "\u2014", note: "", amount: amt });
+      rowDefs.push({ type: "item", sno: sno++, label: it.type || it.item || "\u2014", note: it.description || "", amount: amt });
       tot += amt;
     });
     if (tot > 0) { rowDefs.push({ type: "subtotal", label: "Deliverables Total", amount: tot }); grandTotal += tot; }
@@ -250,11 +255,6 @@ export function generateQuotationPDF(apiResponse) {
       const roomName = camelToTitle(key);
       pushRoomHdr(roomName);
       pushDims(effectiveRoom.basicInfo);
-      // Render feature flags from each non-items sub-object
-      Object.entries(effectiveRoom).forEach(([sk, sv]) => {
-        if (sk === "basicInfo" || sk.endsWith("_items") || sk === "items" || sk === key) return;
-        if (sv && typeof sv === "object" && !Array.isArray(sv)) renderFlags(sv, camelToTitle(sk));
-      });
       // Cost items
       const roomTot = pushRoomItems(effectiveRoom);
       if (roomTot > 0) { rowDefs.push({ type: "subtotal", label: roomName + " Total", amount: roomTot }); grandTotal += roomTot; }
@@ -271,20 +271,12 @@ export function generateQuotationPDF(apiResponse) {
       if (br.bedroom) {
         pushSubsec("Bedroom");
         pushDims(br.bedroom.basicInfo);
-        Object.entries(br.bedroom).forEach(([k, v]) => {
-          if (k === "basicInfo" || k.endsWith("_items")) return;
-          if (v && typeof v === "object" && !Array.isArray(v)) renderFlags(v, camelToTitle(k));
-        });
         const bdTot = pushRoomItems(br.bedroom);
         if (bdTot > 0) { rowDefs.push({ type: "subtotal", label: lbl + " Total", amount: bdTot }); grandTotal += bdTot; }
       }
       if (br.washroom) {
         pushSubsec("Washroom");
         pushDims(br.washroom.basicInfo);
-        Object.entries(br.washroom).forEach(([k, v]) => {
-          if (k === "basicInfo" || k.endsWith("_items")) return;
-          if (v && typeof v === "object" && !Array.isArray(v)) renderFlags(v, camelToTitle(k));
-        });
         const wsTot = pushRoomItems(br.washroom);
         if (wsTot > 0) { rowDefs.push({ type: "subtotal", label: lbl + " Washroom Total", amount: wsTot }); grandTotal += wsTot; }
       }
@@ -299,10 +291,6 @@ export function generateQuotationPDF(apiResponse) {
       const lbl = "Balcony " + (idx + 1);
       pushRoomHdr(lbl);
       pushDims(bal.basic);
-      Object.entries(bal).forEach(([k, v]) => {
-        if (k === "basic" || k.endsWith("_items")) return;
-        if (v && typeof v === "object" && !Array.isArray(v)) renderFlags(v, camelToTitle(k));
-      });
       const balTot = pushRoomItems(bal);
       if (balTot > 0) { rowDefs.push({ type: "subtotal", label: lbl + " Total", amount: balTot }); grandTotal += balTot; }
     });
@@ -312,56 +300,57 @@ export function generateQuotationPDF(apiResponse) {
   rowDefs.push({ type: "grandtotal", amount: grandTotal });
 
   //  Table 
-  const colSno  = 12;
-  const colNote = 52;
-  const colAmt  = 40;
-  const colDesc = cW - colSno - colNote - colAmt;
+  const colSno  = 14;                        // Sl. No.
+  const colItem = 48;                        // Items of work
+  const colAmt  = 30;                        // Total cost
+  const colDesc = cW - colSno - colItem - colAmt;  // Description (widest)
 
   const tableHead = [[
-    { content: "S.No",            styles: { halign: "center" } },
-    { content: "Description",     styles: { halign: "left"   } },
-    { content: "Details / Note",  styles: { halign: "left"   } },
-    { content: "Amount (\u20B9)", styles: { halign: "right"  } },
+    { content: "Sl.\nNo.",           styles: { halign: "center", valign: "middle" } },
+    { content: "Items of work",     styles: { halign: "left",   valign: "middle" } },
+    { content: "Description",       styles: { halign: "left",   valign: "middle" } },
+    { content: "Total cost (INR)",  styles: { halign: "right",  valign: "middle" } },
   ]];
 
   const tableBody = rowDefs.map(r => {
     switch (r.type) {
-      case "section":    return ["", r.label, "", ""];
-      case "room-header":return ["", r.label, "", ""];
-      case "subsection": return ["", r.label, "", ""];
+      case "section":    return [{ content: r.label, colSpan: 4, styles: { halign: "center", fontStyle: "bold" } }];
+      case "room-header":return [{ content: r.label, colSpan: 4, styles: { halign: "center", fontStyle: "bold" } }];
+      case "subsection": return [{ content: r.label, colSpan: 4, styles: { halign: "left",   fontStyle: "bold" } }];
       case "info":       return [r.sno, r.label, r.detail || "", ""];
       case "field":      return ["", r.label, r.detail || "", ""];
       case "check":      return ["", "\u2713  " + r.label, "", ""];
       case "dimension":  return ["", "Dimensions", r.detail, ""];
       case "item":       return [r.sno, r.label, r.note || "", fmt(r.amount)];
-      case "subtotal":   return ["", r.label, "", fmt(r.amount)];
-      case "grandtotal": return ["", "GRAND TOTAL", "", fmt(r.amount)];
-      case "empty":      return ["", "No data entered yet.", "", "\u2014"];
+      case "subtotal":   return [{ content: r.label, colSpan: 3, styles: { halign: "right", fontStyle: "bold" } }, fmt(r.amount)];
+      case "grandtotal": return [{ content: "GRAND TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } }, fmt(r.amount)];
+      case "empty":      return [{ content: "No data entered yet.", colSpan: 4, styles: { halign: "center", fontStyle: "italic" } }];
       default:           return ["", "", "", ""];
     }
   });
 
   autoTable(doc, {
-    startY:     46,
+    startY:     41,
     margin:     { left: mL, right: mR },
     tableWidth: cW,
     head:       tableHead,
     body:       tableBody,
     theme:      "plain",
     styles: {
-      font: "helvetica", fontSize: 7.5, textColor: [30, 30, 40],
-      lineColor: BORDER, lineWidth: 0.15,
+      font: "helvetica", fontSize: 8, textColor: [30, 30, 40],
+      lineColor: [180, 180, 180], lineWidth: 0.2,
       overflow: "linebreak",
-      cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+      cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
     },
     headStyles: {
-      fillColor: DARK, textColor: ACCENT, fontStyle: "bold",
-      fontSize: 8.5, lineColor: BORDER, lineWidth: 0.35,
+      fillColor: [181, 148, 16], textColor: [255, 255, 255], fontStyle: "bold",
+      fontSize: 9, lineColor: [150, 120, 10], lineWidth: 0.4,
+      cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
     },
     columnStyles: {
       0: { cellWidth: colSno,  halign: "center", overflow: "linebreak" },
-      1: { cellWidth: colDesc, halign: "left",   overflow: "linebreak" },
-      2: { cellWidth: colNote, halign: "left",   overflow: "linebreak" },
+      1: { cellWidth: colItem, halign: "left",   overflow: "linebreak" },
+      2: { cellWidth: colDesc, halign: "left",   overflow: "linebreak" },
       3: { cellWidth: colAmt,  halign: "right",  overflow: "linebreak" },
     },
     willDrawCell(cell) {
@@ -374,22 +363,19 @@ export function generateQuotationPDF(apiResponse) {
         case "section":
           doc.setFillColor(...SECTION_BG);
           doc.rect(cell.cell.x, cell.cell.y, cell.cell.width, cell.cell.height, "F");
-          if (ci === 1) { doc.setFont("helvetica","bold"); doc.setFontSize(8.5); doc.setTextColor(...ACCENT); }
-          else            doc.setTextColor(...SECTION_BG);
+          doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(...WHITE);
           break;
 
         case "room-header":
           doc.setFillColor(...ROOM_HDR_BG);
           doc.rect(cell.cell.x, cell.cell.y, cell.cell.width, cell.cell.height, "F");
-          doc.setFont("helvetica","bold"); doc.setFontSize(8);
-          doc.setTextColor(...(ci === 1 ? WHITE : ROOM_HDR_BG));
+          doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(...WHITE);
           break;
 
         case "subsection":
           doc.setFillColor(...SUBSEC_BG);
           doc.rect(cell.cell.x, cell.cell.y, cell.cell.width, cell.cell.height, "F");
-          if (ci === 1) { doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.setTextColor(50,50,120); }
-          else            doc.setTextColor(...SUBSEC_BG);
+          doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(50,50,120);
           break;
 
         case "dimension":
