@@ -4,7 +4,7 @@ import autoTable from "jspdf-autotable";
 function fmt(val) {
   const n = parseFloat(val);
   if (!n || isNaN(n)) return "\u2014";
-  return "\u20B9\u00A0" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return "\u20B9 " + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtNum(val) {
@@ -78,8 +78,8 @@ export function generateQuotationPDF(apiResponse) {
   doc.text("Date: " + today, pageW - mR, 18, { align: "right" });
   if (validUntil) doc.text("Valid Until: " + validUntil, pageW - mR, 24.5, { align: "right" });
   // Title bar
-  const titleAddr = projectInfo.projectAddress ? ", " + projectInfo.projectAddress : "";
-  const titleText = "Interior Work Estimate For" + titleAddr;
+  const titleClient = projectInfo.clientName ? ", " + projectInfo.clientName : "";
+  const titleText = "Interior Work Estimate For" + titleClient;
   doc.setFillColor(...SECTION_BG);
   doc.rect(mL, 29, cW, 9, "F");
   doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...WHITE);
@@ -108,6 +108,15 @@ export function generateQuotationPDF(apiResponse) {
     if (W) parts.push("W: " + W + " ft");
     if (H) parts.push("H: " + H + " ft");
     if (parts.length) rowDefs.push({ type: "dimension", detail: parts.join("   |   ") });
+  }
+
+  function pushDesc(roomObj) {
+    if (!roomObj) return;
+    const desc = roomObj.description
+      || roomObj.basicInfo?.description
+      || roomObj.basicInfo?.roomDescription
+      || roomObj.roomDescription;
+    if (desc && String(desc).trim()) pushField("Description", String(desc).trim());
   }
 
   // Render boolean / string fields of an object (skips _items arrays, basicInfo)
@@ -255,6 +264,7 @@ export function generateQuotationPDF(apiResponse) {
       const roomName = camelToTitle(key);
       pushRoomHdr(roomName);
       pushDims(effectiveRoom.basicInfo);
+      pushDesc(effectiveRoom);
       // Cost items
       const roomTot = pushRoomItems(effectiveRoom);
       if (roomTot > 0) { rowDefs.push({ type: "subtotal", label: roomName + " Total", amount: roomTot }); grandTotal += roomTot; }
@@ -291,6 +301,7 @@ export function generateQuotationPDF(apiResponse) {
       const lbl = "Balcony " + (idx + 1);
       pushRoomHdr(lbl);
       pushDims(bal.basic);
+      pushDesc(bal);
       const balTot = pushRoomItems(bal);
       if (balTot > 0) { rowDefs.push({ type: "subtotal", label: lbl + " Total", amount: balTot }); grandTotal += balTot; }
     });
@@ -300,10 +311,10 @@ export function generateQuotationPDF(apiResponse) {
   rowDefs.push({ type: "grandtotal", amount: grandTotal });
 
   //  Table 
-  const colSno  = 14;                        // Sl. No.
-  const colItem = 48;                        // Items of work
-  const colAmt  = 30;                        // Total cost
-  const colDesc = cW - colSno - colItem - colAmt;  // Description (widest)
+  const colSno  = 12;               // Sl. No.
+  const colItem = 44;               // Items of work
+  const colAmt  = 70;               // Total cost — fixed wide enough for 15-digit INR
+  const colDesc = cW - colSno - colItem - colAmt; // Description fills remainder
 
   const tableHead = [[
     { content: "Sl.\nNo.",           styles: { halign: "center", valign: "middle" } },
@@ -321,9 +332,9 @@ export function generateQuotationPDF(apiResponse) {
       case "field":      return ["", r.label, r.detail || "", ""];
       case "check":      return ["", "\u2713  " + r.label, "", ""];
       case "dimension":  return ["", "Dimensions", r.detail, ""];
-      case "item":       return [r.sno, r.label, r.note || "", fmt(r.amount)];
-      case "subtotal":   return [{ content: r.label, colSpan: 3, styles: { halign: "right", fontStyle: "bold" } }, fmt(r.amount)];
-      case "grandtotal": return [{ content: "GRAND TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } }, fmt(r.amount)];
+      case "item":       return [r.sno, r.label, r.note || "", { content: fmt(r.amount), styles: { halign: "right", fontSize: 6.5 } }];
+      case "subtotal":   return [{ content: r.label, colSpan: 3, styles: { halign: "right", fontStyle: "bold", fontSize: 8 } }, { content: fmt(r.amount), styles: { halign: "right", fontStyle: "bold", fontSize: 6.5 } }];
+      case "grandtotal": return [{ content: "GRAND TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fontSize: 10 } }, { content: fmt(r.amount), styles: { halign: "right", fontStyle: "bold", fontSize: 6.5 } }];
       case "empty":      return [{ content: "No data entered yet.", colSpan: 4, styles: { halign: "center", fontStyle: "italic" } }];
       default:           return ["", "", "", ""];
     }
@@ -351,7 +362,7 @@ export function generateQuotationPDF(apiResponse) {
       0: { cellWidth: colSno,  halign: "center", overflow: "linebreak" },
       1: { cellWidth: colItem, halign: "left",   overflow: "linebreak" },
       2: { cellWidth: colDesc, halign: "left",   overflow: "linebreak" },
-      3: { cellWidth: colAmt,  halign: "right",  overflow: "linebreak" },
+      3: { cellWidth: colAmt,  halign: "right",  overflow: "linebreak", fontSize: 6.5, cellPadding: { top: 3, bottom: 3, left: 3, right: 4 } },
     },
     willDrawCell(cell) {
       const idx = cell.row.index;
@@ -416,13 +427,13 @@ export function generateQuotationPDF(apiResponse) {
         case "subtotal":
           doc.setFillColor(...SUBTOTAL_BG);
           doc.rect(cell.cell.x, cell.cell.y, cell.cell.width, cell.cell.height, "F");
-          doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(...WHITE);
+          doc.setFont("helvetica","bold"); doc.setFontSize(6.5); doc.setTextColor(...WHITE);
           break;
 
         case "grandtotal":
           doc.setFillColor(...DARK);
           doc.rect(cell.cell.x, cell.cell.y, cell.cell.width, cell.cell.height, "F");
-          doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.setTextColor(...ACCENT);
+          doc.setFont("helvetica","bold"); doc.setFontSize(6.5); doc.setTextColor(...ACCENT);
           break;
 
         case "empty":
@@ -435,6 +446,63 @@ export function generateQuotationPDF(apiResponse) {
           if (idx % 2 === 1) { doc.setFillColor(...LIGHT_GRAY); doc.rect(cell.cell.x, cell.cell.y, cell.cell.width, cell.cell.height, "F"); }
           doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(30,30,40);
           break;
+      }
+    },
+  });
+
+  // ── Terms & Conditions last page ─────────────────────────────────────────────
+  doc.addPage();
+
+  // Section header bar
+  doc.setFillColor(...SECTION_BG);
+  doc.rect(mL, 18, cW, 8, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...WHITE);
+  doc.text("TERMS & CONDITIONS", mL + cW / 2, 23.5, { align: "center" });
+
+  autoTable(doc, {
+    startY: 28,
+    margin: { left: mL, right: mR },
+    tableWidth: cW,
+    body: [
+      [{ content: "NOTE: The final price may vary with choice of materials and addition of any extra requirement by the client.", colSpan: 2 }],
+      [{ content: "The proposal also includes 1 year free maintenance of any interior related glitch. The prices are inclusive of transportation and design charges.", colSpan: 2 }],
+      [{ content: "Ply used will be of Austin/century BWP 710 grade, Fittings will be of Hettich. Outer finish will be of Premium Laminate & Acrylic finishing.", colSpan: 2 }],
+      [{ content: "Above Timeline should be followed religiuosly for the work conduct. In case of any delay due to certain unavoidable reasons that should be considered as grace period, it should be pre-decided by the client and Vedara Spaces. If the work delays due to the company\u2019s fault, after the grace period of 14 days, The Client is eligible for Penalty clause of rupees 5000/Day.", colSpan: 2 }],
+      [{ content: "", colSpan: 2 }],
+      [
+        { content: "OFFICIAL PARTNER - AUSTIN PLY, GREENPLY, GYPROC, HXPERTS." },
+        { content: "VEDARA SPACES" },
+      ],
+    ],
+    columnStyles: {
+      0: { cellWidth: cW * 0.72 },
+      1: { cellWidth: cW * 0.28 },
+    },
+    styles: {
+      fontStyle: "bold",
+      fontSize: 9,
+      halign: "center",
+      valign: "middle",
+      textColor: [20, 20, 30],
+      lineColor: [0, 0, 0],
+      lineWidth: 0.4,
+      cellPadding: { top: 7, right: 6, bottom: 7, left: 6 },
+    },
+    theme: "plain",
+    didParseCell(data) {
+      // Empty spacing row — taller padding
+      if (data.row.index === 4) {
+        data.cell.styles.cellPadding = { top: 14, right: 6, bottom: 14, left: 6 };
+      }
+      // Last row right cell — gold background, white text
+      if (data.row.index === 5 && data.column.index === 1) {
+        data.cell.styles.fillColor = ACCENT;
+        data.cell.styles.textColor = WHITE;
+        data.cell.styles.fontSize = 10;
+      }
+      // Last row left cell — left-aligned
+      if (data.row.index === 5 && data.column.index === 0) {
+        data.cell.styles.halign = "left";
       }
     },
   });

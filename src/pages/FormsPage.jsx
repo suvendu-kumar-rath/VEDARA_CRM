@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
 import { generateQuotationPDF } from "../utils/generateQuotationPDF";
 
@@ -3322,9 +3322,17 @@ function RoomSection({
       paintAmount:         ["paint", "amount"],
       // softFurnishing
       curtains:            ["softFurnishing", "curtains"],
-      windowCovering:      ["softFurnishing", "windowCovering"],
-      softFurnishingAmount:["softFurnishing", "amount"],
-      softFurnishingNotes: ["softFurnishing", "notes"],
+      windowCovering:         ["softFurnishing", "windowCovering"],
+      softFurnishingAmount:    ["softFurnishing", "amount"],
+      softFurnishingNotes:     ["softFurnishing", "notes"],
+      // per-section descriptions
+      windowInfoDesc:          ["windowInfo",     "description"],
+      civilWorkDesc:           ["civilWork",       "description"],
+      falseCeilingDesc:        ["falseCeiling",    "description"],
+      carpentryDesc:           ["carpentry",       "description"],
+      electricalDesc:          ["electrical",      "description"],
+      paintDesc:               ["paint",           "description"],
+      softFurnishingDesc:      ["softFurnishing",  "description"],
     };
 
     const mapping = fieldMap[field];
@@ -3643,6 +3651,16 @@ function RoomSection({
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                     />
                   </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.windowInfo?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("windowInfoDesc", e.target.value)}
+                      placeholder="Describe window info scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
+                    />
+                  </div>
                 </div>
               </div>
               {/* CIVIL WORK SECTION FOR FOYER */}
@@ -3678,6 +3696,16 @@ function RoomSection({
                       onChange={e => handleFoyerWindowInfoChange("civilWorkAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.civilWork?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("civilWorkDesc", e.target.value)}
+                      placeholder="Describe civil work scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
                     />
                   </div>
                 </div>
@@ -3741,6 +3769,16 @@ function RoomSection({
                       onChange={e => handleFoyerWindowInfoChange("falseCeilingAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.falseCeiling?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("falseCeilingDesc", e.target.value)}
+                      placeholder="Describe false ceiling scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
                     />
                   </div>
                 </div>
@@ -3823,6 +3861,16 @@ function RoomSection({
                       onChange={e => handleFoyerWindowInfoChange("carpentryAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.carpentry?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("carpentryDesc", e.target.value)}
+                      placeholder="Describe carpentry scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
                     />
                   </div>
                 </div>
@@ -3995,6 +4043,16 @@ function RoomSection({
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
                     />
                   </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.electrical?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("electricalDesc", e.target.value)}
+                      placeholder="Describe electrical scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
+                    />
+                  </div>
                 </div>
               </div>
               {/* PAINT SECTION FOR FOYER */}
@@ -4046,6 +4104,16 @@ function RoomSection({
                       onChange={e => handleFoyerWindowInfoChange("paintAmount", e.target.value)}
                       placeholder="Enter total amount"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.paint?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("paintDesc", e.target.value)}
+                      placeholder="Describe paint scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
                     />
                   </div>
                 </div>
@@ -4102,6 +4170,16 @@ function RoomSection({
                       onChange={e => handleFoyerWindowInfoChange("softFurnishingNotes", e.target.value)}
                       placeholder="Enter notes"
                       className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+                    />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-text mb-2">Description</label>
+                    <textarea
+                      rows={2}
+                      value={roomData.foyer?.softFurnishing?.description || ""}
+                      onChange={e => handleFoyerWindowInfoChange("softFurnishingDesc", e.target.value)}
+                      placeholder="Describe soft furnishing scope..."
+                      className="w-full bg-dark border border-gray-border rounded px-4 py-2 text-white text-sm placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
                     />
                   </div>
                 </div>
@@ -6556,6 +6634,13 @@ function RoomSection({
                           min="0"
                         />
                       </div>
+                      <textarea
+                        rows={2}
+                        value={roomData.livingRoom.amounts?.[`${key}Desc`] || ""}
+                        onChange={(e) => onChange(roomName, `livingRoom.amounts.${key}Desc`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-2 py-1.5 text-white text-xs placeholder-gray-text focus:outline-none focus:border-accent transition resize-none mt-1"
+                        placeholder="Description..."
+                      />
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
@@ -8043,6 +8128,13 @@ function RoomSection({
                           min="0"
                         />
                       </div>
+                      <textarea
+                        rows={2}
+                        value={roomData.diningArea.amounts?.[`${key}Desc`] || ""}
+                        onChange={(e) => onChange(roomName, `diningArea.amounts.${key}Desc`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-2 py-1.5 text-white text-xs placeholder-gray-text focus:outline-none focus:border-accent transition resize-none mt-1"
+                        placeholder="Description..."
+                      />
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
@@ -9309,6 +9401,13 @@ function RoomSection({
                           min="0"
                         />
                       </div>
+                      <textarea
+                        rows={2}
+                        value={roomData.kitchen.amounts?.[`${key}Desc`] || ""}
+                        onChange={(e) => onChange(roomName, `kitchen.amounts.${key}Desc`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-2 py-1.5 text-white text-xs placeholder-gray-text focus:outline-none focus:border-accent transition resize-none mt-1"
+                        placeholder="Description..."
+                      />
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
@@ -10723,6 +10822,13 @@ function RoomSection({
                           min="0"
                         />
                       </div>
+                      <textarea
+                        rows={2}
+                        value={roomData.domesticHelpRoom.amounts?.[`${key}Desc`] || ""}
+                        onChange={(e) => onChange(roomName, `domesticHelpRoom.amounts.${key}Desc`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-2 py-1.5 text-white text-xs placeholder-gray-text focus:outline-none focus:border-accent transition resize-none mt-1"
+                        placeholder="Description..."
+                      />
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
@@ -11161,6 +11267,13 @@ function RoomSection({
                           min="0"
                         />
                       </div>
+                      <textarea
+                        rows={2}
+                        value={roomData.storeRoom.amounts?.[`${key}Desc`] || ""}
+                        onChange={(e) => onChange(roomName, `storeRoom.amounts.${key}Desc`, e.target.value)}
+                        className="w-full bg-dark border border-gray-border rounded px-2 py-1.5 text-white text-xs placeholder-gray-text focus:outline-none focus:border-accent transition resize-none mt-1"
+                        placeholder="Description..."
+                      />
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
@@ -13524,6 +13637,13 @@ function BalconySection({ instance, isExpanded, onToggle, onChange, onRemove }) 
                         min="0"
                       />
                     </div>
+                    <textarea
+                      rows={2}
+                      value={amounts?.[`${key}Desc`] || ""}
+                      onChange={(e) => onChange(id, `amounts.${key}Desc`, e.target.value)}
+                      className="w-full bg-dark border border-gray-border rounded px-2 py-1.5 text-white text-xs placeholder-gray-text focus:outline-none focus:border-accent transition resize-none mt-1"
+                      placeholder="Description..."
+                    />
                   </div>
                 ))}
                 <div className="border-t border-accent/30 pt-3 mt-3">
