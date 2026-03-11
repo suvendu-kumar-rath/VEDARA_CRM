@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../services/api";
 import { generateQuotationPDF } from "../utils/generateQuotationPDF";
+import { logActivity } from "../utils/activityLog";
 
 export default function FormsPage() {
   const [formData, setFormData] = useState({
@@ -2087,30 +2088,109 @@ export default function FormsPage() {
       const instItems = roomWiseItems[inst.id] || [];
       Object.entries(rooms).forEach(([roomName, roomData]) => {
         const key = ROOM_KEY[roomName] || roomName;
+
+        // Main Entrance — items stored in mainEntranceInstances
+        if (roomName === "Main Entrance") {
+          const meKey = `${inst.id}-${roomName}`;
+          const meItems = (mainEntranceInstances[meKey] || []).map(i => ({
+            type: i.itemType,
+            description: i.description,
+            amount: i.amount,
+          }));
+          roomWiseDetails.mainEntrance = {
+            basicInfo: { lengthFt: "", widthFt: "", ceilingHeightFt: "" },
+            items: meItems,
+          };
+          return;
+        }
+
+        // Foyer — items stored in foyerInstances; dimensions in roomData.foyer.windowInfo
+        // static sub-section amounts also captured
+        if (roomName === "Foyer") {
+          const foyerKey = `${inst.id}-${roomName}`;
+          const fItems = (foyerInstances[foyerKey] || []).map(i => ({
+            type: i.itemType,
+            description: i.description,
+            amount: i.amount,
+          }));
+          const wi  = roomData.foyer?.windowInfo  || {};
+          const f   = roomData.foyer              || {};
+          // normalize civilWork & falseCeiling amount field names
+          const buildSec = (sec, amtKey) => {
+            if (!sec) return undefined;
+            const amt = sec.amount || (amtKey ? sec[amtKey] : "") || "";
+            if (!amt && !sec.description) return undefined;
+            return { amount: amt, description: sec.description || "" };
+          };
+          roomWiseDetails.foyer = {
+            basicInfo: {
+              lengthFt: wi.length || "",
+              widthFt: wi.width || "",
+              ceilingHeightFt: wi.ceilingHeight || "",
+            },
+            civilWork:      buildSec(f.civilWork,      "civilWorkAmount"),
+            falseCeiling:   buildSec(f.falseCeiling,   "falseCeilingAmount"),
+            carpentry:      buildSec(f.carpentry,       null),
+            electrical:     buildSec(f.electrical,      null),
+            paint:          buildSec(f.paint,           null),
+            softFurnishing: buildSec(f.softFurnishing,  null),
+            items: fItems,
+          };
+          return;
+        }
+
+        // All other rooms (Living Room, Dining Area, Kitchen, Domestic Help Room, Store Room)
+        // Amounts stored at roomData[key].amounts.{amtKey} with descriptions at {amtKey}Desc
+        const nestedData = roomData[key] || {};
+        const amts = nestedData.amounts || {};
+        const amountSections = {};
+        Object.entries(amts).forEach(([k, v]) => {
+          if (k === 'total' || k.endsWith('Desc')) return;
+          const description = amts[`${k}Desc`] || "";
+          if (v || description) {
+            amountSections[k] = { amount: String(v || ""), description };
+          }
+        });
         roomWiseDetails[key] = {
-          ...roomData,
           basicInfo: {
-            lengthFt: roomData.length,
-            widthFt: roomData.width,
-            ceilingHeightFt: roomData.ceilingHeight,
+            lengthFt: nestedData.basicInfo?.length || roomData.length || "",
+            widthFt: nestedData.basicInfo?.width || roomData.width || "",
+            ceilingHeightFt: nestedData.basicInfo?.ceilingHeight || roomData.ceilingHeight || "",
           },
+          ...amountSections,
           items: mapItems(instItems),
         };
       });
     });
 
-    roomWiseDetails.bedrooms = bedroomWashroomInstances.map(inst => ({
-      bedroom: {
-        ...inst.bedroom,
-        basicInfo: {
-          lengthFt: inst.bedroom.basicInfo?.length,
-          widthFt: inst.bedroom.basicInfo?.width,
-          ceilingHeightFt: inst.bedroom.basicInfo?.ceilingHeight,
+    roomWiseDetails.bedrooms = bedroomWashroomInstances.map(inst => {
+      const allAmts = inst.amounts || {};
+      // Split amounts: bedroom vs washroom
+      const washroomAmtKeys = new Set(['washroomWork', 'washroomElectrical']);
+      const bedroomAmounts = {};
+      const washroomAmounts = {};
+      Object.entries(allAmts).forEach(([k, v]) => {
+        if (k === 'total') return;
+        if (washroomAmtKeys.has(k)) washroomAmounts[k] = v;
+        else bedroomAmounts[k] = v;
+      });
+      return {
+        bedroom: {
+          ...inst.bedroom,
+          basicInfo: {
+            lengthFt: inst.bedroom.basicInfo?.length,
+            widthFt: inst.bedroom.basicInfo?.width,
+            ceilingHeightFt: inst.bedroom.basicInfo?.ceilingHeight,
+          },
+          items: mapItems(bedroomWashroomItems[inst.id] || []),
+          amounts: bedroomAmounts,
         },
-        items: mapItems(bedroomWashroomItems[inst.id] || []),
-      },
-      washroom: inst.washroom,
-    }));
+        washroom: inst.washroom ? {
+          ...inst.washroom,
+          amounts: washroomAmounts,
+        } : inst.washroom,
+      };
+    });
 
     roomWiseDetails.balconies = balconyInstances.map(inst => ({
       ...inst,
@@ -2152,22 +2232,13 @@ export default function FormsPage() {
     e.preventDefault();
     try {
       setSubmitting(true);
-      const response = await apiService.createQuotation(buildApiPayload());
+      const localPayload = buildApiPayload();
+      const response = await apiService.createQuotation(localPayload);
       console.log('Quotation Response:', response);
       if (response.success || response.data) {
-        const raw = response.data || response;
-        // Normalize snake_case DB columns to camelCase for PDF generator
-        const pdfPayload = {
-          projectInfo:     raw.project_info     || raw.projectInfo     || {},
-          globalScope:     raw.global_scope     || raw.globalScope     || {},
-          deliverables:    raw.deliverables                            || {},
-          roomWiseDetails: raw.room_wise_details || raw.roomWiseDetails || {},
-          discountPercent: raw.discount_percent  || raw.discountPercent || 0,
-          validUntil:      raw.valid_until       || raw.validUntil      || "",
-          notes:           raw.notes             || "",
-        };
+        logActivity("Quotation Created", `Quotation for ${localPayload.projectInfo?.clientName || "client"} generated and downloaded`, "📄");
         try {
-          generateQuotationPDF(pdfPayload);
+          generateQuotationPDF(localPayload);
         } catch (pdfErr) {
           console.error('PDF generation error:', pdfErr);
           alert('Quotation created but PDF generation failed: ' + (pdfErr.message || 'Unknown error'));
@@ -3206,20 +3277,6 @@ export default function FormsPage() {
               className="bg-dark-light border border-gray-border text-white px-6 py-3 rounded font-medium hover:border-red-500 hover:text-red-500 transition"
             >
               Reset Form
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  generateQuotationPDF(buildApiPayload());
-                } catch (err) {
-                  console.error("PDF generation error:", err);
-                  alert("Failed to generate PDF: " + (err.message || "Unknown error"));
-                }
-              }}
-              className="bg-dark-light border border-accent text-accent px-6 py-3 rounded font-medium hover:bg-accent hover:text-dark transition"
-            >
-              ⬇ Download PDF
             </button>
             <button
               type="submit"

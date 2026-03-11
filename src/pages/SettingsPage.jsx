@@ -4,11 +4,7 @@ import apiService from "../services/api";
 
 const tabs = [
   { id: "company", label: "Company", icon: "🏢" },
-  { id: "pricing", label: "Pricing", icon: "₹" },
-  { id: "branding", label: "Branding", icon: "🎨" },
-  { id: "tax", label: "Tax & GST", icon: "📋" },
-  { id: "users", label: "Employee", icon: "👥" },
-  { id: "notifications", label: "Notifications", icon: "🔔" }
+  { id: "users", label: "Employee", icon: "👥" }
 ];
 
 // Default company profile data
@@ -20,15 +16,6 @@ const defaultCompanyData = {
   website: "www.luxeinteriors.in",
   established: "2018",
   address: "301, Design Tower, Linking Road, Bandra West, Mumbai - 400050"
-};
-
-// Default pricing data
-const defaultPricingData = {
-  apartment: "2500000",
-  villa: "5000000",
-  penthouse: "6500000",
-  commercial: "8000000",
-  bungalow: "4500000"
 };
 
 export default function SettingsPage() {
@@ -52,30 +39,14 @@ export default function SettingsPage() {
     return savedData ? JSON.parse(savedData) : defaultCompanyData;
   });
 
-  // Load pricing data from localStorage or use defaults
-  const [pricingData, setPricingData] = useState(() => {
-    const savedData = localStorage.getItem('pricingData');
-    return savedData ? JSON.parse(savedData) : defaultPricingData;
-  });
-
   const [hasChanges, setHasChanges] = useState(false);
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const loadSavedData = () => {
-      const savedCompanyData = localStorage.getItem('companyProfile');
-      const savedPricingData = localStorage.getItem('pricingData');
-      
-      if (savedCompanyData) {
-        setFormData(JSON.parse(savedCompanyData));
-      }
-      
-      if (savedPricingData) {
-        setPricingData(JSON.parse(savedPricingData));
-      }
-    };
-    
-    loadSavedData();
+    const savedCompanyData = localStorage.getItem('companyProfile');
+    if (savedCompanyData) {
+      setFormData(JSON.parse(savedCompanyData));
+    }
   }, []);
 
   // Fetch employees from API
@@ -126,26 +97,11 @@ export default function SettingsPage() {
     setHasChanges(true);
   };
 
-  const handlePricingChange = (e) => {
-    const { name, value } = e.target;
-    const numericValue = value.replace(/,/g, '');
-    if (/^\d*$/.test(numericValue)) {
-      setPricingData(prev => ({ ...prev, [name]: numericValue }));
-      setHasChanges(true);
-    }
-  };
-
   const handleSaveChanges = () => {
-    // Save to localStorage
     localStorage.setItem('companyProfile', JSON.stringify(formData));
-    localStorage.setItem('pricingData', JSON.stringify(pricingData));
-    
-    console.log("Saving changes:", { ...formData, pricing: pricingData });
+    console.log("Saving changes:", formData);
     setHasChanges(false);
-    
-    // Show success message
     alert('Changes saved successfully!');
-    // Here you would typically also save to backend if needed
   };
 
   const handleAddUser = async (e) => {
@@ -366,228 +322,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Pricing Section */}
-      {activeTab === "pricing" && (
-        <div className="bg-dark-light border border-gray-border rounded-lg p-6 md:p-8">
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-accent text-xl">₹</span>
-              <h2 className="text-xl font-bold text-white">Project Type Pricing</h2>
-            </div>
-            <p className="text-gray-text text-sm">
-              Set base quotation amounts for each project type. These will be pre-filled when creating new quotations.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {/* Apartment */}
-            <div className="bg-dark border border-gray-border rounded-lg p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-2xl">🏢</div>
-                <div>
-                  <h3 className="text-white font-semibold">Apartment</h3>
-                  <p className="text-gray-text text-xs">Standard residential apartment</p>
-                </div>
-              </div>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-text">₹</span>
-                <input
-                  type="text"
-                  name="apartment"
-                  value={pricingData.apartment ? parseInt(pricingData.apartment).toLocaleString('en-IN') : ""}
-                  onChange={handlePricingChange}
-                  className="w-full bg-dark-light border border-gray-border rounded pl-8 pr-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                />
-              </div>
-            </div>
-
-            {/* Villa */}
-            <div className="bg-dark border border-gray-border rounded-lg p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-2xl">🏡</div>
-                <div>
-                  <h3 className="text-white font-semibold">Villa</h3>
-                  <p className="text-gray-text text-xs">Standalone villa/house</p>
-                </div>
-              </div>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-text">₹</span>
-                <input
-                  type="text"
-                  name="villa"
-                  value={pricingData.villa ? parseInt(pricingData.villa).toLocaleString('en-IN') : ""}
-                  onChange={handlePricingChange}
-                  className="w-full bg-dark-light border border-gray-border rounded pl-8 pr-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                />
-              </div>
-            </div>
-
-            {/* Penthouse */}
-            <div className="bg-dark border border-gray-border rounded-lg p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-2xl">🏙️</div>
-                <div>
-                  <h3 className="text-white font-semibold">Penthouse</h3>
-                  <p className="text-gray-text text-xs">Luxury penthouse unit</p>
-                </div>
-              </div>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-text">₹</span>
-                <input
-                  type="text"
-                  name="penthouse"
-                  value={pricingData.penthouse ? parseInt(pricingData.penthouse).toLocaleString('en-IN') : ""}
-                  onChange={handlePricingChange}
-                  className="w-full bg-dark-light border border-gray-border rounded pl-8 pr-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                />
-              </div>
-            </div>
-
-            {/* Commercial */}
-            <div className="bg-dark border border-gray-border rounded-lg p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-2xl">🏢</div>
-                <div>
-                  <h3 className="text-white font-semibold">Commercial</h3>
-                  <p className="text-gray-text text-xs">Office/retail space</p>
-                </div>
-              </div>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-text">₹</span>
-                <input
-                  type="text"
-                  name="commercial"
-                  value={pricingData.commercial ? parseInt(pricingData.commercial).toLocaleString('en-IN') : ""}
-                  onChange={handlePricingChange}
-                  className="w-full bg-dark-light border border-gray-border rounded pl-8 pr-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                />
-              </div>
-            </div>
-
-            {/* Bungalow */}
-            <div className="bg-dark border border-gray-border rounded-lg p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-2xl">🏠</div>
-                <div>
-                  <h3 className="text-white font-semibold">Bungalow</h3>
-                  <p className="text-gray-text text-xs">Traditional bungalow</p>
-                </div>
-              </div>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-text">₹</span>
-                <input
-                  type="text"
-                  name="bungalow"
-                  value={pricingData.bungalow ? parseInt(pricingData.bungalow).toLocaleString('en-IN') : ""}
-                  onChange={handlePricingChange}
-                  className="w-full bg-dark-light border border-gray-border rounded pl-8 pr-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Tip */}
-          <div className="bg-dark border border-gray-border rounded-lg p-4 mb-6">
-            <p className="text-gray-text text-sm flex items-start gap-2">
-              <span className="text-lg">💡</span>
-              <span>
-                <strong className="text-white">Tip:</strong> These base amounts will be automatically filled when creating a new quotation. You can always adjust the final amount manually.
-              </span>
-            </p>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <button
-              onClick={handleSaveChanges}
-              disabled={!hasChanges}
-              className="bg-accent text-dark px-6 py-2.5 rounded font-medium hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <span>💾</span> Save Pricing Data
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Branding Section */}
-      {activeTab === "branding" && (
-        <div className="bg-dark-light border border-gray-border rounded-lg p-6 md:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-white">Branding</h2>
-            <p className="text-gray-text text-sm mt-1">Customize your studio's brand identity</p>
-          </div>
-          <div className="text-gray-text text-center py-10">
-            Branding settings coming soon...
-          </div>
-        </div>
-      )}
-
-      {/* Tax & GST Section */}
-      {activeTab === "tax" && (
-        <div className="bg-dark-light border border-gray-border rounded-lg p-6 md:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-white">Tax & GST Configuration</h2>
-            <p className="text-gray-text text-sm mt-1">Set up tax rates and GST details for quotations.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">GSTIN</label>
-              <input
-                type="text"
-                name="gstin"
-                value={formData.gstin || "27AABCU9603R1ZM"}
-                onChange={handleChange}
-                className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">PAN</label>
-              <input
-                type="text"
-                name="pan"
-                value={formData.pan || "AABCU9603R"}
-                onChange={handleChange}
-                className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">Default GST Rate</label>
-              <select
-                name="gstRate"
-                value={formData.gstRate || "18%"}
-                onChange={handleChange}
-                className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white focus:outline-none focus:border-accent transition"
-              >
-                <option value="5%">5%</option>
-                <option value="12%">12%</option>
-                <option value="18%">18%</option>
-                <option value="28%">28%</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">State</label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state || "Maharashtra"}
-                onChange={handleChange}
-                className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
-              />
-            </div>
-          </div>
-          <div className="mb-2">
-            <label className="block text-sm font-medium text-white mb-2">Bank Details for Quotations</label>
-            <textarea
-              name="bankDetails"
-              value={formData.bankDetails || `Bank: HDFC Bank Ltd.\nAccount Name: Luxe Interiors Design Pvt. Ltd.\nAccount No: 50200012345678\nIFSC: HDFC0001234\nBranch: Bandra West, Mumbai`}
-              onChange={handleChange}
-              rows={5}
-              className="w-full bg-dark border border-gray-border rounded px-4 py-3 text-white placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
-            />
-          </div>
-        </div>
-      )}
-
       {/* User Roles Section */}
       {activeTab === "users" && (
         <div className="bg-dark-light border border-gray-border rounded-lg p-6 md:p-8">
@@ -635,19 +369,6 @@ export default function SettingsPage() {
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Notifications Section */}
-      {activeTab === "notifications" && (
-        <div className="bg-dark-light border border-gray-border rounded-lg p-6 md:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-white">Notifications</h2>
-            <p className="text-gray-text text-sm mt-1">Configure notification preferences</p>
-          </div>
-          <div className="text-gray-text text-center py-10">
-            Notification settings coming soon...
-          </div>
         </div>
       )}
 

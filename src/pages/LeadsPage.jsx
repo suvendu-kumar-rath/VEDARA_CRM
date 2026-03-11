@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiService from "../services/api";
 import AddLeadModal from "../components/AddLeadModal";
+import { logActivity } from "../utils/activityLog";
 
 // Stage color mapping for badges
 const stageBorderColors = {
@@ -17,7 +18,7 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [noteModal, setNoteModal] = useState({ open: false, lead: null, newNote: "", saving: false });
+  const [noteModal, setNoteModal] = useState({ open: false, lead: null, newNote: "", saving: false, notes: [], loadingNotes: false });
 
   useEffect(() => {
     fetchLeads();
@@ -90,6 +91,7 @@ export default function LeadsPage() {
       console.log('Create Lead Response:', response);
       
       if (response.success || response.status === 200 || response.status === 201) {
+        logActivity("New Lead Added", `${formData.name || "Lead"} added from ${formData.source || "unknown source"}`, "★");
         // Refresh leads list
         try {
           await fetchLeads();
@@ -146,6 +148,7 @@ export default function LeadsPage() {
 
         if (response.success || response.status === 200 || response.status === 201) {
           alert('Lead successfully converted to client!');
+          logActivity("Lead Converted", `${lead.name} has been converted to a client`, "✓");
           await fetchLeads();
         } else {
           alert(`Failed to convert lead: ${response.message || 'Unknown error'}`);
@@ -163,6 +166,8 @@ export default function LeadsPage() {
       console.log('Update Lead Status Response:', response);
 
       if (response.success || response.status === 200) {
+        const label = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+        logActivity("Lead Status Updated", `${lead.name} status changed to ${label}`, "⟳");
         // Update local state immediately for better UX
         setLeads(prevLeads => 
           prevLeads.map(l => 
@@ -246,29 +251,20 @@ export default function LeadsPage() {
 
   const handleOpenNote = (e, lead) => {
     e.stopPropagation();
-    setNoteModal({ open: true, lead, newNote: "", saving: false });
+    setNoteModal({ open: true, lead, newNote: "", saving: false, notes: [], loadingNotes: false });
   };
 
   const handleSaveNote = async () => {
     if (!noteModal.newNote.trim()) return;
     setNoteModal(prev => ({ ...prev, saving: true }));
-
-    const existingNotes = parseNotes(noteModal.lead.notes);
-    const updatedNotes = [
-      { text: noteModal.newNote.trim(), timestamp: new Date().toISOString() },
-      ...existingNotes,
-    ];
-    const notesJson = JSON.stringify(updatedNotes);
-
     try {
-      const response = await apiService.updateLead(noteModal.lead.id, { notes: notesJson });
-      if (response.success || response.status === 200) {
-        setLeads(prev => prev.map(l =>
-          l.id === noteModal.lead.id ? { ...l, notes: notesJson } : l
-        ));
+      const response = await apiService.addLeadNote(noteModal.lead.id, noteModal.newNote.trim());
+      if (response.success || response.status === 200 || response.status === 201) {
+        const newEntry = { note: noteModal.newNote.trim(), createdAt: new Date().toISOString() };
+        logActivity("Note Added", `Note added for lead ${noteModal.lead?.name}`, "📝");
         setNoteModal(prev => ({
           ...prev,
-          lead: { ...prev.lead, notes: notesJson },
+          notes: [newEntry, ...prev.notes],
           newNote: "",
           saving: false,
         }));
@@ -310,46 +306,6 @@ export default function LeadsPage() {
         >
           <span className="text-lg">+</span> Add Lead
         </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">👥</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{stats.total}</div>
-              <div className="text-sm text-gray-text">Total Leads</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">🔥</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{stats.hot}</div>
-              <div className="text-sm text-gray-text">Hot Leads</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">✅</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{stats.converted}</div>
-              <div className="text-sm text-gray-text">Converted</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">❌</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{stats.dropped}</div>
-              <div className="text-sm text-gray-text">Dropped</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Filters */}
@@ -402,20 +358,19 @@ export default function LeadsPage() {
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Budget</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Property</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">City</th>
-                <th className="text-left p-4 text-gray-text font-medium text-sm">Status</th>
                 <th className="text-left p-4 text-gray-text font-medium text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-text">
+                  <td colSpan="6" className="p-8 text-center text-gray-text">
                     Loading leads...
                   </td>
                 </tr>
               ) : filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-text">
+                  <td colSpan="6" className="p-8 text-center text-gray-text">
                     No leads found
                   </td>
                 </tr>
@@ -439,11 +394,6 @@ export default function LeadsPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`border ${stageBorderColors[lead.stageColor]} text-${lead.stageColor === 'yellow' ? 'accent' : lead.stageColor === 'green' ? 'green-400' : lead.stageColor === 'blue' ? 'blue-400' : 'red-400'} px-3 py-1 rounded text-xs font-medium inline-block`}>
-                      {lead.stage}
-                    </span>
-                  </td>
-                  <td className="p-4">
                     <div className="flex items-center gap-2">
                       <select
                         value={lead.stage?.toLowerCase() || 'new'}
@@ -456,11 +406,9 @@ export default function LeadsPage() {
                             : 'cursor-pointer hover:border-accent focus:border-accent'
                         }`}
                       >
-                        <option value="">Change Status...</option>
-                        <option value="new">New</option>
                         <option value="contacted">Contacted</option>
                         <option value="converted">Converted</option>
-                        <option value="lost">Discard</option>
+                        
                       </select>
                       <button
                         onClick={(e) => handleOpenNote(e, lead)}
@@ -517,10 +465,7 @@ export default function LeadsPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-border">
-              <span className={`border ${stageBorderColors[lead.stageColor]} text-${lead.stageColor === 'yellow' ? 'accent' : lead.stageColor === 'green' ? 'green-400' : lead.stageColor === 'blue' ? 'blue-400' : 'red-400'} px-3 py-1 rounded text-xs font-medium`}>
-                {lead.stage}
-              </span>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-border">
               <div className="flex items-center gap-2">
                 <select
                   value={lead.stage?.toLowerCase() || 'new'}
@@ -606,21 +551,23 @@ export default function LeadsPage() {
             {/* Previous notes */}
             <div className="px-6 py-4 overflow-y-auto flex-1">
               <h3 className="text-gray-text text-xs font-semibold uppercase tracking-wider mb-3">History</h3>
-              {parseNotes(noteModal.lead?.notes).length === 0 ? (
+              {noteModal.loadingNotes ? (
+                <p className="text-gray-text text-sm text-center py-6">Loading notes…</p>
+              ) : noteModal.notes.length === 0 ? (
                 <p className="text-gray-text text-sm text-center py-6">No notes yet. Add the first one above.</p>
               ) : (
                 <div className="space-y-3">
-                  {parseNotes(noteModal.lead?.notes).map((entry, i) => (
-                    <div key={i} className="bg-dark border border-gray-border rounded-lg px-4 py-3">
-                      {entry.timestamp && (
+                  {noteModal.notes.map((entry, i) => (
+                    <div key={entry.id ?? i} className="bg-dark border border-gray-border rounded-lg px-4 py-3">
+                      {(entry.createdAt || entry.timestamp) && (
                         <p className="text-gray-text text-xs mb-1">
-                          {new Date(entry.timestamp).toLocaleString('en-IN', {
+                          {new Date(entry.createdAt || entry.timestamp).toLocaleString('en-IN', {
                             day: '2-digit', month: 'short', year: 'numeric',
                             hour: '2-digit', minute: '2-digit',
                           })}
                         </p>
                       )}
-                      <p className="text-white text-sm whitespace-pre-wrap">{entry.text}</p>
+                      <p className="text-white text-sm whitespace-pre-wrap">{entry.note ?? entry.text}</p>
                     </div>
                   ))}
                 </div>

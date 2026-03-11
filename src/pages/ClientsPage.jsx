@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AddClientModal from "../components/AddClientModal";
 import apiService from "../services/api";
+import { logActivity } from "../utils/activityLog";
 
 // Your Google Drive folder URL - Replace with your actual Google Drive link
 const GOOGLE_DRIVE_UPLOAD_URL = "https://drive.google.com/drive/folders/1cJY7527w-k3gddTiBVDwJW02I_5m__W3";
@@ -104,6 +105,7 @@ export default function ClientsPage() {
       console.log('Create Client Response:', response);
       
       if (response.success || response.status === 200 || response.status === 201) {
+        logActivity("New Client Added", `${formData.name || "Client"} added successfully`, "🏠");
         // Refresh clients list
         await fetchClients();
         return { success: true };
@@ -126,6 +128,7 @@ export default function ClientsPage() {
       console.log('Delete Client Response:', response);
 
       if (response.success || response.status === 200 || response.status === 204) {
+        logActivity("Client Deleted", `${clientName} was removed`, "❌");
         alert('Client deleted successfully!');
         // Refresh clients list
         await fetchClients();
@@ -193,46 +196,6 @@ export default function ClientsPage() {
           <p className="text-gray-text mt-1">Manage your customer relationships</p>
         </div>
         
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">👥</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{totalClients}</div>
-              <div className="text-sm text-gray-text">Total Clients</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">🔥</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{activeClients}</div>
-              <div className="text-sm text-gray-text">Active Clients</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">✅</div>
-            <div>
-              <div className="text-2xl font-bold text-white">{completedProjects}</div>
-              <div className="text-sm text-gray-text">Completed Projects</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-dark-light border border-gray-border rounded-lg p-5">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">💰</div>
-            <div>
-              <div className="text-2xl font-bold text-white">₹{totalRevenue.toFixed(1)} L</div>
-              <div className="text-sm text-gray-text">Total Revenue</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Search & Filter Bar */}

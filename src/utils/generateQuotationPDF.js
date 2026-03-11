@@ -3,8 +3,20 @@ import autoTable from "jspdf-autotable";
 
 function fmt(val) {
   const n = parseFloat(val);
-  if (!n || isNaN(n)) return "\u2014";
-  return "\u20B9 " + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!n || isNaN(n)) return "-";
+  // Manual Indian format (avoids locale/font issues in jsPDF)
+  const fixed = Math.abs(n).toFixed(2);
+  const [intPart, dec] = fixed.split(".");
+  let grp = "";
+  if (intPart.length <= 3) {
+    grp = intPart;
+  } else {
+    grp = intPart.slice(-3);
+    let rem = intPart.slice(0, -3);
+    while (rem.length > 2) { grp = rem.slice(-2) + "," + grp; rem = rem.slice(0, -2); }
+    grp = rem + "," + grp;
+  }
+  return (n < 0 ? "-" : "") + "Rs." + grp + "." + dec;
 }
 
 function fmtNum(val) {
@@ -164,9 +176,10 @@ export function generateQuotationPDF(apiResponse) {
   // Push every *_items (and plain items) array found on a room object; return total
   // Also reads amounts stored directly on sub-section objects (e.g. carpentry.amount, paint.amount)
   // and from kitchen/storeRoom-style `amounts` sub-objects.
-  const AMOUNT_SECS = ['carpentry','paint','softFurnishing','plumbing','falseCeiling',
-    'floorCovering','electrical','civilWork','lighting','ventilation','wardrobe',
-    'wallCovering','floor','wall','safety'];
+  const AMOUNT_SECS = ['carpentry','paint','softFurnishing','softFurnishings','plumbing',
+    'falseCeiling','floorCovering','flooring','electrical','civilWork','lighting',
+    'ventilation','wardrobe','wallCovering','wallPaneling','floor','wall','safety',
+    'modularKitchen','bathroom'];
   function pushRoomItems(roomObj) {
     let tot = 0;
     Object.entries(roomObj).forEach(([k, v]) => {
@@ -311,9 +324,9 @@ export function generateQuotationPDF(apiResponse) {
   rowDefs.push({ type: "grandtotal", amount: grandTotal });
 
   //  Table 
-  const colSno  = 12;               // Sl. No.
-  const colItem = 44;               // Items of work
-  const colAmt  = 70;               // Total cost — fixed wide enough for 15-digit INR
+  const colSno  = 10;               // Sl. No.
+  const colItem = 58;               // Items of work
+  const colAmt  = 44;               // Total cost (Rs.9,99,999.00 = 14 chars fits easily)
   const colDesc = cW - colSno - colItem - colAmt; // Description fills remainder
 
   const tableHead = [[
@@ -332,9 +345,9 @@ export function generateQuotationPDF(apiResponse) {
       case "field":      return ["", r.label, r.detail || "", ""];
       case "check":      return ["", "\u2713  " + r.label, "", ""];
       case "dimension":  return ["", "Dimensions", r.detail, ""];
-      case "item":       return [r.sno, r.label, r.note || "", { content: fmt(r.amount), styles: { halign: "right", fontSize: 6.5 } }];
-      case "subtotal":   return [{ content: r.label, colSpan: 3, styles: { halign: "right", fontStyle: "bold", fontSize: 8 } }, { content: fmt(r.amount), styles: { halign: "right", fontStyle: "bold", fontSize: 6.5 } }];
-      case "grandtotal": return [{ content: "GRAND TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fontSize: 10 } }, { content: fmt(r.amount), styles: { halign: "right", fontStyle: "bold", fontSize: 6.5 } }];
+      case "item":       return [r.sno, r.label, r.note || "", { content: fmt(r.amount), styles: { halign: "right" } }];
+      case "subtotal":   return [{ content: r.label, colSpan: 3, styles: { halign: "right", fontStyle: "bold" } }, { content: fmt(r.amount), styles: { halign: "right", fontStyle: "bold" } }];
+      case "grandtotal": return [{ content: "GRAND TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fontSize: 9 } }, { content: fmt(r.amount), styles: { halign: "right", fontStyle: "bold", fontSize: 9 } }];
       case "empty":      return [{ content: "No data entered yet.", colSpan: 4, styles: { halign: "center", fontStyle: "italic" } }];
       default:           return ["", "", "", ""];
     }
@@ -362,7 +375,7 @@ export function generateQuotationPDF(apiResponse) {
       0: { cellWidth: colSno,  halign: "center", overflow: "linebreak" },
       1: { cellWidth: colItem, halign: "left",   overflow: "linebreak" },
       2: { cellWidth: colDesc, halign: "left",   overflow: "linebreak" },
-      3: { cellWidth: colAmt,  halign: "right",  overflow: "linebreak", fontSize: 6.5, cellPadding: { top: 3, bottom: 3, left: 3, right: 4 } },
+      3: { cellWidth: colAmt,  halign: "right",  overflow: "hidden", cellPadding: { top: 3, bottom: 3, left: 2, right: 4 } },
     },
     willDrawCell(cell) {
       const idx = cell.row.index;

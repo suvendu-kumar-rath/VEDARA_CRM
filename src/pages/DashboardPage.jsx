@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import StatCards from "../components/StatCards";
-import ProjectProgress from "../components/ProjectProgress";
-import PaymentOverview from "../components/PaymentOverview";
 import RecentActivity from "../components/RecentActivity";
-import QuickStats from "../components/QuickStats";
 import { useNavigate } from "react-router-dom";
 import AddLeadModal from "../components/AddLeadModal";
 
@@ -23,15 +20,8 @@ export default function DashboardPage() {
         {/* Quick Actions removed */}
       </div>
       <StatCards />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <ProjectProgress />
-          <RecentActivity />
-        </div>
-        <div className="flex flex-col gap-6">
-          <PaymentOverview />
-          <QuickStats />
-        </div>
+      <div className="mt-6">
+        <RecentActivity />
       </div>
 
       {/* Add Lead and Quotation Modals removed */}
