@@ -78,7 +78,7 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <aside className={`w-64 bg-dark-light border-r border-gray-border flex flex-col justify-between py-6 px-4 min-h-screen fixed lg:sticky top-0 z-40 transition-transform duration-300 ${
+      <aside className={`w-64 bg-black border-r border-accent/20 flex flex-col justify-between py-6 px-4 min-h-screen fixed lg:sticky top-0 z-40 transition-transform duration-300 ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div>
@@ -97,8 +97,8 @@ export default function Sidebar() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded text-left text-sm font-medium transition ${
                   isActive(item.path)
-                    ? "bg-gray-border text-accent"
-                    : "text-gray-text hover:bg-gray-border hover:text-white"
+                    ? "bg-accent/10 text-accent border-l-2 border-accent pl-[10px]"
+                    : "text-gray-text hover:bg-white/5 hover:text-white border-l-2 border-transparent pl-[10px]"
                 }`}
               >
                 <span className="text-base">{item.icon}</span>
@@ -109,7 +109,7 @@ export default function Sidebar() {
         </div>
         <div className="space-y-3 mt-10">
           {/* User Profile */}
-          <div className="flex items-center gap-3 p-3 rounded bg-gray-border/50">
+          <div className="flex items-center gap-3 p-3 rounded bg-white/5 border border-gray-border">
             <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRoleColor(user?.role)} flex items-center justify-center`}>
               <span className="text-white font-bold text-sm">
                 {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}

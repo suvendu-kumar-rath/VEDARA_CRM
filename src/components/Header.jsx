@@ -4,7 +4,7 @@ export default function Header() {
   const [showSearch, setShowSearch] = useState(false);
 
   return (
-    <header className="bg-dark-light border-b border-gray-border px-4 md:px-6 py-4 flex items-center gap-2 md:gap-4">
+    <header className="bg-black border-b border-accent/20 px-4 md:px-6 py-4 flex items-center gap-2 md:gap-4">
       {/* Mobile Search Toggle */}
       <button
         onClick={() => setShowSearch(!showSearch)}
@@ -25,7 +25,7 @@ export default function Header() {
           </svg>
         </span>
         <input
-          className="w-full bg-dark border border-gray-border rounded px-10 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition text-sm"
+          className="w-full bg-black border border-gray-border rounded px-10 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition text-sm"
           placeholder="Search projects, clients, designs..."
         />
       </div>

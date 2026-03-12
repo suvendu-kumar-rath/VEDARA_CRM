@@ -309,7 +309,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-dark-light border border-gray-border rounded-lg p-4 mb-6">
+      <div className="bg-black border border-gray-border rounded-lg p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <input
@@ -317,7 +317,7 @@ export default function LeadsPage() {
               placeholder="Search leads..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+              className="w-full bg-black border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition"
             />
           </div>
           <select className="bg-dark border border-gray-border rounded px-4 py-2.5 text-gray-text focus:outline-none focus:border-accent transition">

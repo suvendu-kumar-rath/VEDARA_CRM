@@ -83,7 +83,7 @@ export default function DesignsPage() {
           placeholder="Search designs, projects, rooms..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-dark-light border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition"
+          className="w-full bg-black border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition"
         />
       </div>
 
