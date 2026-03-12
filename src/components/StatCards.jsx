@@ -1,27 +1,18 @@
-import React, { useState, useEffect } from "react";
-import apiService from "../services/api";
+import React from "react";
 
-export default function StatCards() {
-  const [totalLeads, setTotalLeads] = useState("—");
-  const [totalClients, setTotalClients] = useState("—");
-  const [monthlyRevenue] = useState("₹45.8L");
+function formatRevenue(value) {
+  if (!value || value === 0) return "₹0";
+  if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)}Cr`;
+  if (value >= 100000) return `₹${(value / 100000).toFixed(2)}L`;
+  if (value >= 1000) return `₹${(value / 1000).toFixed(1)}K`;
+  return `₹${value}`;
+}
 
-  useEffect(() => {
-    apiService.getLeads().then(res => {
-      const items = res?.data?.items || res?.data || [];
-      setTotalLeads(Array.isArray(items) ? items.length : "—");
-    }).catch(() => setTotalLeads("—"));
-
-    apiService.getClients().then(res => {
-      const items = res?.data?.items || res?.data || [];
-      setTotalClients(Array.isArray(items) ? items.length : "—");
-    }).catch(() => setTotalClients("—"));
-  }, []);
-
+export default function StatCards({ totals, loading }) {
   const stats = [
-    { label: "Total Leads", value: totalLeads, icon: "👥" },
-    { label: "Total Clients", value: totalClients, icon: "🏠" },
-    { label: "Monthly Revenue", value: monthlyRevenue, icon: "💰" },
+    { label: "Total Leads", value: loading ? "…" : (totals?.leads ?? "—"), icon: "👥" },
+    { label: "Total Clients", value: loading ? "…" : (totals?.clients ?? "—"), icon: "🏠" },
+    { label: "Monthly Revenue", value: loading ? "…" : formatRevenue(totals?.monthlyRevenue), icon: "💰" },
   ];
 
   return (

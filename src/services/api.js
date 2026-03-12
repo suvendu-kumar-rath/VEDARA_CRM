@@ -100,6 +100,11 @@ class ApiService {
     });
   }
 
+  // Dashboard API
+  async getDashboard() {
+    return this.request('admin/dashboard', { method: 'GET' });
+  }
+
   // Lead APIs
   async createLead(leadData) {
     return this.request('admin/leads', {

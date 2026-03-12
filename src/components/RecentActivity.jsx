@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { getActivities, timeAgo } from "../utils/activityLog";
 
-export default function RecentActivity() {
-  const [activities, setActivities] = useState(getActivities);
+const TYPE_ICON = { quotation: "📄", lead: "👥", client: "🏠" };
+
+function formatApiActivity(entry) {
+  const icon = TYPE_ICON[entry.type] || "🔔";
+  let desc = "";
+  if (entry.meta?.status) desc += `Status: ${entry.meta.status}`;
+  if (entry.meta?.amount) desc += `${desc ? " · " : ""}₹${Number(entry.meta.amount).toLocaleString("en-IN")}`;
+  return { icon, title: entry.title, desc: desc || entry.type, timestamp: entry.time };
+}
+
+export default function RecentActivity({ apiActivities, loading }) {
+  const [localActivities, setLocalActivities] = useState(getActivities);
 
   useEffect(() => {
-    const refresh = () => setActivities(getActivities());
+    const refresh = () => setLocalActivities(getActivities());
     window.addEventListener("vedara_activity_updated", refresh);
     return () => window.removeEventListener("vedara_activity_updated", refresh);
   }, []);
+
+  // Prefer API data when available
+  const activities = (apiActivities && apiActivities.length > 0)
+    ? apiActivities.map(formatApiActivity)
+    : localActivities;
 
   return (
     <div className="bg-dark-light border border-gray-border rounded-lg p-6">
@@ -16,7 +31,9 @@ export default function RecentActivity() {
         <div className="text-white font-semibold text-lg">Recent Activity</div>
       </div>
       <div className="flex flex-col gap-4">
-        {activities.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-text text-sm text-center py-6">Loading activity…</p>
+        ) : activities.length === 0 ? (
           <p className="text-gray-text text-sm text-center py-6">No activity yet. Actions you take will appear here.</p>
         ) : (
           activities.map((a, i) => (
