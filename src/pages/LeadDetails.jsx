@@ -27,14 +27,55 @@ export default function LeadDetails() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    stage: lead.stage,
-    followUp: lead.followUp,
-    notes: ""
+    stage: "",
+    followUp: "",
+    email: "",
+    address: "",
   });
+  const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     fetchLeadDetails();
+    fetchNotes();
   }, [id]);
+
+  const extractNotes = (response) => {
+    if (!response) return [];
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data && Array.isArray(response.data.notes)) return response.data.notes;
+    if (response.data && Array.isArray(response.data.items)) return response.data.items;
+    if (Array.isArray(response.notes)) return response.notes;
+    if (Array.isArray(response.items)) return response.items;
+    return [];
+  };
+
+  const fetchNotes = async () => {
+    try {
+      const response = await apiService.getLeadNotes(id);
+      console.log('[Notes API response]', response);
+      setNotes(extractNotes(response));
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    try {
+      setSavingNote(true);
+      await apiService.addLeadNote(id, newNote.trim());
+      setNewNote("");
+      await fetchNotes();
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      alert(`Error saving note: ${error.message}`);
+    } finally {
+      setSavingNote(false);
+    }
+  };
 
   const fetchLeadDetails = async () => {
     try {
@@ -64,7 +105,8 @@ export default function LeadDetails() {
           setFormData({
             stage: currentLead.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'New',
             followUp: currentLead.followUp || "",
-            notes: currentLead.notes || ""
+            email: currentLead.email || "",
+            address: currentLead.address || "",
           });
         }
       }
@@ -81,10 +123,31 @@ export default function LeadDetails() {
     { label: "Lead Details" }
   ];
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Here you would typically save to backend
-    console.log("Saving lead data:", formData);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await apiService.updateLead(id, {
+        status: formData.stage,
+        followUp: formData.followUp,
+        email: formData.email,
+        address: formData.address,
+      });
+      setLead(prev => ({
+        ...prev,
+        stage: formData.stage,
+        followUp: formData.followUp,
+        email: formData.email,
+        address: formData.address,
+      }));
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save lead:', error);
+      alert(`Error saving changes: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleConvert = async () => {
@@ -101,7 +164,7 @@ export default function LeadDetails() {
         phone: lead.phone,
         city: lead.city,
         source: lead.source,
-        notes: lead.notes || formData.notes
+        notes: lead.notes
       };
 
       const response = await apiService.convertLeadToClient(lead.id, clientData);
@@ -193,9 +256,10 @@ export default function LeadDetails() {
                   </button>
                   <button
                     onClick={handleSave}
-                    className="bg-accent text-dark px-3 py-1 rounded text-sm hover:bg-yellow-500 transition"
+                    disabled={saving}
+                    className="bg-accent text-dark px-3 py-1 rounded text-sm hover:bg-yellow-500 transition disabled:opacity-60"
                   >
-                    Save
+                    {saving ? "Saving..." : "Save"}
                   </button>
                 </div>
               )}
@@ -245,11 +309,12 @@ export default function LeadDetails() {
                 {isEditing ? (
                   <input
                     type="email"
-                    defaultValue={lead.email}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition"
                   />
                 ) : (
-                  <div className="text-white font-medium">{lead.email}</div>
+                  <div className="text-white font-medium">{formData.email}</div>
                 )}
               </div>
 
@@ -258,31 +323,54 @@ export default function LeadDetails() {
                 <label className="block text-gray-text text-sm mb-2">Address</label>
                 {isEditing ? (
                   <textarea
-                    defaultValue={lead.address}
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     rows="2"
                     className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white focus:outline-none focus:border-accent transition resize-none"
                   ></textarea>
                 ) : (
-                  <div className="text-white font-medium">{lead.address}</div>
+                  <div className="text-white font-medium">{formData.address}</div>
                 )}
               </div>
 
-              {/* Notes */}
+              {/* Notes Section */}
               <div>
-                <label className="block text-gray-text text-sm mb-2">Notes</label>
-                {isEditing ? (
+                <label className="block text-gray-text text-sm mb-3">Notes</label>
+                {/* Add new note */}
+                <div className="flex flex-col gap-2 mb-4">
                   <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Add notes about this lead..."
-                    rows="4"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Add a note about this lead..."
+                    rows="3"
                     className="w-full bg-dark border border-gray-border rounded px-4 py-2.5 text-white placeholder-gray-text focus:outline-none focus:border-accent transition resize-none"
-                  ></textarea>
-                ) : (
-                  <div className="text-gray-text text-sm">
-                    {formData.notes || "No notes added yet"}
-                  </div>
-                )}
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    disabled={savingNote || !newNote.trim()}
+                    className="self-end bg-accent text-dark px-4 py-1.5 rounded text-sm font-medium hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingNote ? "Saving..." : "Save Note"}
+                  </button>
+                </div>
+                {/* Notes history */}
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {notes.length === 0 ? (
+                    <p className="text-gray-text text-sm">No notes added yet.</p>
+                  ) : (
+                    notes.map((n, idx) => (
+                      <div key={n.id || idx} className="bg-dark border border-gray-border rounded px-4 py-3">
+                        <p className="text-white text-sm whitespace-pre-wrap">{n.note || n.content || n.text || ""}</p>
+                        {(n.createdAt || n.created_at) && (
+                          <p className="text-gray-text text-xs mt-1">
+                            {new Date(n.createdAt || n.created_at).toLocaleString()}
+                            {(n.createdBy || n.author) && ` · ${n.createdBy || n.author}`}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>

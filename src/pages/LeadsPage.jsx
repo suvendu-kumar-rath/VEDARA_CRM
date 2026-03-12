@@ -249,9 +249,36 @@ export default function LeadsPage() {
     }
   };
 
-  const handleOpenNote = (e, lead) => {
+  // Extract notes array from whatever shape the API returns
+  const extractNotes = (response) => {
+    if (!response) return null;
+    // Direct array
+    if (Array.isArray(response)) return response;
+    // { data: [...] }
+    if (Array.isArray(response.data)) return response.data;
+    // { data: { notes: [...] } }
+    if (response.data && Array.isArray(response.data.notes)) return response.data.notes;
+    // { data: { items: [...] } }
+    if (response.data && Array.isArray(response.data.items)) return response.data.items;
+    // { notes: [...] }
+    if (Array.isArray(response.notes)) return response.notes;
+    // { items: [...] }
+    if (Array.isArray(response.items)) return response.items;
+    return null;
+  };
+
+  const handleOpenNote = async (e, lead) => {
     e.stopPropagation();
-    setNoteModal({ open: true, lead, newNote: "", saving: false, notes: [], loadingNotes: false });
+    setNoteModal({ open: true, lead, newNote: "", saving: false, notes: [], loadingNotes: true });
+    try {
+      const response = await apiService.getLeadNotes(lead.id);
+      console.log('[Notes API response]', response);
+      const notesList = extractNotes(response);
+      setNoteModal(prev => ({ ...prev, notes: notesList ?? [], loadingNotes: false }));
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+      setNoteModal(prev => ({ ...prev, loadingNotes: false }));
+    }
   };
 
   const handleSaveNote = async () => {
@@ -260,14 +287,22 @@ export default function LeadsPage() {
     try {
       const response = await apiService.addLeadNote(noteModal.lead.id, noteModal.newNote.trim());
       if (response.success || response.status === 200 || response.status === 201) {
-        const newEntry = { note: noteModal.newNote.trim(), createdAt: new Date().toISOString() };
         logActivity("Note Added", `Note added for lead ${noteModal.lead?.name}`, "📝");
-        setNoteModal(prev => ({
-          ...prev,
-          notes: [newEntry, ...prev.notes],
-          newNote: "",
-          saving: false,
-        }));
+        // Refresh from API so history is always in sync
+        const leadId = noteModal.lead.id;
+        setNoteModal(prev => ({ ...prev, newNote: "", saving: false, loadingNotes: true }));
+        try {
+          const refreshed = await apiService.getLeadNotes(leadId);
+          console.log('[Notes refresh response]', refreshed);
+          const notesList = extractNotes(refreshed);
+          setNoteModal(prev => ({
+            ...prev,
+            notes: notesList ?? prev.notes,
+            loadingNotes: false,
+          }));
+        } catch {
+          setNoteModal(prev => ({ ...prev, loadingNotes: false }));
+        }
       } else {
         alert(`Failed to save note: ${response.message || 'Unknown error'}`);
         setNoteModal(prev => ({ ...prev, saving: false }));
@@ -567,7 +602,7 @@ export default function LeadsPage() {
                           })}
                         </p>
                       )}
-                      <p className="text-white text-sm whitespace-pre-wrap">{entry.note ?? entry.text}</p>
+                      <p className="text-white text-sm whitespace-pre-wrap">{entry.note ?? entry.content ?? entry.text ?? ""}</p>
                     </div>
                   ))}
                 </div>

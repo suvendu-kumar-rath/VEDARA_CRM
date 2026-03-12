@@ -141,6 +141,12 @@ class ApiService {
     });
   }
 
+  async getLeadNotes(leadId) {
+    return this.request(`admin/leads/${leadId}/notes`, {
+      method: 'GET',
+    });
+  }
+
   // Client APIs
   async getClients(filters = {}) {
     const queryParams = new URLSearchParams(filters).toString();

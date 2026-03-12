@@ -133,24 +133,38 @@ export function generateQuotationPDF(apiResponse) {
 
   // Render boolean / string fields of an object (skips _items arrays, basicInfo)
   const SKIP_RENDER = new Set([
-    "items","basicInfo","lengthFt","widthFt","ceilingHeightFt","length","width",
-    "ceilingHeight","largthFt","amount",
+    "items","basicInfo","lengthFt","widthFt","ceilingHeightFt",
+    "ceilingHeight","largthFt","amount","description","item","total","id",
   ]);
+
+  // Check if obj has any field that renderFlags would show
+  function hasContent(obj) {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+    return Object.entries(obj).some(([k, v]) => {
+      if (SKIP_RENDER.has(k) || k.endsWith("_items")) return false;
+      if (v === false || v === null || v === undefined || v === "") return false;
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === "object") return hasContent(v);
+      return true;
+    });
+  }
   function renderFlags(obj, subLabel) {
     if (!obj || typeof obj !== "object" || Array.isArray(obj)) return;
-    const bools = [], fields = [];
+    const bools = [], fields = [], nested = [];
     Object.entries(obj).forEach(([k, v]) => {
       if (SKIP_RENDER.has(k) || k.endsWith("_items")) return;
       if (v === true)  bools.push(camelToTitle(k));
       else if (v === false || v === null || v === undefined || v === "") return;
-      else if (Array.isArray(v))           fields.push([camelToTitle(k), v.join(", ")]);
-      else if (typeof v === "object")      return; // skip nested objects (caller recurses)
-      else                                 fields.push([camelToTitle(k), String(v)]);
+      else if (Array.isArray(v)) { if (v.length > 0) fields.push([camelToTitle(k), v.join(", ")]); }
+      else if (typeof v === "object") nested.push([camelToTitle(k), v]);
+      else                             fields.push([camelToTitle(k), String(v)]);
     });
-    if (bools.length === 0 && fields.length === 0) return;
+    if (bools.length === 0 && fields.length === 0 && nested.length === 0) return;
     if (subLabel) pushSubsec(subLabel);
     bools.forEach(b  => pushCheck(b));
     fields.forEach(([l, d]) => pushField(l, d));
+    // Recurse into nested sub-objects (e.g. lighting, internalLayout, automationOptions)
+    nested.forEach(([l, o]) => renderFlags(o, l));
   }
 
   // Push one *_items array as cost rows; return sum
@@ -176,51 +190,81 @@ export function generateQuotationPDF(apiResponse) {
   // Push every *_items (and plain items) array found on a room object; return total
   // Also reads amounts stored directly on sub-section objects (e.g. carpentry.amount, paint.amount)
   // and from kitchen/storeRoom-style `amounts` sub-objects.
-  const AMOUNT_SECS = ['carpentry','paint','softFurnishing','softFurnishings','plumbing',
-    'falseCeiling','floorCovering','flooring','electrical','civilWork','lighting',
+  const AMOUNT_SECS = ['carpentry','otherCarpentry','paint','softFurnishing','softFurnishings',
+    'plumbing','falseCeiling','floorCovering','flooring','electrical','civilWork','lighting',
     'ventilation','wardrobe','wallCovering','wallPaneling','floor','wall','safety',
-    'modularKitchen','bathroom'];
+    'modularKitchen','bathroom','helpBathroom','bedNiche','optionalEnhancements',
+    'storageZoning','internalLayout','looseFurniture','greeneryPlanters','waterPlumbing'];
+
   function pushRoomItems(roomObj) {
     let tot = 0;
+
+    // Top-level primitive flags on the room itself (e.g. storeRoom.budgetRange, .notes,
+    // .metalStorageRacks; bedroom top-level booleans, etc.)
+    // We render only non-object primitives here to avoid duplicating sub-section objects.
+    {
+      const bools = [], fields = [];
+      Object.entries(roomObj).forEach(([k, v]) => {
+        if (SKIP_RENDER.has(k) || k.endsWith("_items")) return;
+        if (typeof v === "object" || Array.isArray(v)) return; // sub-objects handled below
+        if (v === true) bools.push(camelToTitle(k));
+        else if (v !== false && v !== null && v !== undefined && v !== "")
+          fields.push([camelToTitle(k), String(v)]);
+      });
+      bools.forEach(b => pushCheck(b));
+      fields.forEach(([l, d]) => pushField(l, d));
+    }
+
+    // Arrays of items
     Object.entries(roomObj).forEach(([k, v]) => {
       if (!Array.isArray(v)) return;
       const secName = k === "items" ? null : camelToTitle(k.replace(/_items$/, ""));
       tot += pushItems(v, secName);
     });
-    // Sub-section .amount fields (foyer / living-room style)
+
+    // Named sub-sections — render flags + optional cost row
     AMOUNT_SECS.forEach(sec => {
       const secData = roomObj[sec];
-      if (secData && typeof secData === "object" && !Array.isArray(secData) && secData.amount) {
-        const amt = parseFloat(secData.amount) || 0;
-        if (amt > 0) {
-          rowDefs.push({ type: "item", sno: sno++, label: camelToTitle(sec), note: secData.description || "", amount: amt });
-          tot += amt;
-        }
+      if (!secData || typeof secData !== "object" || Array.isArray(secData)) return;
+      const amt = parseFloat(secData.amount) || 0;
+      if (amt <= 0 && !hasContent(secData)) return;
+      const label = (secData.item && String(secData.item).trim())
+        ? String(secData.item).trim() : camelToTitle(sec);
+      renderFlags(secData, camelToTitle(sec));
+      if (amt > 0) {
+        rowDefs.push({ type: "item", sno: sno++, label, note: secData.description || "", amount: amt });
+        tot += amt;
       }
     });
-    // Kitchen / storeRoom-style `amounts` sub-object
+
+    // amounts sub-object (bedroom / balcony / help-room style)
     if (roomObj.amounts && typeof roomObj.amounts === "object") {
       Object.entries(roomObj.amounts).forEach(([k, v]) => {
         if (k === "total") return;
         const amt = parseFloat(v) || 0;
+        const secDetail = roomObj[k];
+        const hasSec = secDetail && typeof secDetail === "object" && !Array.isArray(secDetail);
+        if (amt <= 0 && (!hasSec || !hasContent(secDetail))) return;
+        if (hasSec) renderFlags(secDetail, camelToTitle(k));
         if (amt > 0) {
           rowDefs.push({ type: "item", sno: sno++, label: camelToTitle(k), note: "", amount: amt });
           tot += amt;
         }
       });
     }
+
     return tot;
   }
 
   //  SECTION 1: PROJECT INFORMATION 
   pushSection("PROJECT INFORMATION");
   const pi = projectInfo;
-  if (pi.clientName)            rowDefs.push({ type: "info", sno: sno++, label: "Client Name",           detail: pi.clientName });
-  if (pi.projectAddress)        rowDefs.push({ type: "info", sno: sno++, label: "Project Address",        detail: pi.projectAddress });
-  if (pi.propertyType)          rowDefs.push({ type: "info", sno: sno++, label: "Property Type",          detail: pi.propertyType });
-  if (pi.unitType)              rowDefs.push({ type: "info", sno: sno++, label: "Unit Type",              detail: pi.unitType });
-  if (pi.totalCarpetAreaSqFt)   rowDefs.push({ type: "info", sno: sno++, label: "Total Carpet Area",      detail: pi.totalCarpetAreaSqFt + " sq.ft" });
-  if (pi.ceilingHeights?.general) rowDefs.push({ type: "info", sno: sno++, label: "General Ceiling Height", detail: pi.ceilingHeights.general + " ft" });
+  if (pi.clientName)            rowDefs.push({ type: "info", label: "Client Name",           detail: pi.clientName });
+  if (pi.projectAddress)        rowDefs.push({ type: "info", label: "Project Address",        detail: pi.projectAddress });
+  if (pi.propertyType)          rowDefs.push({ type: "info", label: "Property Type",          detail: pi.propertyType });
+  if (pi.unitType)              rowDefs.push({ type: "info", label: "Unit Type",              detail: pi.unitType });
+  if (pi.totalCarpetAreaSqFt)   rowDefs.push({ type: "info", label: "Total Carpet Area",      detail: pi.totalCarpetAreaSqFt + " sq.ft" });
+  if (pi.ceilingHeights?.general) rowDefs.push({ type: "info", label: "General Ceiling Height", detail: pi.ceilingHeights.general + " ft" });
   if (pi.windowInfo) {
     const wi = pi.windowInfo;
     const wParts = [];
@@ -228,10 +272,13 @@ export function generateQuotationPDF(apiResponse) {
     if (wi.windowType)          wParts.push(wi.windowType);
     if (wi.sillHeightFeet)      wParts.push("Sill: " + wi.sillHeightFeet + " ft");
     if (wi.lintelHeightFeet)    wParts.push("Lintel: " + wi.lintelHeightFeet + " ft");
-    if (wParts.length) rowDefs.push({ type: "info", sno: sno++, label: "Window Info", detail: wParts.join("  |  ") });
+    if (wParts.length) rowDefs.push({ type: "info", label: "Window Info", detail: wParts.join("  |  ") });
   }
-  if (validUntil) rowDefs.push({ type: "info", sno: sno++, label: "Valid Until", detail: validUntil });
-  if (notes)      rowDefs.push({ type: "info", sno: sno++, label: "Notes",       detail: notes });
+  if (validUntil) rowDefs.push({ type: "info", label: "Valid Until", detail: validUntil });
+  if (notes)      rowDefs.push({ type: "info", label: "Notes",       detail: notes });
+
+  // Reset sno so numbering starts from Section 2 onwards
+  sno = 1;
 
   //  SECTION 2: GLOBAL PROJECT SCOPE 
   const scopeItems = globalScope.items || [];
@@ -324,8 +371,8 @@ export function generateQuotationPDF(apiResponse) {
   rowDefs.push({ type: "grandtotal", amount: grandTotal });
 
   //  Table 
-  const colSno  = 10;               // Sl. No.
-  const colItem = 58;               // Items of work
+  const colSno  = 14;               // Sl. No.
+  const colItem = 54;               // Items of work
   const colAmt  = 44;               // Total cost (Rs.9,99,999.00 = 14 chars fits easily)
   const colDesc = cW - colSno - colItem - colAmt; // Description fills remainder
 
@@ -341,7 +388,7 @@ export function generateQuotationPDF(apiResponse) {
       case "section":    return [{ content: r.label, colSpan: 4, styles: { halign: "center", fontStyle: "bold" } }];
       case "room-header":return [{ content: r.label, colSpan: 4, styles: { halign: "center", fontStyle: "bold" } }];
       case "subsection": return [{ content: r.label, colSpan: 4, styles: { halign: "left",   fontStyle: "bold" } }];
-      case "info":       return [r.sno, r.label, r.detail || "", ""];
+      case "info":       return ["", r.label, r.detail || "", ""];
       case "field":      return ["", r.label, r.detail || "", ""];
       case "check":      return ["", "\u2713  " + r.label, "", ""];
       case "dimension":  return ["", "Dimensions", r.detail, ""];
@@ -372,7 +419,7 @@ export function generateQuotationPDF(apiResponse) {
       cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
     },
     columnStyles: {
-      0: { cellWidth: colSno,  halign: "center", overflow: "linebreak" },
+      0: { cellWidth: colSno,  halign: "center", overflow: "hidden" },
       1: { cellWidth: colItem, halign: "left",   overflow: "linebreak" },
       2: { cellWidth: colDesc, halign: "left",   overflow: "linebreak" },
       3: { cellWidth: colAmt,  halign: "right",  overflow: "hidden", cellPadding: { top: 3, bottom: 3, left: 2, right: 4 } },

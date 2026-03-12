@@ -2116,11 +2116,18 @@ export default function FormsPage() {
           const wi  = roomData.foyer?.windowInfo  || {};
           const f   = roomData.foyer              || {};
           // normalize civilWork & falseCeiling amount field names
-          const buildSec = (sec, amtKey) => {
+          // itemKey = the field on sec that holds the selected item/type label
+          const buildSec = (sec, amtKey, itemKey) => {
             if (!sec) return undefined;
             const amt = sec.amount || (amtKey ? sec[amtKey] : "") || "";
             if (!amt && !sec.description) return undefined;
-            return { amount: amt, description: sec.description || "" };
+            // Spread full section so all checkbox/select data reaches the PDF
+            const result = { ...sec };
+            if (amtKey && amtKey !== "amount") delete result[amtKey]; // avoid duplicate amount field
+            result.item        = itemKey ? (sec[itemKey] || "") : "";
+            result.amount      = amt;
+            result.description = sec.description || "";
+            return result;
           };
           roomWiseDetails.foyer = {
             basicInfo: {
@@ -2128,12 +2135,12 @@ export default function FormsPage() {
               widthFt: wi.width || "",
               ceilingHeightFt: wi.ceilingHeight || "",
             },
-            civilWork:      buildSec(f.civilWork,      "civilWorkAmount"),
-            falseCeiling:   buildSec(f.falseCeiling,   "falseCeilingAmount"),
-            carpentry:      buildSec(f.carpentry,       null),
-            electrical:     buildSec(f.electrical,      null),
-            paint:          buildSec(f.paint,           null),
-            softFurnishing: buildSec(f.softFurnishing,  null),
+            civilWork:      buildSec(f.civilWork,      "civilWorkAmount",    "civilWorkItem"),
+            falseCeiling:   buildSec(f.falseCeiling,   "falseCeilingAmount", "falseCeilingType"),
+            carpentry:      buildSec(f.carpentry,       null,                "consoleStorage"),
+            electrical:     buildSec(f.electrical,      null,                "switchType"),
+            paint:          buildSec(f.paint,           null,                "wallPaint"),
+            softFurnishing: buildSec(f.softFurnishing,  null,                "curtains"),
             items: fItems,
           };
           return;
@@ -2143,12 +2150,41 @@ export default function FormsPage() {
         // Amounts stored at roomData[key].amounts.{amtKey} with descriptions at {amtKey}Desc
         const nestedData = roomData[key] || {};
         const amts = nestedData.amounts || {};
+
+        // Key aliases: amounts key → actual section data key on nestedData
+        const KEY_ALIASES = {
+          bathroom:     'helpBathroom',
+          bedroomCivil: 'civilWork',
+          carpentry:    'otherCarpentry',
+        };
+
         const amountSections = {};
         Object.entries(amts).forEach(([k, v]) => {
           if (k === 'total' || k.endsWith('Desc')) return;
           const description = amts[`${k}Desc`] || "";
-          if (v || description) {
-            amountSections[k] = { amount: String(v || ""), description };
+          const dataKey = KEY_ALIASES[k] || k;
+          const sectionData = (nestedData[dataKey] && typeof nestedData[dataKey] === 'object' && !Array.isArray(nestedData[dataKey]))
+            ? nestedData[dataKey]
+            : {};
+          if (v || description || Object.values(sectionData).some(sv => sv !== "" && sv !== false && sv !== null && sv !== undefined)) {
+            amountSections[dataKey] = { ...sectionData, amount: String(v || ""), description };
+          }
+        });
+
+        // Also include named sub-sections that have no amount entry but have selections
+        const ALL_SECS = ['civilWork','falseCeiling','floorCovering','wallPaneling','carpentry',
+          'otherCarpentry','electrical','paint','softFurnishings','modularKitchen','plumbing',
+          'wardrobe','lighting','ventilation','helpBathroom','bedNiche','optionalEnhancements',
+          'storageZoning'];
+        ALL_SECS.forEach(sec => {
+          if (amountSections[sec]) return; // already captured
+          const secData = nestedData[sec];
+          if (secData && typeof secData === 'object' && !Array.isArray(secData)) {
+            const hasAny = Object.values(secData).some(sv =>
+              sv !== "" && sv !== false && sv !== null && sv !== undefined &&
+              !(typeof sv === 'object' && !Array.isArray(sv) && Object.values(sv).every(vv => !vv))
+            );
+            if (hasAny) amountSections[sec] = { ...secData, amount: "", description: "" };
           }
         });
         roomWiseDetails[key] = {
@@ -2158,6 +2194,9 @@ export default function FormsPage() {
             ceilingHeightFt: nestedData.basicInfo?.ceilingHeight || roomData.ceilingHeight || "",
           },
           ...amountSections,
+          // Top-level primitives (notes, budgetRange, top-level flags)
+          ...(nestedData.notes    ? { notes:       nestedData.notes       } : {}),
+          ...(nestedData.budgetRange ? { budgetRange: nestedData.budgetRange } : {}),
           items: mapItems(instItems),
         };
       });
@@ -2165,7 +2204,6 @@ export default function FormsPage() {
 
     roomWiseDetails.bedrooms = bedroomWashroomInstances.map(inst => {
       const allAmts = inst.amounts || {};
-      // Split amounts: bedroom vs washroom
       const washroomAmtKeys = new Set(['washroomWork', 'washroomElectrical']);
       const bedroomAmounts = {};
       const washroomAmounts = {};
@@ -2173,6 +2211,13 @@ export default function FormsPage() {
         if (k === 'total') return;
         if (washroomAmtKeys.has(k)) washroomAmounts[k] = v;
         else bedroomAmounts[k] = v;
+      });
+      // Remap amount keys to actual data keys on inst.bedroom
+      const BEDROOM_KEY_MAP = { bedroomCivil: 'civilWork', carpentry: 'otherCarpentry' };
+      const bedroomAmountsMapped = {};
+      Object.entries(bedroomAmounts).forEach(([k, v]) => {
+        const realKey = BEDROOM_KEY_MAP[k] || k;
+        bedroomAmountsMapped[realKey] = v;
       });
       return {
         bedroom: {
@@ -2183,7 +2228,7 @@ export default function FormsPage() {
             ceilingHeightFt: inst.bedroom.basicInfo?.ceilingHeight,
           },
           items: mapItems(bedroomWashroomItems[inst.id] || []),
-          amounts: bedroomAmounts,
+          amounts: bedroomAmountsMapped,
         },
         washroom: inst.washroom ? {
           ...inst.washroom,
@@ -6701,19 +6746,17 @@ function RoomSection({
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
-                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                       <input
                         type="number"
-                        value={roomData.livingRoom.amounts?.total || ""}
-                        onChange={(e) => onChange(roomName, "livingRoom.amounts.total", e.target.value)}
-                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                        placeholder="0"
-                        min="0"
+                        readOnly
+                        value={Object.entries(roomData.livingRoom.amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                       />
                     </div>
-                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                    <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                   </div>
                 </div>
               </div>
@@ -8195,19 +8238,17 @@ function RoomSection({
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
-                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                       <input
                         type="number"
-                        value={roomData.diningArea.amounts?.total || ""}
-                        onChange={(e) => onChange(roomName, "diningArea.amounts.total", e.target.value)}
-                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                        placeholder="0"
-                        min="0"
+                        readOnly
+                        value={Object.entries(roomData.diningArea.amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                       />
                     </div>
-                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                    <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                   </div>
                 </div>
               </div>
@@ -9468,19 +9509,17 @@ function RoomSection({
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
-                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                       <input
                         type="number"
-                        value={roomData.kitchen.amounts?.total || ""}
-                        onChange={(e) => onChange(roomName, "kitchen.amounts.total", e.target.value)}
-                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                        placeholder="0"
-                        min="0"
+                        readOnly
+                        value={Object.entries(roomData.kitchen.amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                       />
                     </div>
-                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                    <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                   </div>
                 </div>
               </div>
@@ -10889,19 +10928,17 @@ function RoomSection({
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
-                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                       <input
                         type="number"
-                        value={roomData.domesticHelpRoom.amounts?.total || ""}
-                        onChange={(e) => onChange(roomName, "domesticHelpRoom.amounts.total", e.target.value)}
-                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                        placeholder="0"
-                        min="0"
+                        readOnly
+                        value={Object.entries(roomData.domesticHelpRoom.amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                       />
                     </div>
-                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                    <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                   </div>
                 </div>
               </div>
@@ -11334,19 +11371,17 @@ function RoomSection({
                     </div>
                   ))}
                   <div className="border-t border-accent/30 pt-3 mt-3">
-                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                    <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                       <input
                         type="number"
-                        value={roomData.storeRoom.amounts?.total || ""}
-                        onChange={(e) => onChange(roomName, "storeRoom.amounts.total", e.target.value)}
-                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                        placeholder="0"
-                        min="0"
+                        readOnly
+                        value={Object.entries(roomData.storeRoom.amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                        className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                       />
                     </div>
-                    <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                    <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                   </div>
                 </div>
               </div>
@@ -11530,19 +11565,17 @@ function WashroomSection({ roomName, washroomData, amounts, onChange }) {
               </div>
             ))}
             <div className="border-t border-accent/30 pt-3 mt-3">
-              <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+              <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                 <input
                   type="number"
-                  value={amounts?.total || ""}
-                  onChange={(e) => onChange(roomName, "washroom.amounts.total", e.target.value)}
-                  className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                  placeholder="0"
-                  min="0"
+                  readOnly
+                  value={Object.entries(amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                  className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                 />
               </div>
-              <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+              <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
             </div>
           </div>
         </div>
@@ -12918,19 +12951,17 @@ function BedroomWithWashroomSection({ instance, isExpanded, onToggle, onChange, 
                   </div>
                 ))}
                 <div className="border-t border-accent/30 pt-3 mt-3">
-                  <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                  <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                     <input
                       type="number"
-                      value={amounts?.total || ""}
-                      onChange={(e) => onChange(id, "amounts.total", e.target.value)}
-                      className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                      placeholder="0"
-                      min="0"
+                      readOnly
+                      value={Object.entries(amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                      className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                     />
                   </div>
-                  <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                 </div>
               </div>
             </div>
@@ -13704,19 +13735,17 @@ function BalconySection({ instance, isExpanded, onToggle, onChange, onRemove }) 
                   </div>
                 ))}
                 <div className="border-t border-accent/30 pt-3 mt-3">
-                  <label className="block text-xs text-accent font-semibold mb-1">Total Amount</label>
+                  <label className="block text-xs text-accent font-semibold mb-1">Total Amount (Auto)</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-accent text-sm font-bold">₹</span>
                     <input
                       type="number"
-                      value={amounts?.total || ""}
-                      onChange={(e) => onChange(id, "amounts.total", e.target.value)}
-                      className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm focus:outline-none focus:border-accent transition"
-                      placeholder="0"
-                      min="0"
+                      readOnly
+                      value={Object.entries(amounts || {}).filter(([k]) => k !== 'total' && !k.endsWith('Desc')).reduce((s, [, v]) => s + (parseFloat(v) || 0), 0)}
+                      className="w-full bg-dark border border-accent/50 rounded pl-7 pr-3 py-2 text-accent font-semibold text-sm cursor-default select-all"
                     />
                   </div>
-                  <p className="text-xs text-gray-text mt-2 italic">Enter category-wise amounts above, or enter the total directly.</p>
+                  <p className="text-xs text-gray-text mt-2 italic">Auto-calculated from category amounts above.</p>
                 </div>
               </div>
             </div>
