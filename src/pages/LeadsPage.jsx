@@ -376,9 +376,6 @@ export default function LeadsPage() {
             <option>Email Campaign</option>
             <option>LinkedIn</option>
           </select>
-          <button className="bg-dark border border-gray-border rounded px-4 py-2.5 text-gray-text hover:border-accent hover:text-accent transition flex items-center gap-2">
-            <span>🔽</span> More Filters
-          </button>
         </div>
       </div>
 

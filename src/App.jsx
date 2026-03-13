@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
 import DashboardPage from "./pages/DashboardPage";
 import LeadsPage from "./pages/LeadsPage";
 import LeadDetails from "./pages/LeadDetails";
@@ -33,7 +32,6 @@ function AppContent() {
     <div className="flex bg-dark min-h-screen font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <Header />
         <Routes>
           <Route path="/" element={
             <ProtectedRoute allowedRoles={["admin", "lead"]}>

@@ -78,7 +78,7 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <aside className={`w-64 bg-black border-r border-accent/20 flex flex-col justify-between py-6 px-4 min-h-screen fixed lg:sticky top-0 z-40 transition-transform duration-300 ${
+      <aside className={`w-64 bg-black border-r border-accent/20 flex flex-col justify-between pt-3 pb-6 px-4 min-h-screen fixed lg:sticky top-0 z-40 transition-transform duration-300 ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div>
